@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEET PG Quiz</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; margin: 0; background: #f4f4f4; display: flex; height: 100vh; }
+    .sidebar {
+      width: 200px;
+      background: #fff;
+      border-right: 1px solid #ccc;
+      padding: 10px;
+      overflow-y: auto;
+    }
+    .sidebar h3 { margin-top: 0; }
+    .palette {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 5px;
+    }
+    .palette button {
+      padding: 5px;
+      border: 1px solid #ccc;
+      background: #eee;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .main {
+      flex: 1;
+      padding: 20px;
+    }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .question {
+      font-size: 1.1em;
+      margin-bottom: 10px;
+    }
+    .image {
+      max-width: 100%;
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+    }
+    .options button {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      font-size: 1em;
+      border: 1px solid #aaa;
+      background: #fff;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+    .correct { background: #c8e6c9; border-color: green; }
+    .wrong { background: #ffcdd2; border-color: red; }
+    .controls {
+      margin-top: 20px;
+    }
+    .controls button {
+      margin-right: 10px;
+      padding: 10px 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h3>Questions</h3>
+    <div class="palette" id="palette"></div>
+  </div>
+  <div class="main">
+    <div class="top-bar">
+      <div id="question-number">Question 1</div>
+      <div>+4 ✅  |  -1 ❌</div>
+    </div>
+    <div class="question" id="question-text"></div>
+    <img id="question-image" class="image" style="display:none" />
+    <div class="options" id="options"></div>
+    <div class="controls">
+      <button onclick="prevQuestion()">⬅️ Prev</button>
+      <button onclick="nextQuestion()">Next ➡️</button>
+      <button onclick="resetQuiz()">🔄 Retry</button>
+      <button onclick="location.href='index.html'">🏠 Home</button>
+    </div>
+  </div>
+
+  <!-- Firebase & App -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
