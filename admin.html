@@ -32,59 +32,70 @@
       border-radius: 8px;
       box-shadow: 0 1px 4px rgba(0,0,0,0.1);
     }
+    #admin-section { display: none; }
   </style>
 </head>
 <body>
-  <h2>Admin Panel: Add / Manage MCQs</h2>
+  <h2>Admin Login</h2>
+  <div id="login-section">
+    <label>Email</label>
+    <input id="admin-email" type="email" />
+    <label>Password</label>
+    <input id="admin-password" type="password" />
+    <button onclick="adminLogin()">Login</button>
+  </div>
 
-  <label for="subject">Select Subject</label>
-  <select id="subject">
-    <option disabled selected>Select Subject</option>
-    <option>Anatomy</option>
-    <option>Physiology</option>
-    <option>Biochemistry</option>
-    <option>Pathology</option>
-    <option>Pharmacology</option>
-    <option>Microbiology</option>
-    <option>Forensic Medicine</option>
-    <option>Community Medicine</option>
-    <option>ENT</option>
-    <option>Ophthalmology</option>
-    <option>General Medicine</option>
-    <option>General Surgery</option>
-    <option>Obstetrics & Gynaecology</option>
-    <option>Pediatrics</option>
-    <option>Orthopaedics</option>
-    <option>Dermatology</option>
-    <option>Psychiatry</option>
-    <option>Respiratory Medicine</option>
-    <option>Anesthesiology</option>
-  </select>
+  <div id="admin-section">
+    <h2>Admin Panel: Add / Manage MCQs</h2>
+    <label for="subject">Select Subject</label>
+    <select id="subject">
+      <option disabled selected>Select Subject</option>
+      <option>Anatomy</option>
+      <option>Physiology</option>
+      <option>Biochemistry</option>
+      <option>Pathology</option>
+      <option>Pharmacology</option>
+      <option>Microbiology</option>
+      <option>Forensic Medicine</option>
+      <option>Community Medicine</option>
+      <option>ENT</option>
+      <option>Ophthalmology</option>
+      <option>General Medicine</option>
+      <option>General Surgery</option>
+      <option>Obstetrics & Gynaecology</option>
+      <option>Pediatrics</option>
+      <option>Orthopaedics</option>
+      <option>Dermatology</option>
+      <option>Psychiatry</option>
+      <option>Respiratory Medicine</option>
+      <option>Anesthesiology</option>
+    </select>
 
-  <label>Question</label>
-  <textarea id="question" rows="3"></textarea>
+    <label>Question</label>
+    <textarea id="question" rows="3"></textarea>
 
-  <label>Option 1</label>
-  <input id="opt1" />
+    <label>Option 1</label>
+    <input id="opt1" />
 
-  <label>Option 2</label>
-  <input id="opt2" />
+    <label>Option 2</label>
+    <input id="opt2" />
 
-  <label>Option 3</label>
-  <input id="opt3" />
+    <label>Option 3</label>
+    <input id="opt3" />
 
-  <label>Option 4</label>
-  <input id="opt4" />
+    <label>Option 4</label>
+    <input id="opt4" />
 
-  <label>Correct Option (0–3)</label>
-  <input type="number" id="correct" min="0" max="3" />
+    <label>Correct Option (0–3)</label>
+    <input type="number" id="correct" min="0" max="3" />
 
-  <label>Image URL (optional)</label>
-  <input id="image" />
+    <label>Image URL (optional)</label>
+    <input id="image" />
 
-  <button onclick="uploadQuestion()">Upload Question</button>
-  <button onclick="loadQuestions()">Preview All Questions</button>
-  <div id="preview"></div>
+    <button onclick="uploadQuestion()">Upload Question</button>
+    <button onclick="loadQuestions()">Preview All Questions</button>
+    <div id="preview"></div>
+  </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -96,7 +107,6 @@
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
     import {
       getAuth,
-      onAuthStateChanged,
       signInWithEmailAndPassword
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
@@ -114,14 +124,22 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    const adminEmail = "y3knishu@gmail.com";
-    const adminPassword = "xrnb21r72W@";
+    window.adminLogin = function() {
+      const email = document.getElementById("admin-email").value;
+      const password = document.getElementById("admin-password").value;
+      signInWithEmailAndPassword(auth, email, password)
+        .then(user => {
+          if (email === "y3knishu@gmail.com") {
+            document.getElementById("login-section").style.display = "none";
+            document.getElementById("admin-section").style.display = "block";
+          } else {
+            alert("Access denied: Not authorized");
+          }
+        })
+        .catch(err => alert("Login failed: " + err.message));
+    }
 
-    signInWithEmailAndPassword(auth, adminEmail, adminPassword)
-      .then(() => console.log("Admin logged in"))
-      .catch((error) => alert("Admin login failed: " + error.message));
-
-    async function uploadQuestion() {
+    window.uploadQuestion = async function() {
       const subject = document.getElementById("subject").value;
       const question = document.getElementById("question").value;
       const options = [
@@ -160,7 +178,7 @@
       document.getElementById("image").value = "";
     }
 
-    async function loadQuestions() {
+    window.loadQuestions = async function() {
       const subject = document.getElementById("subject").value;
       if (!subject) return alert("Select a subject");
 
