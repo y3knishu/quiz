@@ -1,103 +1,127 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NEET PG Subjects</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f0f2f5;
-      padding: 20px;
-      text-align: center;
-    }
-    h1 {
-      font-size: 2em;
-      margin-bottom: 30px;
-    }
-    .subjects {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 15px;
-      max-width: 1000px;
-      margin: auto;
-    }
-    .card {
-      background: #fff;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      cursor: pointer;
-      transition: 0.2s;
-      text-decoration: none;
-      color: black;
-    }
-    .card:hover {
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    }
-    .card-title {
-      font-weight: bold;
-      margin-bottom: 5px;
-    }
-    .card-sub {
-      font-size: 0.9em;
-      color: gray;
-    }
-  </style>
-</head>
-<body>
-  <h1>NEET PG Subjects</h1>
-  <div class="subjects" id="subject-container"></div>
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
+  authDomain: "mcqs-96117.firebaseapp.com",
+  projectId: "mcqs-96117",
+  storageBucket: "mcqs-96117.firebasestorage.app",
+  messagingSenderId: "352256319143",
+  appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582",
+  measurementId: "G-6FZ770H045"
+};
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
-      authDomain: "mcqs-96117.firebaseapp.com",
-      projectId: "mcqs-96117",
-      storageBucket: "mcqs-96117.firebasestorage.app",
-      messagingSenderId: "352256319143",
-      appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582",
-      measurementId: "G-6FZ770H045"
-    };
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+const urlParams = new URLSearchParams(window.location.search);
+const subject = urlParams.get('subject') || 'Anatomy';
 
-    const subjects = [
-      "Anatomy", "Physiology", "Biochemistry",
-      "Pathology", "Pharmacology", "Microbiology", "Forensic Medicine",
-      "Community Medicine", "ENT", "Ophthalmology",
-      "General Medicine", "General Surgery", "Obstetrics & Gynaecology",
-      "Pediatrics", "Orthopaedics", "Dermatology",
-      "Psychiatry", "Respiratory Medicine", "Anesthesiology"
-    ];
+let questions = [];
+let current = 0;
+let selectedAnswers = [];
 
-    const container = document.getElementById("subject-container");
+const qText = document.getElementById("question-text");
+const qImage = document.getElementById("question-image");
+const qOptions = document.getElementById("options");
+const qNumber = document.getElementById("question-number");
+const palette = document.getElementById("palette");
 
-    subjects.forEach(async subject => {
-      let attempted = "Not attempted";
-      try {
-        const snap = await getDoc(doc(db, "progress", subject));
-        if (snap.exists()) {
-          const data = snap.data();
-          attempted = `${data.correct} ✅ / ${data.wrong} ❌ / ${data.attempted} attempted`;
-        }
-      } catch (e) {
-        console.warn("No progress for", subject);
-      }
+function renderPalette() {
+  palette.innerHTML = "";
+  questions.forEach((_, i) => {
+    const btn = document.createElement("button");
+    btn.textContent = i + 1;
+    btn.onclick = () => loadQuestion(i);
+    if (selectedAnswers[i] !== undefined) {
+      btn.style.background = selectedAnswers[i].correct ? "#c8e6c9" : "#ffcdd2";
+    }
+    palette.appendChild(btn);
+  });
+}
 
-      const card = document.createElement("a");
-      card.className = "card";
-      card.href = `quiz.html?subject=${encodeURIComponent(subject)}`;
-      card.innerHTML = `
-        <div class="card-title">${subject}</div>
-        <div class="card-sub">${attempted}</div>
-      `;
-      container.appendChild(card);
-    });
-  </script>
-</body>
-</html>
+function loadQuestion(index) {
+  current = index;
+  const q = questions[index];
+  qNumber.textContent = `Question ${index + 1}`;
+  qText.textContent = q.question;
+  qImage.style.display = q.image ? "block" : "none";
+  qImage.src = q.image || "";
+  qOptions.innerHTML = "";
+
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement("button");
+    btn.textContent = opt;
+    btn.onclick = () => selectAnswer(i, btn);
+    qOptions.appendChild(btn);
+  });
+  renderPalette();
+}
+
+function selectAnswer(selectedIndex, btn) {
+  const q = questions[current];
+  const isCorrect = selectedIndex === q.answer;
+  selectedAnswers[current] = { selectedIndex, correct: isCorrect };
+
+  const buttons = qOptions.querySelectorAll("button");
+  buttons.forEach((b, i) => {
+    b.disabled = true;
+    if (i === q.answer) b.classList.add("correct");
+    if (i === selectedIndex && !isCorrect) b.classList.add("wrong");
+  });
+
+  saveProgress();
+  renderPalette();
+}
+
+function prevQuestion() {
+  if (current > 0) loadQuestion(current - 1);
+}
+
+function nextQuestion() {
+  if (current < questions.length - 1) loadQuestion(current + 1);
+}
+
+function resetQuiz() {
+  selectedAnswers = [];
+  saveProgress();
+  loadQuestion(0);
+}
+
+async function loadQuiz(subjectName) {
+  const docRef = doc(db, "questions", subjectName);
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    questions = docSnap.data().questions;
+    selectedAnswers = new Array(questions.length);
+    loadProgress();
+    loadQuestion(0);
+  } else {
+    alert("No questions found for this subject.");
+  }
+}
+
+async function saveProgress() {
+  const summary = {
+    attempted: selectedAnswers.filter(a => a !== undefined).length,
+    correct: selectedAnswers.filter(a => a && a.correct).length,
+    wrong: selectedAnswers.filter(a => a && !a.correct).length,
+    total: questions.length,
+    timestamp: Date.now()
+  };
+  try {
+    await setDoc(doc(db, "progress", subject), summary);
+  } catch (e) {
+    console.error("Error saving progress", e);
+  }
+}
+
+async function loadProgress() {
+  const progressDoc = await getDoc(doc(db, "progress", subject));
+  if (progressDoc.exists()) {
+    console.log("Progress loaded:", progressDoc.data());
+  }
+}
+
+loadQuiz(subject);
