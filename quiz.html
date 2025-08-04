@@ -61,8 +61,9 @@
       right: 10px;
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body>
+<body class="dark">
   <div class="sidebar">
     <h4>Palette</h4>
     <div id="palette"></div>
@@ -80,7 +81,20 @@
     <button onclick="location.href='index.html'">🏠 Home</button>
     <div id="result-summary" class="summary"></div>
   </div>
-  <button id="toggle-dark" onclick="toggleDarkMode()">🌓</button>
+  <button id="toggle-dark" onclick="toggleDarkMode()">☀️</button>
+
+  <script>
+    // Restore saved dark mode
+    if (localStorage.getItem("dark") === "false") {
+      document.body.classList.remove("dark");
+      document.getElementById("toggle-dark").textContent = "🌙";
+    }
+    function toggleDarkMode() {
+      const isDark = document.body.classList.toggle("dark");
+      localStorage.setItem("dark", isDark);
+      document.getElementById("toggle-dark").textContent = isDark ? "☀️" : "🌙";
+    }
+  </script>
   <script type="module" src="app.js"></script>
 </body>
 </html>
