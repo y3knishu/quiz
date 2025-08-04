@@ -2,63 +2,102 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NEET PG Subjects</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f2f5f9;
-      margin: 0;
+      background: #f0f2f5;
       padding: 20px;
       text-align: center;
     }
-
     h1 {
-      font-size: 28px;
-      margin-bottom: 20px;
+      font-size: 2em;
+      margin-bottom: 30px;
     }
-
-    .subjects-container {
+    .subjects {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 16px;
-      max-width: 900px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 15px;
+      max-width: 1000px;
       margin: auto;
     }
-
-    .subject-card {
-      background-color: white;
-      border: 1px solid #ccc;
+    .card {
+      background: #fff;
+      padding: 15px;
       border-radius: 8px;
-      padding: 16px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-      text-align: left;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: 0.2s;
+      text-decoration: none;
+      color: black;
     }
-
-    .subject-card:hover {
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    .card:hover {
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
-
-    .subject-name {
+    .card-title {
       font-weight: bold;
-      font-size: 16px;
-      margin-bottom: 4px;
+      margin-bottom: 5px;
     }
-
-    .subject-status {
-      font-size: 14px;
-      color: #666;
+    .card-sub {
+      font-size: 0.9em;
+      color: gray;
     }
   </style>
 </head>
 <body>
   <h1>NEET PG Subjects</h1>
-  <div class="subjects-container" id="subjects-grid">
-    <!-- Subject cards will be added here by JS -->
-  </div>
+  <div class="subjects" id="subject-container"></div>
 
-  <script type="module" src="app.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
+      authDomain: "mcqs-96117.firebaseapp.com",
+      projectId: "mcqs-96117",
+      storageBucket: "mcqs-96117.firebasestorage.app",
+      messagingSenderId: "352256319143",
+      appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582",
+      measurementId: "G-6FZ770H045"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const subjects = [
+      "Anatomy", "Physiology", "Biochemistry",
+      "Pathology", "Pharmacology", "Microbiology", "Forensic Medicine",
+      "Community Medicine", "ENT", "Ophthalmology",
+      "General Medicine", "General Surgery", "Obstetrics & Gynaecology",
+      "Pediatrics", "Orthopaedics", "Dermatology",
+      "Psychiatry", "Respiratory Medicine", "Anesthesiology"
+    ];
+
+    const container = document.getElementById("subject-container");
+
+    subjects.forEach(async subject => {
+      let attempted = "Not attempted";
+      try {
+        const snap = await getDoc(doc(db, "progress", subject));
+        if (snap.exists()) {
+          const data = snap.data();
+          attempted = `${data.correct} ✅ / ${data.wrong} ❌ / ${data.attempted} attempted`;
+        }
+      } catch (e) {
+        console.warn("No progress for", subject);
+      }
+
+      const card = document.createElement("a");
+      card.className = "card";
+      card.href = `quiz.html?subject=${encodeURIComponent(subject)}`;
+      card.innerHTML = `
+        <div class="card-title">${subject}</div>
+        <div class="card-sub">${attempted}</div>
+      `;
+      container.appendChild(card);
+    });
+  </script>
 </body>
 </html>
