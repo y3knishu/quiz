@@ -2,45 +2,46 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>NEET PG Quiz</title>
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEET PG Style Quiz</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="app">
-    <div id="login-page" class="page hidden">
-      <h2>Login</h2>
-      <button id="google-login">Login with Google</button>
-      <input type="email" id="email" placeholder="Email" />
-      <input type="password" id="password" placeholder="Password" />
-      <button id="email-login">Login</button>
-    </div>
-
-    <div id="home-page" class="page hidden">
-      <h1>Subjects</h1>
-      <div id="subjects-grid"></div>
-      <button id="logout">Logout</button>
-    </div>
-
-    <div id="quiz-page" class="page hidden">
-      <h2 id="quiz-subject"></h2>
-      <div id="question-container"></div>
-      <div id="palette-container"></div>
-      <button id="submit-quiz">Submit</button>
-      <button id="retry-quiz">Retry</button>
-      <button id="back-home">Back to Home</button>
-    </div>
-
-    <div id="admin-page" class="page hidden">
-      <h2>Admin Panel</h2>
-      <textarea id="bulk-json" placeholder="Paste JSON questions here"></textarea>
-      <select id="admin-subject">
-        <option value="">Select Subject</option>
-      </select>
-      <button id="upload-json">Upload</button>
-      <button id="admin-logout">Logout</button>
-    </div>
+  <!-- LOGIN PAGE -->
+  <div id="login-page" class="page visible">
+    <h2>Login to Continue</h2>
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Password" />
+    <button id="email-login">Login with Email</button>
+    <button id="google-login">Login with Google</button>
   </div>
+
+  <!-- HOME PAGE -->
+  <div id="home-page" class="page hidden">
+    <h2>Welcome to NEET PG Style Quiz</h2>
+    <div id="subjects-grid"></div>
+    <button id="logout">Logout</button>
+  </div>
+
+  <!-- QUIZ PAGE -->
+  <div id="quiz-page" class="page hidden">
+    <h2 id="quiz-subject"></h2>
+    <div id="question-container"></div>
+    <div id="palette-container" class="palette"></div>
+    <button id="submit-quiz">Submit</button>
+    <button id="retry-quiz">Retry</button>
+    <button id="back-home">Back to Home</button>
+  </div>
+
+  <!-- ADMIN PAGE -->
+  <div id="admin-page" class="page hidden">
+    <h2>Admin Panel</h2>
+    <select id="admin-subject"></select>
+    <textarea id="bulk-json" placeholder="Paste JSON here"></textarea>
+    <button id="upload-json">Upload Questions</button>
+    <button id="admin-logout">Logout</button>
+  </div>
+
   <script type="module" src="app.js"></script>
 </body>
 </html>
