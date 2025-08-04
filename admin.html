@@ -1,285 +1,78 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Panel</title>
   <style>
     body {
-      background: #121212;
-      color: #fff;
-      font-family: Arial, sans-serif;
+      font-family: Arial;
       padding: 20px;
+      background: #f0f2f5;
     }
-    input, select, button, textarea {
+    h1 {
+      text-align: center;
+    }
+    label, select, input, textarea {
       display: block;
       margin: 10px 0;
-      padding: 10px;
-      font-size: 1em;
       width: 100%;
       max-width: 500px;
     }
-    .question-box {
-      background: #1e1e1e;
-      padding: 15px;
-      margin: 15px 0;
-      border-radius: 8px;
-    }
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-    #adminEmail {
-      color: lightgreen;
-    }
-    .logout {
-      background: crimson;
-      color: white;
+    button {
+      margin: 5px 0;
       padding: 8px 16px;
-      border: none;
-      cursor: pointer;
+      font-size: 1em;
     }
-    .delete-btn {
-      background: red;
-      color: white;
-      border: none;
-      padding: 6px 12px;
-      margin-top: 5px;
-      cursor: pointer;
+    .question-box {
+      background: #fff;
+      border-radius: 6px;
+      padding: 10px;
+      margin: 10px 0;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
     }
+    img { max-width: 100%; margin-top: 5px; }
+    #preview { margin-top: 30px; }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div id="adminEmail">Checking auth...</div>
-    <button class="logout" onclick="logout()">🚪 Logout</button>
-  </div>
+  <h1>Admin Panel</h1>
+  <div id="adminEmail"></div>
+  <button onclick="logout()">Logout</button>
 
-  <h2>Add New MCQ</h2>
+  <hr/>
+
+  <label>Select Subject</label>
   <select id="subject">
-    <option disabled selected>Select Subject</option>
-    <option>Anatomy</option>
-    <option>Physiology</option>
-    <option>Biochemistry</option>
-    <option>Pathology</option>
-    <option>Pharmacology</option>
-    <option>Microbiology</option>
-    <option>Forensic Medicine</option>
-    <option>Community Medicine</option>
-    <option>ENT</option>
-    <option>Ophthalmology</option>
-    <option>General Medicine</option>
-    <option>General Surgery</option>
-    <option>Obstetrics & Gynaecology</option>
-    <option>Pediatrics</option>
-    <option>Orthopaedics</option>
-    <option>Dermatology</option>
-    <option>Psychiatry</option>
-    <option>Respiratory Medicine</option>
-    <option>Anesthesiology</option>
+    <option value="">-- Select --</option>
+    <option>Anatomy</option><option>Physiology</option><option>Biochemistry</option>
+    <option>Pathology</option><option>Pharmacology</option><option>Microbiology</option><option>Forensic Medicine</option>
+    <option>Community Medicine</option><option>ENT</option><option>Ophthalmology</option>
+    <option>General Medicine</option><option>General Surgery</option><option>Obstetrics & Gynaecology</option>
+    <option>Pediatrics</option><option>Orthopaedics</option><option>Dermatology</option>
+    <option>Psychiatry</option><option>Respiratory Medicine</option><option>Anesthesiology</option>
   </select>
 
-  <textarea id="question" placeholder="Question text"></textarea>
-  <input id="optA" placeholder="Option A" />
-  <input id="optB" placeholder="Option B" />
-  <input id="optC" placeholder="Option C" />
-  <input id="optD" placeholder="Option D" />
-  <select id="correct">
-    <option disabled selected>Correct Option</option>
-    <option value="A">A</option>
-    <option value="B">B</option>
-    <option value="C">C</option>
-    <option value="D">D</option>
-  </select>
-  <input id="imgUrl" placeholder="Image URL (optional)" />
-  <button onclick="addQuestion()">➕ Add Question</button>
-  <button onclick="loadAllQuestions()">📋 Preview All Questions</button>
-  <button onclick="exportQuestions()">📥 Export All Questions</button>
-  <input type="file" id="importFile" accept="application/json" />
-  <button onclick="importQuestions()">📤 Import Questions (JSON)</button>
-  <button onclick="showSummary()">📊 Show Subject Summary</button>
+  <textarea id="question" placeholder="Enter question"></textarea>
+  <input id="optA" placeholder="Option A"/>
+  <input id="optB" placeholder="Option B"/>
+  <input id="optC" placeholder="Option C"/>
+  <input id="optD" placeholder="Option D"/>
+  <input id="correct" placeholder="Correct answer (A/B/C/D)"/>
+  <input id="imgUrl" placeholder="Optional Image URL"/>
+
+  <button onclick="addQuestion()">Add Question</button>
+  <button onclick="loadAllQuestions()">Preview All Questions</button>
+  <button onclick="showSummary()">Show Subject Summary</button>
+  <hr/>
+
+  <h3>Export/Import</h3>
+  <button onclick="exportQuestions()">Export Questions</button>
+  <input type="file" id="importFile"/>
+  <button onclick="importQuestions()">Import JSON</button>
 
   <div id="preview"></div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
-    import {
-      getFirestore,
-      collection,
-      addDoc,
-      getDocs,
-      deleteDoc,
-      doc
-    } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
-    import {
-      getAuth,
-      onAuthStateChanged,
-      signOut
-    } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
-      authDomain: "mcqs-96117.firebaseapp.com",
-      projectId: "mcqs-96117",
-      storageBucket: "mcqs-96117.firebasestorage.app",
-      messagingSenderId: "352256319143",
-      appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582",
-      measurementId: "G-6FZ770H045"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
-
-    const emailBox = document.getElementById("adminEmail");
-
-    onAuthStateChanged(auth, (user) => {
-      if (!user || user.email !== "y3knishu@gmail.com") {
-        alert("Access denied");
-        window.location.href = "index.html";
-      } else {
-        emailBox.textContent = "👤 Logged in as: " + user.email;
-      }
-    });
-
-    window.logout = () => {
-      signOut(auth).then(() => {
-        window.location.href = "admin-login.html";
-      });
-    };
-
-    window.addQuestion = async () => {
-      const subject = document.getElementById("subject").value;
-      const question = document.getElementById("question").value;
-      const optA = document.getElementById("optA").value;
-      const optB = document.getElementById("optB").value;
-      const optC = document.getElementById("optC").value;
-      const optD = document.getElementById("optD").value;
-      const correct = document.getElementById("correct").value;
-      const image = document.getElementById("imgUrl").value;
-
-      if (!subject || !question || !optA || !optB || !optC || !optD || !correct) {
-        alert("Please fill all required fields.");
-        return;
-      }
-
-      await addDoc(collection(db, subject), {
-        question,
-        options: [optA, optB, optC, optD],
-        correct,
-        image
-      });
-
-      alert("✅ Question added!");
-      document.getElementById("question").value = "";
-      document.getElementById("optA").value = "";
-      document.getElementById("optB").value = "";
-      document.getElementById("optC").value = "";
-      document.getElementById("optD").value = "";
-      document.getElementById("correct").value = "";
-      document.getElementById("imgUrl").value = "";
-    };
-
-    window.loadAllQuestions = async () => {
-      const subject = document.getElementById("subject").value;
-      if (!subject) {
-        alert("Select a subject");
-        return;
-      }
-
-      const querySnapshot = await getDocs(collection(db, subject));
-      const container = document.getElementById("preview");
-      container.innerHTML = "";
-
-      querySnapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        const div = document.createElement("div");
-        div.className = "question-box";
-        div.innerHTML = `
-          <b>Q:</b> ${data.question}<br/>
-          <b>A:</b> ${data.options[0]}<br/>
-          <b>B:</b> ${data.options[1]}<br/>
-          <b>C:</b> ${data.options[2]}<br/>
-          <b>D:</b> ${data.options[3]}<br/>
-          <b>Correct:</b> ${data.correct}<br/>
-          ${data.image ? `<img src="${data.image}" width="200"/>` : ""}
-          <br/>
-          <button class="delete-btn" onclick="deleteQuestion('${subject}', '${docSnap.id}')">🗑 Delete</button>
-        `;
-        container.appendChild(div);
-      });
-    };
-
-    window.deleteQuestion = async (subject, id) => {
-      await deleteDoc(doc(db, subject, id));
-      alert("🗑 Question deleted");
-      loadAllQuestions();
-    };
-
-    window.exportQuestions = async () => {
-      const subject = document.getElementById("subject").value;
-      if (!subject) {
-        alert("Please select a subject to export.");
-        return;
-      }
-
-      const querySnapshot = await getDocs(collection(db, subject));
-      const allQuestions = [];
-
-      querySnapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        allQuestions.push({
-          id: docSnap.id,
-          question: data.question,
-          options: data.options,
-          correct: data.correct,
-          image: data.image || ""
-        });
-      });
-
-      const blob = new Blob([JSON.stringify(allQuestions, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${subject}-questions.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-    };
-
-    window.importQuestions = () => {
-      const subject = document.getElementById("subject").value;
-      const fileInput = document.getElementById("importFile");
-      if (!subject || !fileInput.files.length) return alert("Choose subject and JSON file");
-
-      const file = fileInput.files[0];
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const questions = JSON.parse(e.target.result);
-        for (let q of questions) {
-          await addDoc(collection(db, subject), q);
-        }
-        alert("✅ Questions imported!");
-      };
-      reader.readAsText(file);
-    };
-
-    window.showSummary = async () => {
-      const subjects = [
-        "Anatomy", "Physiology", "Biochemistry",
-        "Pathology", "Pharmacology", "Microbiology", "Forensic Medicine",
-        "Community Medicine", "ENT", "Ophthalmology",
-        "General Medicine", "General Surgery", "Obstetrics & Gynaecology",
-        "Pediatrics", "Orthopaedics", "Dermatology",
-        "Psychiatry", "Respiratory Medicine", "Anesthesiology"
-      ];
-      let summary = "\nTotal Questions per Subject:\n";
-      for (let s of subjects) {
-        const qs = await getDocs(collection(db, s));
-        summary += `\n${s}: ${qs.size}`;
-      }
-      alert(summary);
-    };
-  </script>
+  <script type="module" src="admin.js"></script>
 </body>
 </html>
