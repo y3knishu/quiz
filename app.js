@@ -38,7 +38,7 @@ function renderPalette() {
     btn.textContent = i + 1;
     btn.onclick = () => loadQuestion(i);
     if (selectedAnswers[i] !== undefined) {
-      btn.style.background = selectedAnswers[i].correct ? "#c8e6c9" : "#ffcdd2";
+      btn.style.background = selectedAnswers[i].correct ? "#66bb6a" : "#ef5350";
     }
     palette.appendChild(btn);
   });
@@ -121,12 +121,32 @@ function submitQuiz() {
 
   resultDiv.innerHTML = `
     <h3>Quiz Summary</h3>
-    ✅ Correct: ${correct}<br>
-    ❌ Wrong: ${wrong}<br>
-    ⏳ Unattempted: ${unattempted}<br>
-    🧮 Score: ${score} / ${questions.length * 4}<br>
-    ⏱️ Time Taken: ${minutes} min ${seconds} sec
+    <p>✅ Correct: ${correct}</p>
+    <p>❌ Wrong: ${wrong}</p>
+    <p>⏳ Unattempted: ${unattempted}</p>
+    <p>🧮 Score: ${score} / ${questions.length * 4}</p>
+    <p>⏱️ Time Taken: ${minutes} min ${seconds} sec</p>
+    <canvas id="resultChart" width="300" height="300"></canvas>
   `;
+
+  new Chart(document.getElementById("resultChart"), {
+    type: "pie",
+    data: {
+      labels: ["Correct", "Wrong", "Unattempted"],
+      datasets: [{
+        data: [correct, wrong, unattempted],
+        backgroundColor: ["#66bb6a", "#ef5350", "#ffee58"]
+      }]
+    },
+    options: {
+      responsive: false,
+      plugins: {
+        legend: {
+          position: "bottom"
+        }
+      }
+    }
+  });
 
   clearInterval(timerInterval);
   renderPalette();
@@ -137,10 +157,6 @@ function updateTimer() {
   const mins = Math.floor(diff / 60);
   const secs = diff % 60;
   timer.textContent = `Time: ${mins}m ${secs}s`;
-}
-
-function toggleDarkMode() {
-  document.body.classList.toggle("dark");
 }
 
 function saveProgress() {
@@ -181,7 +197,7 @@ async function loadQuiz(subjectName) {
 
 loadQuiz(subject);
 
-// expose functions
+// Expose functions
 window.prevQuestion = prevQuestion;
 window.nextQuestion = nextQuestion;
 window.resetQuiz = resetQuiz;
