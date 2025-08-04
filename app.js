@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
 
+// Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
   authDomain: "mcqs-96117.firebaseapp.com",
@@ -14,6 +15,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// Get subject from URL
 const urlParams = new URLSearchParams(window.location.search);
 const subject = urlParams.get('subject') || 'Anatomy';
 
@@ -21,6 +23,7 @@ let questions = [];
 let current = 0;
 let selectedAnswers = [];
 
+// DOM Elements
 const qText = document.getElementById("question-text");
 const qImage = document.getElementById("question-image");
 const qOptions = document.getElementById("options");
@@ -124,4 +127,10 @@ async function loadProgress() {
   }
 }
 
+// ✅ Load quiz
 loadQuiz(subject);
+
+// ✅ Expose navigation buttons to global scope
+window.nextQuestion = nextQuestion;
+window.prevQuestion = prevQuestion;
+window.resetQuiz = resetQuiz;
