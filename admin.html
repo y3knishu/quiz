@@ -61,7 +61,9 @@
     <button onclick="uploadQuestion()">Upload Question</button>
     <button onclick="loadQuestions()">Load All Questions</button>
     <button onclick="exportQuestions()">Export Questions as JSON</button>
-
+    <input type="file" id="importFile" />
+    <button onclick="importQuestions()">Import JSON</button>
+    <p id="questionCount"></p>
     <div id="preview"></div>
   </div>
 
@@ -178,10 +180,13 @@
       const docRef = doc(db, "questions", subject);
       const docSnap = await getDoc(docRef);
       const preview = document.getElementById("preview");
+      const countBox = document.getElementById("questionCount");
       preview.innerHTML = "";
+      countBox.textContent = "";
 
       if (docSnap.exists()) {
         const questions = docSnap.data().questions || [];
+        countBox.textContent = `📊 Total Questions: ${questions.length}`;
         questions.forEach((q, index) => {
           const div = document.createElement("div");
           div.className = "question-item";
@@ -226,6 +231,28 @@
       a.download = `${subject}-questions.json`;
       a.click();
       URL.revokeObjectURL(url);
+    };
+
+    window.importQuestions = async function () {
+      const subject = document.getElementById("subject").value;
+      const input = document.getElementById("importFile");
+      if (!subject || !input.files.length) return alert("Select subject and choose a JSON file");
+
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const imported = JSON.parse(e.target.result);
+        const docRef = doc(db, "questions", subject);
+        const docSnap = await getDoc(docRef);
+        let existing = [];
+        if (docSnap.exists()) {
+          existing = docSnap.data().questions || [];
+        }
+        await setDoc(docRef, { questions: [...existing, ...imported] });
+        alert("✅ Imported successfully!");
+        loadQuestions();
+      };
+      reader.readAsText(file);
     };
   </script>
 </body>
