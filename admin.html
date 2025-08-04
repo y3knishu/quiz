@@ -41,6 +41,7 @@
 
   <div id="admin-section">
     <h2>Admin Panel - Upload MCQs</h2>
+    <button onclick="logout()">Logout</button>
     <select id="subject">
       <option disabled selected>Select Subject</option>
       <option>Anatomy</option><option>Physiology</option><option>Biochemistry</option>
@@ -59,6 +60,7 @@
     <input id="image" placeholder="Image URL (optional)" />
     <button onclick="uploadQuestion()">Upload Question</button>
     <button onclick="loadQuestions()">Load All Questions</button>
+    <button onclick="exportQuestions()">Export Questions as JSON</button>
 
     <div id="preview"></div>
   </div>
@@ -75,6 +77,7 @@
       getAuth,
       signInWithEmailAndPassword,
       signInWithPopup,
+      signOut,
       GoogleAuthProvider
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
@@ -122,6 +125,13 @@
         .catch((error) => {
           alert("Google Sign-In failed: " + error.message);
         });
+    };
+
+    window.logout = function () {
+      signOut(auth).then(() => {
+        alert("Logged out");
+        location.reload();
+      });
     };
 
     window.uploadQuestion = async function () {
@@ -199,6 +209,23 @@
       questions.splice(index, 1);
       await setDoc(docRef, { questions });
       loadQuestions();
+    };
+
+    window.exportQuestions = async function () {
+      const subject = document.getElementById("subject").value;
+      if (!subject) return alert("Select subject");
+
+      const snap = await getDoc(doc(db, "questions", subject));
+      if (!snap.exists()) return alert("No data found");
+
+      const data = snap.data().questions || [];
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${subject}-questions.json`;
+      a.click();
+      URL.revokeObjectURL(url);
     };
   </script>
 </body>
