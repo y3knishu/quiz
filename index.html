@@ -5,39 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>NEET PG Quiz</title>
   <style>
-    .hidden { display: none; }
-    .visible { display: block; }
+    .subject-card {
+      border: 1px solid #ccc;
+      padding: 12px;
+      margin: 10px;
+      display: inline-block;
+      border-radius: 8px;
+    }
   </style>
 </head>
 <body>
-  <!-- Login Page -->
-  <div id="login-page" class="page visible">
-    <h2>Login</h2>
-    <input type="email" id="email" placeholder="Email" />
-    <input type="password" id="password" placeholder="Password" />
-    <button id="email-login">Login with Email</button>
-    <button id="google-login">Login with Google</button>
-
-    <h3>OR Sign Up</h3>
-    <input type="email" id="signup-email" placeholder="New Email" />
-    <input type="password" id="signup-password" placeholder="New Password" />
-    <button id="signup-btn">Sign Up</button>
-  </div>
-
-  <!-- Home Page -->
-  <div id="home-page" class="page hidden">
-    <h2>Welcome to NEET PG Quiz App</h2>
-    <div id="subjects-grid"></div>
-    <button id="logout">Logout</button>
-  </div>
-
-  <!-- Admin Page -->
-  <div id="admin-page" class="page hidden">
-    <h2>Admin Panel</h2>
-    <p>Only for y3knishu@gmail.com</p>
-    <button id="admin-logout">Logout</button>
-  </div>
-
+  <h2>NEET PG Quiz Subjects</h2>
+  <div id="subjects-grid"></div>
   <script type="module" src="app.js"></script>
 </body>
 </html>
