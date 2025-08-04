@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel - NEET PG Quiz</title>
+</head>
+<body>
+  <h2>Admin Login</h2>
+  <input type="email" id="email" placeholder="Email" /><br/>
+  <input type="password" id="password" placeholder="Password" /><br/>
+  <button id="login">Login</button>
+
+  <div id="admin-section" style="display:none;">
+    <h3>Add MCQ</h3>
+    <textarea id="question" placeholder="Question"></textarea><br/>
+    <input type="text" id="opt1" placeholder="Option 1" /><br/>
+    <input type="text" id="opt2" placeholder="Option 2" /><br/>
+    <input type="text" id="opt3" placeholder="Option 3" /><br/>
+    <input type="text" id="opt4" placeholder="Option 4" /><br/>
+    <input type="number" id="answer" placeholder="Correct Option Index (0-3)" /><br/>
+    <input type="text" id="image" placeholder="Image URL (optional)" /><br/>
+    <input type="text" id="subject" placeholder="Subject Name" /><br/>
+    <button id="upload">Upload Question</button>
+  </div>
+
+  <script type="module" src="admin.js"></script>
+</body>
+</html>
