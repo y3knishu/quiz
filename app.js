@@ -1,20 +1,22 @@
+// Firebase config
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
 import {
   getAuth,
-  onAuthStateChanged,
   GoogleAuthProvider,
   signInWithPopup,
   signInWithEmailAndPassword,
-  signOut
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import {
   getFirestore,
-  collection,
   doc,
-  getDocs,
   setDoc,
+  getDoc,
   updateDoc,
-  getDoc
+  collection,
+  getDocs
 } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -32,202 +34,178 @@ const auth = getAuth();
 const db = getFirestore();
 const provider = new GoogleAuthProvider();
 
-const loginPage = document.getElementById('login-page');
-const homePage = document.getElementById('home-page');
-const quizPage = document.getElementById('quiz-page');
-const adminPage = document.getElementById('admin-page');
+// DOM Elements
+const loginPage = document.getElementById("login-page");
+const homePage = document.getElementById("home-page");
+const quizPage = document.getElementById("quiz-page");
+const adminPage = document.getElementById("admin-page");
 
 function showPage(page) {
-  [loginPage, homePage, quizPage, adminPage].forEach(p => p.classList.add('hidden'));
-  page.classList.remove('hidden');
-  page.classList.add('visible');
+  [loginPage, homePage, quizPage, adminPage].forEach(p => p.classList.add("hidden"));
+  page.classList.remove("hidden");
 }
 
+// Login logic
+const emailLoginBtn = document.getElementById("email-login");
+const googleLoginBtn = document.getElementById("google-login");
+const signupBtn = document.getElementById("signup-btn");
+
+emailLoginBtn.onclick = () => {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  signInWithEmailAndPassword(auth, email, password)
+    .then(() => console.log("Email login success"))
+    .catch(error => alert("Login failed: " + error.message));
+};
+
+googleLoginBtn.onclick = () => {
+  signInWithPopup(auth, provider)
+    .then(result => console.log("Google login success"))
+    .catch(error => alert("Google login failed: " + error.message));
+};
+
+signupBtn.onclick = () => {
+  const email = document.getElementById("signup-email").value;
+  const password = document.getElementById("signup-password").value;
+  createUserWithEmailAndPassword(auth, email, password)
+    .then(() => alert("Account created! You are now logged in."))
+    .catch(error => alert("Signup failed: " + error.message));
+};
+
+// Logout
+const logoutBtn = document.getElementById("logout");
+if (logoutBtn) {
+  logoutBtn.onclick = () => signOut(auth).then(() => showPage(loginPage));
+}
+
+// Auth State
 onAuthStateChanged(auth, async user => {
   if (user) {
-    currentUser = user;
-    userEmail = user.email;
-    userProgress = (await getDoc(doc(db, "userProgress", userEmail))).data() || {};
     if (user.email === "y3knishu@gmail.com") {
       showPage(adminPage);
     } else {
-      populateSubjectGrid();
       showPage(homePage);
+      loadSubjects();
     }
   } else {
     showPage(loginPage);
   }
 });
 
-document.getElementById("google-login").onclick = () => signInWithPopup(auth, provider);
-document.getElementById("email-login").onclick = () => {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-  signInWithEmailAndPassword(auth, email, password);
+// Subjects
+const subjectsByYear = {
+  "1st Year": ["Anatomy", "Physiology", "Biochemistry"],
+  "2nd Year": ["Pathology", "Pharmacology", "Microbiology", "Forensic Medicine"],
+  "3rd Year": ["Community Medicine", "ENT", "Ophthalmology"],
+  "Final Year": ["General Medicine", "General Surgery", "Obstetrics & Gynaecology", "Pediatrics", "Orthopaedics", "Dermatology", "Psychiatry", "Respiratory Medicine", "Anesthesiology"]
 };
 
-document.getElementById("logout").onclick = () => signOut(auth);
-document.getElementById("admin-logout").onclick = () => signOut(auth);
-
-let currentUser = null;
-let userEmail = "";
-let userProgress = {};
-let subjects = [];
-
-fetch("subjects.json")
-  .then(res => res.json())
-  .then(data => {
-    subjects = data;
-    populateAdminDropdown();
-  });
-
-function populateSubjectGrid() {
+async function loadSubjects() {
   const grid = document.getElementById("subjects-grid");
   grid.innerHTML = "";
-
-  const grouped = subjects.reduce((acc, subj) => {
-    acc[subj.year] = acc[subj.year] || [];
-    acc[subj.year].push(subj);
-    return acc;
-  }, {});
-
-  for (const year of Object.keys(grouped)) {
-    const yearHeader = document.createElement("h3");
-    yearHeader.textContent = year;
-    yearHeader.className = "year-heading";
-    grid.appendChild(yearHeader);
-
+  for (let year in subjectsByYear) {
+    const h3 = document.createElement("h3");
+    h3.textContent = year;
+    h3.className = "year-heading";
+    grid.appendChild(h3);
     const row = document.createElement("div");
     row.className = "subject-row";
-
-    grouped[year].forEach(subj => {
-      const progress = userProgress[subj.id] || { attempted: 0, correct: 0, wrong: 0 };
+    for (let sub of subjectsByYear[year]) {
       const card = document.createElement("div");
       card.className = "subject-card";
-      card.innerHTML = `
-        <strong>${subj.name}</strong>
-        <div class="progress">✅ ${progress.correct} | ❌ ${progress.wrong} | 📝 ${progress.attempted}</div>
-        <button class="start-btn">Start</button>
-      `;
-      card.querySelector(".start-btn").onclick = () => loadSubjectQuiz(subj.id, subj.name);
+      card.innerHTML = `<strong>${sub}</strong><br/><button class='start-btn'>Start</button>`;
+      card.querySelector(".start-btn").onclick = () => startQuiz(sub);
       row.appendChild(card);
-    });
-
+    }
     grid.appendChild(row);
   }
 }
 
-function populateAdminDropdown() {
-  const dropdown = document.getElementById("admin-subject");
-  subjects.forEach(subj => {
+// Admin upload JSON
+const uploadBtn = document.getElementById("upload-json");
+if (uploadBtn) {
+  uploadBtn.onclick = async () => {
+    const subject = document.getElementById("admin-subject").value;
+    const jsonText = document.getElementById("bulk-json").value;
+    try {
+      const questions = JSON.parse(jsonText);
+      const ref = doc(db, "questions", subject);
+      await setDoc(ref, { questions });
+      alert("Questions uploaded!");
+    } catch (err) {
+      alert("Invalid JSON");
+    }
+  };
+}
+
+// Load admin subject dropdown
+const adminDropdown = document.getElementById("admin-subject");
+if (adminDropdown) {
+  Object.values(subjectsByYear).flat().forEach(sub => {
     const opt = document.createElement("option");
-    opt.value = subj.id;
-    opt.textContent = subj.name;
-    dropdown.appendChild(opt);
+    opt.value = opt.textContent = sub;
+    adminDropdown.appendChild(opt);
   });
 }
 
-document.getElementById("upload-json").onclick = async () => {
-  const jsonText = document.getElementById("bulk-json").value;
-  const subject = document.getElementById("admin-subject").value;
-  if (!jsonText || !subject) return alert("Please select subject and paste JSON.");
+// Quiz logic
+let currentQuestionIndex = 0;
+let currentSubject = "";
+let questions = [];
 
-  let questions;
-  try {
-    questions = JSON.parse(jsonText);
-  } catch (e) {
-    return alert("Invalid JSON format");
-  }
-
-  for (let q of questions) {
-    const id = `${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
-    await setDoc(doc(db, "subjects", subject, "questions", id), q);
-  }
-
-  alert("Questions uploaded successfully!");
-};
-
-let currentQuestions = [];
-let currentSubjectId = "";
-let currentAnswers = {};
-
-async function loadSubjectQuiz(subjectId, subjectName) {
-  currentSubjectId = subjectId;
-  currentAnswers = {};
-  document.getElementById("quiz-subject").textContent = subjectName;
-
-  const qsnap = await getDocs(collection(db, "subjects", subjectId, "questions"));
-  currentQuestions = qsnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-  renderQuestion(0);
-  renderPalette();
+async function startQuiz(subject) {
+  currentSubject = subject;
+  const ref = doc(db, "questions", subject);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return alert("No questions found");
+  questions = snap.data().questions;
+  currentQuestionIndex = 0;
   showPage(quizPage);
+  renderQuestion();
+  renderPalette();
 }
 
-function renderQuestion(index) {
-  const q = currentQuestions[index];
+function renderQuestion() {
+  const q = questions[currentQuestionIndex];
   const container = document.getElementById("question-container");
-  container.innerHTML = `<h3>Q${index + 1}. ${q.questionText}</h3>`;
-
-  if (q.imageUrl) {
-    const img = document.createElement("img");
-    img.src = q.imageUrl;
-    container.appendChild(img);
-  }
-
+  container.innerHTML = `<div><strong>Q${currentQuestionIndex + 1}:</strong> ${q.question}</div>`;
+  if (q.image) container.innerHTML += `<img src='${q.image}' alt='question image' />`;
   q.options.forEach((opt, i) => {
-    const btn = document.createElement("div");
-    btn.className = "option";
-    btn.textContent = opt;
-    if (currentAnswers[index] !== undefined) {
-      if (i === q.correctIndex) btn.classList.add("correct");
-      else if (i === currentAnswers[index]) btn.classList.add("wrong");
-    }
-    btn.onclick = () => {
-      if (currentAnswers[index] !== undefined) return;
-      currentAnswers[index] = i;
-      renderQuestion(index);
-      renderPalette();
-    };
-    container.appendChild(btn);
+    const div = document.createElement("div");
+    div.className = "option";
+    div.textContent = opt;
+    div.onclick = () => validateAnswer(i, div, q.answer);
+    container.appendChild(div);
+  });
+}
+
+function validateAnswer(index, el, correctIndex) {
+  const options = document.querySelectorAll(".option");
+  options.forEach((opt, i) => {
+    opt.classList.remove("correct", "wrong");
+    if (i === correctIndex) opt.classList.add("correct");
+    else if (i === index) opt.classList.add("wrong");
   });
 }
 
 function renderPalette() {
   const palette = document.getElementById("palette-container");
   palette.innerHTML = "";
-  currentQuestions.forEach((_, idx) => {
+  for (let i = 0; i < questions.length; i++) {
     const btn = document.createElement("button");
-    btn.textContent = idx + 1;
-    btn.style.margin = "5px";
-    if (currentAnswers[idx] !== undefined) {
-      if (currentAnswers[idx] === currentQuestions[idx].correctIndex)
-        btn.style.background = "#2ecc71";
-      else btn.style.background = "#e74c3c";
-    }
-    btn.onclick = () => renderQuestion(idx);
+    btn.textContent = i + 1;
+    btn.onclick = () => {
+      currentQuestionIndex = i;
+      renderQuestion();
+    };
     palette.appendChild(btn);
-  });
+  }
 }
 
-document.getElementById("submit-quiz").onclick = async () => {
-  let correct = 0, wrong = 0;
-  currentQuestions.forEach((q, i) => {
-    if (currentAnswers[i] === q.correctIndex) correct++;
-    else if (currentAnswers[i] !== undefined) wrong++;
-  });
-
-  await setDoc(doc(db, "userProgress", userEmail), {
-    [currentSubjectId]: { attempted: currentQuestions.length, correct, wrong }
-  }, { merge: true });
-
-  alert(`Submitted!\nCorrect: ${correct}\nWrong: ${wrong}`);
-};
-
-document.getElementById("retry-quiz").onclick = () => {
-  loadSubjectQuiz(currentSubjectId, document.getElementById("quiz-subject").textContent);
-};
-
-document.getElementById("back-home").onclick = () => {
-  showPage(homePage);
-};
+// Retry and back buttons
+const retryBtn = document.getElementById("retry-quiz");
+if (retryBtn) retryBtn.onclick = () => startQuiz(currentSubject);
+const backBtn = document.getElementById("back-home");
+if (backBtn) backBtn.onclick = () => showPage(homePage);
+const adminLogout = document.getElementById("admin-logout");
+if (adminLogout) adminLogout.onclick = () => signOut(auth);
