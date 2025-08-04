@@ -20,12 +20,16 @@ const subject = urlParams.get('subject') || 'Anatomy';
 let questions = [];
 let current = 0;
 let selectedAnswers = [];
+let startTime = Date.now();
+let timerInterval;
 
 const qText = document.getElementById("question-text");
 const qImage = document.getElementById("question-image");
 const qOptions = document.getElementById("options");
 const qNumber = document.getElementById("question-number");
 const palette = document.getElementById("palette");
+const resultDiv = document.getElementById("result-summary");
+const timer = document.getElementById("timer");
 
 function renderPalette() {
   palette.innerHTML = "";
@@ -55,6 +59,18 @@ function loadQuestion(index) {
     btn.onclick = () => selectAnswer(i, btn);
     qOptions.appendChild(btn);
   });
+
+  if (selectedAnswers[index] !== undefined) {
+    const correctIndex = q.answer;
+    const selected = selectedAnswers[index].selectedIndex;
+    const buttons = qOptions.querySelectorAll("button");
+    buttons.forEach((b, i) => {
+      b.disabled = true;
+      if (i === correctIndex) b.classList.add("correct");
+      if (i === selected && selected !== correctIndex) b.classList.add("wrong");
+    });
+  }
+
   renderPalette();
 }
 
@@ -77,29 +93,54 @@ function selectAnswer(selectedIndex, btn) {
 function prevQuestion() {
   if (current > 0) loadQuestion(current - 1);
 }
-
 function nextQuestion() {
   if (current < questions.length - 1) loadQuestion(current + 1);
 }
-
 function resetQuiz() {
   selectedAnswers = [];
   saveProgress();
   loadQuestion(0);
+  resultDiv.innerHTML = "";
+  startTime = Date.now();
+}
+function submitQuiz() {
+  let correct = 0, wrong = 0, attempted = 0;
+  selectedAnswers.forEach(a => {
+    if (a !== undefined) {
+      attempted++;
+      if (a.correct) correct++;
+      else wrong++;
+    }
+  });
+  const unattempted = questions.length - attempted;
+  const score = correct * 4 - wrong;
+
+  const timeTaken = Math.floor((Date.now() - startTime) / 1000);
+  const minutes = Math.floor(timeTaken / 60);
+  const seconds = timeTaken % 60;
+
+  resultDiv.innerHTML = `
+    <h3>Quiz Summary</h3>
+    ✅ Correct: ${correct}<br>
+    ❌ Wrong: ${wrong}<br>
+    ⏳ Unattempted: ${unattempted}<br>
+    🧮 Score: ${score} / ${questions.length * 4}<br>
+    ⏱️ Time Taken: ${minutes} min ${seconds} sec
+  `;
+
+  clearInterval(timerInterval);
+  renderPalette();
 }
 
-async function loadQuiz(subjectName) {
-  const docRef = doc(db, "questions", subjectName);
-  const docSnap = await getDoc(docRef);
+function updateTimer() {
+  const diff = Math.floor((Date.now() - startTime) / 1000);
+  const mins = Math.floor(diff / 60);
+  const secs = diff % 60;
+  timer.textContent = `Time: ${mins}m ${secs}s`;
+}
 
-  if (docSnap.exists()) {
-    questions = docSnap.data().questions;
-    selectedAnswers = new Array(questions.length);
-    loadProgress();
-    loadQuestion(0);
-  } else {
-    alert("No questions found for this subject.");
-  }
+function toggleDarkMode() {
+  document.body.classList.toggle("dark");
 }
 
 function saveProgress() {
@@ -123,9 +164,26 @@ function loadProgress() {
   }
 }
 
+async function loadQuiz(subjectName) {
+  const docRef = doc(db, "questions", subjectName);
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    questions = docSnap.data().questions;
+    selectedAnswers = new Array(questions.length);
+    loadProgress();
+    loadQuestion(0);
+    timerInterval = setInterval(updateTimer, 1000);
+  } else {
+    alert("No questions found for this subject.");
+  }
+}
+
 loadQuiz(subject);
 
-// make buttons globally accessible
-window.nextQuestion = nextQuestion;
+// expose functions
 window.prevQuestion = prevQuestion;
+window.nextQuestion = nextQuestion;
 window.resetQuiz = resetQuiz;
+window.submitQuiz = submitQuiz;
+window.toggleDarkMode = toggleDarkMode;
