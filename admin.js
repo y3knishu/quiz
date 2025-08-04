@@ -1,19 +1,17 @@
-// admin.js
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getAuth,
-  signInWithEmailAndPassword,
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
 import {
   getFirestore,
-  doc,
-  updateDoc,
-  setDoc,
-  arrayUnion
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  collection,
+  addDoc,
+  getDocs,
+  deleteDoc,
+  doc
+} from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
+import {
+  getAuth,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
@@ -26,49 +24,122 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
-const loginBtn = document.getElementById("login");
-const adminSection = document.getElementById("admin-section");
+const emailBox = document.getElementById("adminEmail");
 
-loginBtn.onclick = () => {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-
-  signInWithEmailAndPassword(auth, email, password)
-    .then(() => console.log("Login successful"))
-    .catch(err => alert("Login failed: " + err.message));
-};
-
-onAuthStateChanged(auth, async user => {
-  if (user && user.email === "y3knishu@gmail.com") {
-    adminSection.style.display = "block";
+onAuthStateChanged(auth, (user) => {
+  if (!user || user.email !== "y3knishu@gmail.com") {
+    alert("Access denied");
+    window.location.href = "admin-login.html";
   } else {
-    adminSection.style.display = "none";
+    emailBox.textContent = "👤 Logged in as: " + user.email;
   }
 });
 
-document.getElementById("upload").onclick = async () => {
+window.logout = () => {
+  signOut(auth).then(() => window.location.href = "admin-login.html");
+};
+
+window.addQuestion = async () => {
+  const subject = document.getElementById("subject").value;
   const question = document.getElementById("question").value;
   const options = [
-    document.getElementById("opt1").value,
-    document.getElementById("opt2").value,
-    document.getElementById("opt3").value,
-    document.getElementById("opt4").value
+    document.getElementById("optA").value,
+    document.getElementById("optB").value,
+    document.getElementById("optC").value,
+    document.getElementById("optD").value
   ];
-  const answer = parseInt(document.getElementById("answer").value);
-  const image = document.getElementById("image").value;
-  const subject = document.getElementById("subject").value;
+  const correct = document.getElementById("correct").value;
+  const image = document.getElementById("imgUrl").value;
 
-  const docRef = doc(db, "questions", subject);
-  try {
-    await setDoc(docRef, { questions: [] }, { merge: true });
-    await updateDoc(docRef, {
-      questions: arrayUnion({ question, options, answer, image })
-    });
-    alert("Question uploaded successfully!");
-  } catch (err) {
-    alert("Error uploading: " + err.message);
+  if (!subject || !question || options.includes("") || !correct) {
+    return alert("Fill all fields properly.");
   }
+
+  await addDoc(collection(db, subject), { question, options, correct, image });
+  alert("✅ Question added!");
+};
+
+window.loadAllQuestions = async () => {
+  const subject = document.getElementById("subject").value;
+  const preview = document.getElementById("preview");
+  if (!subject) return alert("Select a subject");
+
+  const qSnap = await getDocs(collection(db, subject));
+  preview.innerHTML = "";
+
+  qSnap.forEach((docSnap) => {
+    const q = docSnap.data();
+    const div = document.createElement("div");
+    div.className = "question-box";
+    div.innerHTML = `
+      <b>Q:</b> ${q.question}<br/>
+      A: ${q.options[0]}<br/>
+      B: ${q.options[1]}<br/>
+      C: ${q.options[2]}<br/>
+      D: ${q.options[3]}<br/>
+      ✅ Correct: ${q.correct}<br/>
+      ${q.image ? `<img src="${q.image}" />` : ""}
+      <br/>
+      <button onclick="deleteQuestion('${subject}', '${docSnap.id}')">🗑 Delete</button>
+    `;
+    preview.appendChild(div);
+  });
+};
+
+window.deleteQuestion = async (subject, id) => {
+  await deleteDoc(doc(db, subject, id));
+  alert("Deleted");
+  loadAllQuestions();
+};
+
+window.showSummary = async () => {
+  const subjects = [
+    "Anatomy", "Physiology", "Biochemistry",
+    "Pathology", "Pharmacology", "Microbiology", "Forensic Medicine",
+    "Community Medicine", "ENT", "Ophthalmology",
+    "General Medicine", "General Surgery", "Obstetrics & Gynaecology",
+    "Pediatrics", "Orthopaedics", "Dermatology",
+    "Psychiatry", "Respiratory Medicine", "Anesthesiology"
+  ];
+
+  let report = "📊 Total Questions:\n";
+  for (let s of subjects) {
+    const snap = await getDocs(collection(db, s));
+    report += `${s}: ${snap.size}\n`;
+  }
+  alert(report);
+};
+
+window.exportQuestions = async () => {
+  const subject = document.getElementById("subject").value;
+  if (!subject) return alert("Select subject");
+
+  const snap = await getDocs(collection(db, subject));
+  const questions = [];
+  snap.forEach((docSnap) => questions.push(docSnap.data()));
+
+  const blob = new Blob([JSON.stringify(questions, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${subject}-questions.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+window.importQuestions = () => {
+  const subject = document.getElementById("subject").value;
+  const fileInput = document.getElementById("importFile");
+  if (!subject || !fileInput.files.length) return alert("Choose subject and file");
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const questions = JSON.parse(e.target.result);
+    for (let q of questions) await addDoc(collection(db, subject), q);
+    alert("✅ Imported!");
+  };
+  reader.readAsText(fileInput.files[0]);
 };
