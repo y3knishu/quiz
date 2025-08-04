@@ -1,11 +1,8 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getFirestore,
-  doc,
-  getDoc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+// Import Firebase modules
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
 
-// ✅ Firebase Config
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
   authDomain: "mcqs-96117.firebaseapp.com",
@@ -16,163 +13,95 @@ const firebaseConfig = {
   measurementId: "G-6FZ770H045"
 };
 
+// Init Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ✅ Subjects
-const subjects = [
-  "Anatomy", "Physiology", "Biochemistry", "Pathology", "Pharmacology",
-  "Microbiology", "Forensic Medicine", "Community Medicine", "ENT", "Ophthalmology",
-  "General Medicine", "General Surgery", "Obstetrics & Gynaecology", "Pediatrics",
-  "Orthopaedics", "Dermatology", "Psychiatry", "Respiratory Medicine", "Anesthesiology"
-];
+// Get subject from URL
+const urlParams = new URLSearchParams(window.location.search);
+const subject = urlParams.get('subject') || 'Anatomy'; // Default to Anatomy
 
-// ✅ Homepage subject cards
-const grid = document.getElementById("subjects-grid");
-
-subjects.forEach(subject => {
-  const card = document.createElement("div");
-  card.className = "subject-card";
-
-  const name = document.createElement("div");
-  name.className = "subject-name";
-  name.textContent = subject;
-
-  const status = document.createElement("div");
-  status.className = "subject-status";
-  status.textContent = "Not attempted";
-
-  card.appendChild(name);
-  card.appendChild(status);
-  card.onclick = () => loadQuiz(subject);
-  grid.appendChild(card);
-});
-
-// ✅ Quiz Elements
-const quizPage = document.createElement("div");
-quizPage.id = "quiz-page";
-document.body.appendChild(quizPage);
-
-let currentSubject = "";
 let questions = [];
-let answers = {};
-let currentIndex = 0;
+let current = 0;
+let selectedAnswers = [];
 
-// ✅ Load Quiz
-async function loadQuiz(subject) {
-  currentSubject = subject;
-  const docRef = doc(db, "questions", subject);
-  const docSnap = await getDoc(docRef);
-  if (!docSnap.exists()) return alert("No questions found for " + subject);
-  questions = docSnap.data().questions || [];
-  answers = {};
-  currentIndex = 0;
-  renderQuizUI();
+// DOM Elements
+const qText = document.getElementById("question-text");
+const qImage = document.getElementById("question-image");
+const qOptions = document.getElementById("options");
+const qNumber = document.getElementById("question-number");
+const palette = document.getElementById("palette");
+
+function renderPalette() {
+  palette.innerHTML = "";
+  questions.forEach((_, i) => {
+    const btn = document.createElement("button");
+    btn.textContent = i + 1;
+    btn.onclick = () => loadQuestion(i);
+    if (selectedAnswers[i] !== undefined) {
+      btn.style.background = selectedAnswers[i].correct ? "#c8e6c9" : "#ffcdd2";
+    }
+    palette.appendChild(btn);
+  });
 }
 
-// ✅ Render Quiz UI
-function renderQuizUI() {
-  quizPage.innerHTML = "";
-  quizPage.style.display = "block";
-  grid.style.display = "none";
-
-  const q = questions[currentIndex];
-  const imageHTML = q.image ? `<img src="${q.image}" width="200" /><br/>` : "";
-  const qBox = document.createElement("div");
-  qBox.innerHTML = `<h3>Q${currentIndex + 1}: ${q.question}</h3>${imageHTML}`;
+function loadQuestion(index) {
+  current = index;
+  const q = questions[index];
+  qNumber.textContent = `Question ${index + 1}`;
+  qText.textContent = q.question;
+  qImage.style.display = q.image ? "block" : "none";
+  qImage.src = q.image || "";
+  qOptions.innerHTML = "";
 
   q.options.forEach((opt, i) => {
     const btn = document.createElement("button");
     btn.textContent = opt;
-    btn.style.margin = "6px";
-    btn.onclick = () => validateAnswer(i, q.answer, btn);
-
-    if (answers[currentIndex] !== undefined) {
-      btn.disabled = true;
-      if (i === q.answer) btn.style.background = "green";
-      if (i === answers[currentIndex] && i !== q.answer) btn.style.background = "red";
-    }
-
-    qBox.appendChild(btn);
+    btn.onclick = () => selectAnswer(i, btn);
+    qOptions.appendChild(btn);
   });
-
-  quizPage.appendChild(qBox);
   renderPalette();
-  renderNavigation();
 }
 
-// ✅ Validate Answer
-function validateAnswer(selected, correct, btn) {
-  answers[currentIndex] = selected;
-  renderQuizUI();
-}
+function selectAnswer(selectedIndex, btn) {
+  const q = questions[current];
+  const isCorrect = selectedIndex === q.answer;
+  selectedAnswers[current] = { selectedIndex, correct: isCorrect };
 
-// ✅ Palette
-function renderPalette() {
-  const palette = document.createElement("div");
-  palette.innerHTML = "<h4>Question Palette</h4>";
-
-  questions.forEach((_, i) => {
-    const b = document.createElement("button");
-    b.textContent = i + 1;
-    b.style.margin = "2px";
-    if (answers[i] !== undefined) b.style.background = "orange";
-    b.onclick = () => { currentIndex = i; renderQuizUI(); };
-    palette.appendChild(b);
+  const buttons = qOptions.querySelectorAll("button");
+  buttons.forEach((b, i) => {
+    b.disabled = true;
+    if (i === q.answer) b.classList.add("correct");
+    if (i === selectedIndex && !isCorrect) b.classList.add("wrong");
   });
 
-  quizPage.appendChild(palette);
+  renderPalette();
 }
 
-// ✅ Navigation
-function renderNavigation() {
-  const nav = document.createElement("div");
-  nav.style.marginTop = "20px";
+function prevQuestion() {
+  if (current > 0) loadQuestion(current - 1);
+}
 
-  if (currentIndex > 0) {
-    const prev = document.createElement("button");
-    prev.textContent = "Previous";
-    prev.onclick = () => { currentIndex--; renderQuizUI(); };
-    nav.appendChild(prev);
+function nextQuestion() {
+  if (current < questions.length - 1) loadQuestion(current + 1);
+}
+
+function resetQuiz() {
+  selectedAnswers = [];
+  loadQuestion(0);
+}
+
+async function loadQuiz(subjectName) {
+  const docRef = doc(db, "questions", subjectName);
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    questions = docSnap.data().questions;
+    selectedAnswers = new Array(questions.length);
+    loadQuestion(0);
+  } else {
+    alert("No questions found for this subject.");
   }
-
-  if (currentIndex < questions.length - 1) {
-    const next = document.createElement("button");
-    next.textContent = "Next";
-    next.onclick = () => { currentIndex++; renderQuizUI(); };
-    nav.appendChild(next);
-  }
-
-  const submit = document.createElement("button");
-  submit.textContent = "Submit";
-  submit.onclick = showScore;
-  nav.appendChild(submit);
-
-  const reset = document.createElement("button");
-  reset.textContent = "Reset";
-  reset.onclick = () => { answers = {}; currentIndex = 0; renderQuizUI(); };
-  nav.appendChild(reset);
-
-  const back = document.createElement("button");
-  back.textContent = "Back to Subjects";
-  back.onclick = () => {
-    quizPage.style.display = "none";
-    grid.style.display = "grid";
-  };
-  nav.appendChild(back);
-
-  quizPage.appendChild(nav);
 }
 
-// ✅ Show Score
-function showScore() {
-  let correct = 0, attempted = 0;
-  questions.forEach((q, i) => {
-    if (answers[i] !== undefined) {
-      attempted++;
-      if (answers[i] === q.answer) correct++;
-    }
-  });
-  const wrong = attempted - correct;
-  alert(`Attempted: ${attempted}\\nCorrect: ${correct}\\nWrong: ${wrong}`);
-}
+loadQuiz(subject);
