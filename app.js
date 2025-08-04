@@ -13,7 +13,8 @@ import {
   doc,
   getDocs,
   setDoc,
-  updateDoc
+  updateDoc,
+  getDoc
 } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -42,12 +43,15 @@ function showPage(page) {
   page.classList.add('visible');
 }
 
-onAuthStateChanged(auth, user => {
+onAuthStateChanged(auth, async user => {
   if (user) {
     currentUser = user;
+    userEmail = user.email;
+    userProgress = (await getDoc(doc(db, "userProgress", userEmail))).data() || {};
     if (user.email === "y3knishu@gmail.com") {
       showPage(adminPage);
     } else {
+      populateSubjectGrid();
       showPage(homePage);
     }
   } else {
@@ -66,26 +70,51 @@ document.getElementById("logout").onclick = () => signOut(auth);
 document.getElementById("admin-logout").onclick = () => signOut(auth);
 
 let currentUser = null;
+let userEmail = "";
+let userProgress = {};
 let subjects = [];
 
 fetch("subjects.json")
   .then(res => res.json())
   .then(data => {
     subjects = data;
-    populateSubjectGrid();
     populateAdminDropdown();
   });
 
 function populateSubjectGrid() {
   const grid = document.getElementById("subjects-grid");
   grid.innerHTML = "";
-  subjects.forEach(subj => {
-    const card = document.createElement("div");
-    card.className = "subject-card";
-    card.innerText = `${subj.name} (${subj.year})`;
-    card.onclick = () => loadSubjectQuiz(subj.id, subj.name);
-    grid.appendChild(card);
-  });
+
+  const grouped = subjects.reduce((acc, subj) => {
+    acc[subj.year] = acc[subj.year] || [];
+    acc[subj.year].push(subj);
+    return acc;
+  }, {});
+
+  for (const year of Object.keys(grouped)) {
+    const yearHeader = document.createElement("h3");
+    yearHeader.textContent = year;
+    yearHeader.className = "year-heading";
+    grid.appendChild(yearHeader);
+
+    const row = document.createElement("div");
+    row.className = "subject-row";
+
+    grouped[year].forEach(subj => {
+      const progress = userProgress[subj.id] || { attempted: 0, correct: 0, wrong: 0 };
+      const card = document.createElement("div");
+      card.className = "subject-card";
+      card.innerHTML = `
+        <strong>${subj.name}</strong>
+        <div class="progress">✅ ${progress.correct} | ❌ ${progress.wrong} | 📝 ${progress.attempted}</div>
+        <button class="start-btn">Start</button>
+      `;
+      card.querySelector(".start-btn").onclick = () => loadSubjectQuiz(subj.id, subj.name);
+      row.appendChild(card);
+    });
+
+    grid.appendChild(row);
+  }
 }
 
 function populateAdminDropdown() {
@@ -188,7 +217,7 @@ document.getElementById("submit-quiz").onclick = async () => {
     else if (currentAnswers[i] !== undefined) wrong++;
   });
 
-  await setDoc(doc(db, "userProgress", auth.currentUser.email), {
+  await setDoc(doc(db, "userProgress", userEmail), {
     [currentSubjectId]: { attempted: currentQuestions.length, correct, wrong }
   }, { merge: true });
 
