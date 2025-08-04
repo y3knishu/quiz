@@ -19,7 +19,18 @@ import {
   collection,
   getDocs
 } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-
+onAuthStateChanged(auth, user => {
+  if (user) {
+    if (user.email === "y3knishu@gmail.com") {
+      showPage(document.getElementById("admin-page"));
+    } else {
+      showPage(document.getElementById("home-page"));
+      loadSubjects(); // if you have a function to populate subjects
+    }
+  } else {
+    showPage(document.getElementById("login-page"));
+  }
+});
 const firebaseConfig = {
   apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
   authDomain: "mcqs-96117.firebaseapp.com",
