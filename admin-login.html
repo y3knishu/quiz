@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Login</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #121212;
+      color: white;
+      text-align: center;
+      padding: 50px;
+    }
+    input, button {
+      padding: 10px;
+      margin: 10px;
+      font-size: 1em;
+    }
+    .box {
+      background: #1e1e1e;
+      padding: 30px;
+      border-radius: 8px;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+  <h1>Admin Login</h1>
+  <div class="box">
+    <p><b>Google Sign-In</b></p>
+    <button onclick="loginWithGoogle()">🔐 Login with Google</button>
+    <hr />
+    <p><b>Email + Password</b></p>
+    <input type="email" id="email" placeholder="Email" /><br/>
+    <input type="password" id="password" placeholder="Password" /><br/>
+    <button onclick="loginWithEmail()">Login</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
+    import {
+      getAuth,
+      setPersistence,
+      browserSessionPersistence,
+      signInWithEmailAndPassword,
+      GoogleAuthProvider,
+      signInWithPopup
+    } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
+      authDomain: "mcqs-96117.firebaseapp.com",
+      projectId: "mcqs-96117",
+      storageBucket: "mcqs-96117.firebasestorage.app",
+      messagingSenderId: "352256319143",
+      appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582",
+      measurementId: "G-6FZ770H045"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    window.loginWithGoogle = () => {
+      setPersistence(auth, browserSessionPersistence)
+        .then(() => signInWithPopup(auth, provider))
+        .then((result) => {
+          const email = result.user.email;
+          if (email === "y3knishu@gmail.com") {
+            window.location.href = "admin.html";
+          } else {
+            alert("❌ Not authorized to access admin panel.");
+          }
+        })
+        .catch(err => alert("Google login failed."));
+    };
+
+    window.loginWithEmail = () => {
+      const email = document.getElementById("email").value;
+      const pass = document.getElementById("password").value;
+
+      setPersistence(auth, browserSessionPersistence)
+        .then(() => signInWithEmailAndPassword(auth, email, pass))
+        .then((result) => {
+          if (result.user.email === "y3knishu@gmail.com") {
+            window.location.href = "admin.html";
+          } else {
+            alert("❌ Unauthorized email.");
+          }
+        })
+        .catch((error) => {
+          alert("Login error: " + error.message);
+        });
+    };
+  </script>
+</body>
+</html>
