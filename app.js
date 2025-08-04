@@ -15,6 +15,7 @@ import {
   setDoc,
   getDoc,
   updateDoc,
+  deleteDoc,
   collection,
   getDocs
 } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
@@ -34,7 +35,6 @@ const auth = getAuth();
 const db = getFirestore();
 const provider = new GoogleAuthProvider();
 
-// DOM Elements
 const loginPage = document.getElementById("login-page");
 const homePage = document.getElementById("home-page");
 const quizPage = document.getElementById("quiz-page");
@@ -72,13 +72,11 @@ signupBtn.onclick = () => {
     .catch(error => alert("Signup failed: " + error.message));
 };
 
-// Logout
 const logoutBtn = document.getElementById("logout");
 if (logoutBtn) {
   logoutBtn.onclick = () => signOut(auth).then(() => showPage(loginPage));
 }
 
-// Auth State
 onAuthStateChanged(auth, async user => {
   if (user) {
     if (user.email === "y3knishu@gmail.com") {
@@ -92,7 +90,6 @@ onAuthStateChanged(auth, async user => {
   }
 });
 
-// Subjects
 const subjectsByYear = {
   "1st Year": ["Anatomy", "Physiology", "Biochemistry"],
   "2nd Year": ["Pathology", "Pharmacology", "Microbiology", "Forensic Medicine"],
@@ -121,24 +118,6 @@ async function loadSubjects() {
   }
 }
 
-// Admin upload JSON
-const uploadBtn = document.getElementById("upload-json");
-if (uploadBtn) {
-  uploadBtn.onclick = async () => {
-    const subject = document.getElementById("admin-subject").value;
-    const jsonText = document.getElementById("bulk-json").value;
-    try {
-      const questions = JSON.parse(jsonText);
-      const ref = doc(db, "questions", subject);
-      await setDoc(ref, { questions });
-      alert("Questions uploaded!");
-    } catch (err) {
-      alert("Invalid JSON");
-    }
-  };
-}
-
-// Load admin subject dropdown
 const adminDropdown = document.getElementById("admin-subject");
 if (adminDropdown) {
   Object.values(subjectsByYear).flat().forEach(sub => {
@@ -148,64 +127,65 @@ if (adminDropdown) {
   });
 }
 
-// Quiz logic
-let currentQuestionIndex = 0;
-let currentSubject = "";
-let questions = [];
+let newQuestions = [];
 
-async function startQuiz(subject) {
-  currentSubject = subject;
+document.getElementById("add-question").onclick = () => {
+  const question = document.getElementById("question-text").value.trim();
+  const options = [
+    document.getElementById("option0").value.trim(),
+    document.getElementById("option1").value.trim(),
+    document.getElementById("option2").value.trim(),
+    document.getElementById("option3").value.trim()
+  ];
+  const answer = parseInt(document.getElementById("correct-index").value);
+  const image = document.getElementById("image-url").value.trim();
+
+  if (!question || options.some(o => !o) || isNaN(answer) || answer < 0 || answer > 3) {
+    alert("Please fill all fields correctly.");
+    return;
+  }
+
+  newQuestions.push({ question, options, answer, image });
+  document.getElementById("question-preview").innerHTML += `<div>✅ ${question}</div>`;
+
+  document.getElementById("question-text").value = "";
+  options.forEach((_, i) => document.getElementById("option" + i).value = "");
+  document.getElementById("correct-index").value = "";
+  document.getElementById("image-url").value = "";
+};
+
+document.getElementById("save-questions").onclick = async () => {
+  const subject = document.getElementById("admin-subject").value;
+  if (newQuestions.length === 0) {
+    alert("No questions to save.");
+    return;
+  }
+  try {
+    const ref = doc(db, "questions", subject);
+    await setDoc(ref, { questions: newQuestions });
+    alert("Questions saved successfully!");
+    newQuestions = [];
+    document.getElementById("question-preview").innerHTML = "";
+  } catch (err) {
+    alert("Error saving questions: " + err.message);
+  }
+};
+
+document.getElementById("preview-questions").onclick = async () => {
+  const subject = document.getElementById("admin-subject").value;
   const ref = doc(db, "questions", subject);
   const snap = await getDoc(ref);
-  if (!snap.exists()) return alert("No questions found");
-  questions = snap.data().questions;
-  currentQuestionIndex = 0;
-  showPage(quizPage);
-  renderQuestion();
-  renderPalette();
-}
+  if (!snap.exists()) return alert("No questions in DB for this subject");
+  const qlist = snap.data().questions;
+  const preview = qlist.map((q, i) => `${i + 1}. ${q.question}`).join("<br>");
+  document.getElementById("question-preview").innerHTML = preview;
+};
 
-function renderQuestion() {
-  const q = questions[currentQuestionIndex];
-  const container = document.getElementById("question-container");
-  container.innerHTML = `<div><strong>Q${currentQuestionIndex + 1}:</strong> ${q.question}</div>`;
-  if (q.image) container.innerHTML += `<img src='${q.image}' alt='question image' />`;
-  q.options.forEach((opt, i) => {
-    const div = document.createElement("div");
-    div.className = "option";
-    div.textContent = opt;
-    div.onclick = () => validateAnswer(i, div, q.answer);
-    container.appendChild(div);
-  });
-}
-
-function validateAnswer(index, el, correctIndex) {
-  const options = document.querySelectorAll(".option");
-  options.forEach((opt, i) => {
-    opt.classList.remove("correct", "wrong");
-    if (i === correctIndex) opt.classList.add("correct");
-    else if (i === index) opt.classList.add("wrong");
-  });
-}
-
-function renderPalette() {
-  const palette = document.getElementById("palette-container");
-  palette.innerHTML = "";
-  for (let i = 0; i < questions.length; i++) {
-    const btn = document.createElement("button");
-    btn.textContent = i + 1;
-    btn.onclick = () => {
-      currentQuestionIndex = i;
-      renderQuestion();
-    };
-    palette.appendChild(btn);
-  }
-}
-
-// Retry and back buttons
-const retryBtn = document.getElementById("retry-quiz");
-if (retryBtn) retryBtn.onclick = () => startQuiz(currentSubject);
-const backBtn = document.getElementById("back-home");
-if (backBtn) backBtn.onclick = () => showPage(homePage);
-const adminLogout = document.getElementById("admin-logout");
-if (adminLogout) adminLogout.onclick = () => signOut(auth);
+document.getElementById("delete-questions").onclick = async () => {
+  const subject = document.getElementById("admin-subject").value;
+  const confirmed = confirm("Are you sure you want to delete all questions for " + subject + "?");
+  if (!confirmed) return;
+  await deleteDoc(doc(db, "questions", subject));
+  alert("Questions deleted.");
+  document.getElementById("question-preview").innerHTML = "";
+};
