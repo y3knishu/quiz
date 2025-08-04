@@ -2,11 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NEET PG Style Quiz</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NEET PG Quiz App</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+
   <!-- LOGIN PAGE -->
   <div id="login-page" class="page visible">
     <h2>Login to Continue</h2>
@@ -14,6 +15,11 @@
     <input type="password" id="password" placeholder="Password" />
     <button id="email-login">Login with Email</button>
     <button id="google-login">Login with Google</button>
+
+    <h4>Don't have an account?</h4>
+    <input type="email" id="signup-email" placeholder="New Email" />
+    <input type="password" id="signup-password" placeholder="New Password" />
+    <button id="signup-btn">Sign Up</button>
   </div>
 
   <!-- HOME PAGE -->
@@ -37,11 +43,12 @@
   <div id="admin-page" class="page hidden">
     <h2>Admin Panel</h2>
     <select id="admin-subject"></select>
-    <textarea id="bulk-json" placeholder="Paste JSON here"></textarea>
+    <textarea id="bulk-json" placeholder="Paste JSON here (array of questions)"></textarea>
     <button id="upload-json">Upload Questions</button>
     <button id="admin-logout">Logout</button>
   </div>
 
+  <!-- MAIN JS -->
   <script type="module" src="app.js"></script>
 </body>
 </html>
