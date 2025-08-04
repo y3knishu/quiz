@@ -20,26 +20,15 @@
       max-width: 500px;
     }
     button {
-      margin: 5px 0;
-      padding: 8px 16px;
-      font-size: 1em;
-    }
-    .question-box {
-      background: #fff;
-      border-radius: 6px;
-      padding: 10px;
       margin: 10px 0;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+      padding: 10px;
     }
-    img { max-width: 100%; margin-top: 5px; }
-    #preview { margin-top: 30px; }
   </style>
 </head>
 <body>
   <h1>Admin Panel</h1>
   <div id="adminEmail"></div>
   <button onclick="logout()">Logout</button>
-
   <hr/>
 
   <label>Select Subject</label>
@@ -54,24 +43,14 @@
   </select>
 
   <textarea id="question" placeholder="Enter question"></textarea>
-  <input id="optA" placeholder="Option A"/>
-  <input id="optB" placeholder="Option B"/>
-  <input id="optC" placeholder="Option C"/>
-  <input id="optD" placeholder="Option D"/>
-  <input id="correct" placeholder="Correct answer (A/B/C/D)"/>
-  <input id="imgUrl" placeholder="Optional Image URL"/>
+  <input id="optA" placeholder="Option A" />
+  <input id="optB" placeholder="Option B" />
+  <input id="optC" placeholder="Option C" />
+  <input id="optD" placeholder="Option D" />
+  <input id="correct" placeholder="Correct answer (A/B/C/D)" />
+  <input id="imgUrl" placeholder="Optional Image URL" />
 
   <button onclick="addQuestion()">Add Question</button>
-  <button onclick="loadAllQuestions()">Preview All Questions</button>
-  <button onclick="showSummary()">Show Subject Summary</button>
-  <hr/>
-
-  <h3>Export/Import</h3>
-  <button onclick="exportQuestions()">Export Questions</button>
-  <input type="file" id="importFile"/>
-  <button onclick="importQuestions()">Import JSON</button>
-
-  <div id="preview"></div>
 
   <script type="module" src="admin.js"></script>
 </body>
