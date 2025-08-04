@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NEET PG / INI-CET Previous Year Questions </title>
+  <title>NEET PG Subjects</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -46,26 +46,10 @@
   </style>
 </head>
 <body>
-  <h1>NEET PG / INI-CET Previous Year Questions</h1>
+  <h1>NEET PG Subjects</h1>
   <div class="subjects" id="subject-container"></div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
-      authDomain: "mcqs-96117.firebaseapp.com",
-      projectId: "mcqs-96117",
-      storageBucket: "mcqs-96117.firebasestorage.app",
-      messagingSenderId: "352256319143",
-      appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582",
-      measurementId: "G-6FZ770H045"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
+  <script>
     const subjects = [
       "Anatomy", "Physiology", "Biochemistry",
       "Pathology", "Pharmacology", "Microbiology", "Forensic Medicine",
@@ -77,16 +61,12 @@
 
     const container = document.getElementById("subject-container");
 
-    subjects.forEach(async subject => {
+    subjects.forEach(subject => {
       let attempted = "Not attempted";
-      try {
-        const snap = await getDoc(doc(db, "progress", subject));
-        if (snap.exists()) {
-          const data = snap.data();
-          attempted = `${data.correct} ✅ / ${data.wrong} ❌ / ${data.attempted} attempted`;
-        }
-      } catch (e) {
-        console.warn("No progress for", subject);
+      const data = localStorage.getItem(`progress_${subject}`);
+      if (data) {
+        const parsed = JSON.parse(data);
+        attempted = `${parsed.correct} ✅ / ${parsed.wrong} ❌ / ${parsed.attempted} attempted`;
       }
 
       const card = document.createElement("a");
