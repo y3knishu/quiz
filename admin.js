@@ -2,10 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebas
 import {
   getFirestore,
   collection,
-  addDoc,
-  getDocs,
-  deleteDoc,
-  doc
+  addDoc
 } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
 import {
   getAuth,
@@ -27,14 +24,13 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-const emailBox = document.getElementById("adminEmail");
-
+// ✅ Restrict access to admin email only
 onAuthStateChanged(auth, (user) => {
   if (!user || user.email !== "y3knishu@gmail.com") {
     alert("Access denied");
     window.location.href = "admin-login.html";
   } else {
-    emailBox.textContent = "👤 Logged in as: " + user.email;
+    document.getElementById("adminEmail").textContent = "Logged in as: " + user.email;
   }
 });
 
@@ -51,95 +47,24 @@ window.addQuestion = async () => {
     document.getElementById("optC").value,
     document.getElementById("optD").value
   ];
-  const correct = document.getElementById("correct").value;
+  const correct = document.getElementById("correct").value.toUpperCase();
   const image = document.getElementById("imgUrl").value;
 
-  if (!subject || !question || options.includes("") || !correct) {
-    return alert("Fill all fields properly.");
+  if (!subject || !question || options.includes("") || !"ABCD".includes(correct)) {
+    return alert("Please fill all fields and a valid correct answer (A/B/C/D)");
   }
 
-  await addDoc(collection(db, subject), { question, options, correct, image });
-  alert("✅ Question added!");
-};
-
-window.loadAllQuestions = async () => {
-  const subject = document.getElementById("subject").value;
-  const preview = document.getElementById("preview");
-  if (!subject) return alert("Select a subject");
-
-  const qSnap = await getDocs(collection(db, subject));
-  preview.innerHTML = "";
-
-  qSnap.forEach((docSnap) => {
-    const q = docSnap.data();
-    const div = document.createElement("div");
-    div.className = "question-box";
-    div.innerHTML = `
-      <b>Q:</b> ${q.question}<br/>
-      A: ${q.options[0]}<br/>
-      B: ${q.options[1]}<br/>
-      C: ${q.options[2]}<br/>
-      D: ${q.options[3]}<br/>
-      ✅ Correct: ${q.correct}<br/>
-      ${q.image ? `<img src="${q.image}" />` : ""}
-      <br/>
-      <button onclick="deleteQuestion('${subject}', '${docSnap.id}')">🗑 Delete</button>
-    `;
-    preview.appendChild(div);
-  });
-};
-
-window.deleteQuestion = async (subject, id) => {
-  await deleteDoc(doc(db, subject, id));
-  alert("Deleted");
-  loadAllQuestions();
-};
-
-window.showSummary = async () => {
-  const subjects = [
-    "Anatomy", "Physiology", "Biochemistry",
-    "Pathology", "Pharmacology", "Microbiology", "Forensic Medicine",
-    "Community Medicine", "ENT", "Ophthalmology",
-    "General Medicine", "General Surgery", "Obstetrics & Gynaecology",
-    "Pediatrics", "Orthopaedics", "Dermatology",
-    "Psychiatry", "Respiratory Medicine", "Anesthesiology"
-  ];
-
-  let report = "📊 Total Questions:\n";
-  for (let s of subjects) {
-    const snap = await getDocs(collection(db, s));
-    report += `${s}: ${snap.size}\n`;
+  try {
+    await addDoc(collection(db, subject), { question, options, correct, image });
+    alert("✅ Question added!");
+    document.getElementById("question").value = "";
+    document.getElementById("optA").value = "";
+    document.getElementById("optB").value = "";
+    document.getElementById("optC").value = "";
+    document.getElementById("optD").value = "";
+    document.getElementById("correct").value = "";
+    document.getElementById("imgUrl").value = "";
+  } catch (err) {
+    alert("❌ Error adding question: " + err.message);
   }
-  alert(report);
-};
-
-window.exportQuestions = async () => {
-  const subject = document.getElementById("subject").value;
-  if (!subject) return alert("Select subject");
-
-  const snap = await getDocs(collection(db, subject));
-  const questions = [];
-  snap.forEach((docSnap) => questions.push(docSnap.data()));
-
-  const blob = new Blob([JSON.stringify(questions, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `${subject}-questions.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-};
-
-window.importQuestions = () => {
-  const subject = document.getElementById("subject").value;
-  const fileInput = document.getElementById("importFile");
-  if (!subject || !fileInput.files.length) return alert("Choose subject and file");
-
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    const questions = JSON.parse(e.target.result);
-    for (let q of questions) await addDoc(collection(db, subject), q);
-    alert("✅ Imported!");
-  };
-  reader.readAsText(fileInput.files[0]);
 };
