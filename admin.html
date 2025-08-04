@@ -25,11 +25,17 @@
       margin-top: 15px;
       padding: 10px 20px;
     }
+    .question-item {
+      background: #fff;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
   </style>
 </head>
 <body>
-
-  <h2>Admin: Add MCQ</h2>
+  <h2>Admin Panel: Add / Manage MCQs</h2>
 
   <label for="subject">Select Subject</label>
   <select id="subject">
@@ -77,6 +83,8 @@
   <input id="image" />
 
   <button onclick="uploadQuestion()">Upload Question</button>
+  <button onclick="loadQuestions()">Preview All Questions</button>
+  <div id="preview"></div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -86,6 +94,11 @@
       getDoc,
       setDoc
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+      signInWithEmailAndPassword
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
@@ -99,6 +112,14 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    const adminEmail = "y3knishu@gmail.com";
+    const adminPassword = "xrnb21r72W@";
+
+    signInWithEmailAndPassword(auth, adminEmail, adminPassword)
+      .then(() => console.log("Admin logged in"))
+      .catch((error) => alert("Admin login failed: " + error.message));
 
     async function uploadQuestion() {
       const subject = document.getElementById("subject").value;
@@ -113,7 +134,7 @@
       const image = document.getElementById("image").value;
 
       if (!subject || !question || options.includes("") || isNaN(answer)) {
-        alert("Please fill all required fields.");
+        alert("Please fill all fields correctly.");
         return;
       }
 
@@ -122,12 +143,10 @@
 
       const docRef = doc(db, "questions", subject);
       const docSnap = await getDoc(docRef);
-
       let existing = [];
       if (docSnap.exists()) {
         existing = docSnap.data().questions || [];
       }
-
       existing.push(newQ);
       await setDoc(docRef, { questions: existing });
 
@@ -139,6 +158,43 @@
       document.getElementById("opt4").value = "";
       document.getElementById("correct").value = "";
       document.getElementById("image").value = "";
+    }
+
+    async function loadQuestions() {
+      const subject = document.getElementById("subject").value;
+      if (!subject) return alert("Select a subject");
+
+      const docRef = doc(db, "questions", subject);
+      const docSnap = await getDoc(docRef);
+      const preview = document.getElementById("preview");
+      preview.innerHTML = "";
+
+      if (docSnap.exists()) {
+        const questions = docSnap.data().questions || [];
+        questions.forEach((q, index) => {
+          const div = document.createElement("div");
+          div.className = "question-item";
+          div.innerHTML = `<b>Q${index + 1}:</b> ${q.question}<br>
+            Options: ${q.options.join(", ")}<br>
+            Answer: ${q.answer}<br>
+            <button onclick="deleteQuestion(${index})">Delete</button>`;
+          preview.appendChild(div);
+        });
+      } else {
+        preview.innerHTML = "No questions found.";
+      }
+    }
+
+    window.deleteQuestion = async function(index) {
+      const subject = document.getElementById("subject").value;
+      const docRef = doc(db, "questions", subject);
+      const docSnap = await getDoc(docRef);
+
+      if (!docSnap.exists()) return;
+      const questions = docSnap.data().questions;
+      questions.splice(index, 1);
+      await setDoc(docRef, { questions });
+      loadQuestions();
     }
   </script>
 </body>
