@@ -41,28 +41,28 @@
 
   <!-- ADMIN PAGE -->
   <div id="admin-page" class="page hidden">
-  <h2>Admin Panel</h2>
+    <h2>Admin Panel</h2>
 
-  <select id="admin-subject">
-    <!-- options will be loaded dynamically -->
-  </select>
+    <select id="admin-subject"></select>
 
-  <input type="text" id="question-text" placeholder="Enter question" />
-  <input type="text" id="option0" placeholder="Option 1" />
-  <input type="text" id="option1" placeholder="Option 2" />
-  <input type="text" id="option2" placeholder="Option 3" />
-  <input type="text" id="option3" placeholder="Option 4" />
-  <input type="number" id="correct-index" placeholder="Correct option (0-3)" min="0" max="3" />
-  <input type="text" id="image-url" placeholder="Image URL (optional)" />
+    <input type="text" id="question-text" placeholder="Enter question" />
+    <input type="text" id="option0" placeholder="Option 1" />
+    <input type="text" id="option1" placeholder="Option 2" />
+    <input type="text" id="option2" placeholder="Option 3" />
+    <input type="text" id="option3" placeholder="Option 4" />
+    <input type="number" id="correct-index" placeholder="Correct option (0-3)" min="0" max="3" />
+    <input type="text" id="image-url" placeholder="Image URL (optional)" />
 
-  <button id="add-question">Add Question</button>
-  <button id="save-questions">Save All Questions</button>
-  <button id="admin-logout">Logout</button>
+    <button id="add-question">Add Question</button>
+    <button id="save-questions">Save All Questions</button>
+    <button id="preview-questions">Preview All Questions</button>
+    <button id="delete-questions">Delete All Questions</button>
+    <button id="admin-logout">Logout</button>
 
-  <div id="question-preview"></div>
-</div>
+    <div id="question-preview" style="margin-top: 10px;"></div>
+  </div>
 
-  <!-- MAIN JS -->
+  <!-- MAIN SCRIPT -->
   <script type="module" src="app.js"></script>
 </body>
 </html>
