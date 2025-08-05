@@ -39,6 +39,12 @@
     .divider {
       margin: 10px;
     }
+    .link {
+      color: #66c2ff;
+      cursor: pointer;
+      text-decoration: underline;
+      font-size: 0.9em;
+    }
   </style>
 </head>
 <body>
@@ -47,6 +53,8 @@
     <input type="email" id="email" placeholder="Email" /><br>
     <input type="password" id="password" placeholder="Password" /><br>
     <button id="emailLogin">Login with Email</button>
+    <button id="emailSignup">Create New Account</button><br>
+    <span class="link" id="resetPassword">Forgot Password?</span>
   </div>
   <div class="divider">OR</div>
   <button id="googleLogin">Sign in with Google</button>
@@ -58,7 +66,9 @@
       signInWithEmailAndPassword,
       signInWithPopup,
       GoogleAuthProvider,
-      onAuthStateChanged
+      onAuthStateChanged,
+      createUserWithEmailAndPassword,
+      sendPasswordResetEmail
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     const firebaseConfig = {
@@ -99,7 +109,31 @@
         });
     };
 
-    // Auto-redirect if already logged in
+    document.getElementById("emailSignup").onclick = () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      createUserWithEmailAndPassword(auth, email, password)
+        .then(user => {
+          alert("✅ Account created for: " + email);
+          window.location.href = "index.html";
+        })
+        .catch(error => {
+          alert("Signup failed: " + error.message);
+        });
+    };
+
+    document.getElementById("resetPassword").onclick = () => {
+      const email = document.getElementById("email").value;
+      if (!email) return alert("Please enter your email to reset password.");
+      sendPasswordResetEmail(auth, email)
+        .then(() => {
+          alert("📩 Password reset email sent.");
+        })
+        .catch(error => {
+          alert("Reset failed: " + error.message);
+        });
+    };
+
     onAuthStateChanged(auth, user => {
       if (user) {
         window.location.href = "index.html";
