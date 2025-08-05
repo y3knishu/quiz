@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NEET PG / INI-CET PREVIOUS YEAR QUESTIONS</title>
+  <title>NEET PG Subjects</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f0f2f5;
+      background: #111;
+      color: white;
       padding: 20px;
       text-align: center;
     }
@@ -23,33 +24,55 @@
       margin: auto;
     }
     .card {
-      background: #fff;
+      background: #222;
       padding: 15px;
       border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 5px rgba(255,255,255,0.05);
       cursor: pointer;
       transition: 0.2s;
       text-decoration: none;
-      color: black;
+      color: white;
     }
     .card:hover {
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 10px rgba(255,255,255,0.2);
     }
-    .card-title {
-      font-weight: bold;
-      margin-bottom: 5px;
+    .card.locked {
+      background: #444;
+      pointer-events: none;
+      opacity: 0.6;
     }
-    .card-sub {
-      font-size: 0.9em;
-      color: gray;
+    #payBtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 1em;
     }
   </style>
 </head>
 <body>
-  <h1>NEET PG / INI-CET PREVIOUS YEAR QUESTIONS</h1>
-  <div class="subjects" id="subject-container"></div>
+  <h1>NEET PG Subjects</h1>
+  <div id="subject-container" class="subjects"></div>
+  <button id="payBtn" style="display:none">💳 Pay ₹99 to Unlock All Subjects</button>
 
-  <script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
+      authDomain: "mcqs-96117.firebaseapp.com",
+      projectId: "mcqs-96117",
+      storageBucket: "mcqs-96117.firebasestorage.app",
+      messagingSenderId: "352256319143",
+      appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582",
+      measurementId: "G-6FZ770H045"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
     const subjects = [
       "Anatomy", "Physiology", "Biochemistry",
       "Pathology", "Pharmacology", "Microbiology", "Forensic Medicine",
@@ -59,25 +82,68 @@
       "Psychiatry", "Respiratory Medicine", "Anesthesiology"
     ];
 
-    const container = document.getElementById("subject-container");
+    let isPaid = false;
+    let userId = null;
 
-    subjects.forEach(subject => {
-      let attempted = "Not attempted";
-      const data = localStorage.getItem(`progress_${subject}`);
-      if (data) {
-        const parsed = JSON.parse(data);
-        attempted = `${parsed.correct} ✅ / ${parsed.wrong} ❌ / ${parsed.attempted} attempted`;
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        userId = user.uid;
+        const docRef = doc(db, "users", user.uid);
+        const snap = await getDoc(docRef);
+        if (snap.exists() && snap.data().isPaid) {
+          isPaid = true;
+        } else {
+          document.getElementById("payBtn").style.display = "inline-block";
+        }
+        renderSubjects();
+      } else {
+        alert("Please login to access subjects");
+        location.href = "admin-login.html";
       }
-
-      const card = document.createElement("a");
-      card.className = "card";
-      card.href = `quiz.html?subject=${encodeURIComponent(subject)}`;
-      card.innerHTML = `
-        <div class="card-title">${subject}</div>
-        <div class="card-sub">${attempted}</div>
-      `;
-      container.appendChild(card);
     });
+
+    function renderSubjects() {
+      const container = document.getElementById("subject-container");
+      container.innerHTML = "";
+
+      subjects.forEach(subject => {
+        const card = document.createElement("a");
+        card.className = "card";
+        const isFree = subject === "Anatomy";
+        const locked = !isFree && !isPaid;
+        card.classList.toggle("locked", locked);
+        card.innerHTML = `
+          <div class="card-title">${subject}</div>
+          <div class="card-sub">${locked ? "🔒 Locked" : "✅ Open"}</div>
+        `;
+        if (!locked) {
+          card.href = `quiz.html?subject=${encodeURIComponent(subject)}`;
+        }
+        container.appendChild(card);
+      });
+    }
+
+    document.getElementById("payBtn").onclick = function () {
+      const options = {
+        key: "rzp_live_7nZptAUoDrsfRb",
+        amount: 9900,
+        currency: "INR",
+        name: "NEET PG Quiz",
+        description: "Unlock all subjects",
+        handler: async function (response) {
+          alert("✅ Payment successful! ID: " + response.razorpay_payment_id);
+          await setDoc(doc(db, "users", userId), { isPaid: true }, { merge: true });
+          document.getElementById("payBtn").style.display = "none";
+          isPaid = true;
+          renderSubjects();
+        },
+        theme: {
+          color: "#3399cc"
+        }
+      };
+      const rzp = new Razorpay(options);
+      rzp.open();
+    };
   </script>
 </body>
 </html>
