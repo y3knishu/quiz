@@ -98,44 +98,9 @@
     const logoutBtn = document.getElementById("logoutBtn");
     const payBtn = document.getElementById("payBtn");
 
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        currentUser = user;
-        userId = user.uid;
-        loginBtn.style.display = "none";
-        logoutBtn.style.display = "inline-block";
-        userInfo.textContent = `👋 Logged in as: ${user.email}`;
-
-        const docRef = doc(db, "users", user.uid);
-        const snap = await getDoc(docRef);
-        if (snap.exists() && snap.data().isPaid) {
-          isPaid = true;
-        } else {
-          payBtn.style.display = "inline-block";
-        }
-        renderSubjects();
-      } else {
-        userInfo.textContent = "🔐 You are not logged in.";
-        loginBtn.style.display = "inline-block";
-        renderSubjects();
-      }
-    });
-
-    loginBtn.onclick = () => {
-      window.location.href = "admin-login.html";
-    };
-
-    logoutBtn.onclick = () => {
-      signOut(auth).then(() => {
-        alert("Logged out");
-        window.location.reload();
-      });
-    };
-
     function renderSubjects() {
       const container = document.getElementById("subject-container");
       container.innerHTML = "";
-
       subjects.forEach(subject => {
         const card = document.createElement("a");
         card.className = "card";
@@ -153,6 +118,47 @@
       });
     }
 
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        userId = user.uid;
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+        userInfo.textContent = `👋 Logged in as: ${user.email}`;
+
+        try {
+          const docRef = doc(db, "users", user.uid);
+          const snap = await getDoc(docRef);
+          if (snap.exists() && snap.data().isPaid) {
+            isPaid = true;
+            payBtn.style.display = "none";
+          } else {
+            payBtn.style.display = "inline-block";
+          }
+        } catch (e) {
+          console.warn("Error checking payment status:", e);
+        }
+        renderSubjects();
+      } else {
+        userInfo.textContent = "🔐 You are not logged in.";
+        loginBtn.style.display = "inline-block";
+        logoutBtn.style.display = "none";
+        payBtn.style.display = "none";
+        renderSubjects();
+      }
+    });
+
+    loginBtn.onclick = () => {
+      window.location.href = "admin-login.html";
+    };
+
+    logoutBtn.onclick = () => {
+      signOut(auth).then(() => {
+        alert("Logged out");
+        window.location.reload();
+      });
+    };
+
     payBtn.onclick = function () {
       const options = {
         key: "rzp_live_7nZptAUoDrsfRb",
@@ -163,8 +169,8 @@
         handler: async function (response) {
           alert("✅ Payment successful! ID: " + response.razorpay_payment_id);
           await setDoc(doc(db, "users", userId), { isPaid: true }, { merge: true });
-          payBtn.style.display = "none";
           isPaid = true;
+          payBtn.style.display = "none";
           renderSubjects();
         },
         theme: {
