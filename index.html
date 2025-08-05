@@ -10,15 +10,27 @@
       background: #111;
       color: white;
       padding: 20px;
-      text-align: center;
+      margin: 0;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
     }
     h1 {
       font-size: 2em;
-      margin-bottom: 10px;
     }
-    #user-info {
-      font-size: 0.9em;
+    .top-right {
+      text-align: right;
+    }
+    .top-right button {
+      margin-left: 8px;
+    }
+    .info-message {
+      text-align: center;
       margin-bottom: 20px;
+      color: #ccc;
     }
     .subjects {
       display: grid;
@@ -42,23 +54,42 @@
     }
     .card.locked {
       background: #444;
-      pointer-events: none;
+      pointer-events: auto;
       opacity: 0.6;
     }
     #payBtn, #loginBtn, #logoutBtn {
-      margin: 10px;
       padding: 8px 16px;
       font-size: 0.9em;
+      background: #3399cc;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      cursor: pointer;
+    }
+    #payBtn:hover, #loginBtn:hover, #logoutBtn:hover {
+      background: #2788bb;
     }
   </style>
 </head>
 <body>
-  <h1>NEET PG Subjects</h1>
-  <div id="user-info">Loading...</div>
+  <header>
+    <h1>NEET PG Subjects</h1>
+    <div class="top-right">
+      <span id="user-info">Loading...</span>
+      <button id="loginBtn" style="display:none">🔐 Login / Sign Up</button>
+      <button id="logoutBtn" style="display:none">🚪 Logout</button>
+    </div>
+  </header>
+
+  <div class="info-message">
+    🔓 <strong>Anatomy</strong> is free. Pay ₹99 once to unlock access to all other subjects.<br>
+    Please login first to make the payment.
+  </div>
+
   <div id="subject-container" class="subjects"></div>
-  <button id="payBtn" style="display:none">💳 Pay ₹99 to Unlock All Subjects</button>
-  <button id="loginBtn" style="display:none">🔐 Login / Sign Up</button>
-  <button id="logoutBtn" style="display:none">🚪 Logout</button>
+  <div style="text-align:center; margin-top:20px">
+    <button id="payBtn" style="display:none">💳 Pay ₹99 to Unlock All Subjects</button>
+  </div>
 
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script type="module">
@@ -113,6 +144,11 @@
         `;
         if (!locked) {
           card.href = `quiz.html?subject=${encodeURIComponent(subject)}`;
+        } else {
+          card.onclick = (e) => {
+            e.preventDefault();
+            alert("🔒 This subject is locked. Please login and pay ₹99 to unlock all subjects.");
+          };
         }
         container.appendChild(card);
       });
@@ -124,7 +160,7 @@
         userId = user.uid;
         loginBtn.style.display = "none";
         logoutBtn.style.display = "inline-block";
-        userInfo.textContent = `👋 Logged in as: ${user.email}`;
+        userInfo.textContent = `👋 ${user.email}`;
 
         try {
           const docRef = doc(db, "users", user.uid);
@@ -140,7 +176,7 @@
         }
         renderSubjects();
       } else {
-        userInfo.textContent = "🔐 You are not logged in.";
+        userInfo.textContent = "🔐 Not logged in";
         loginBtn.style.display = "inline-block";
         logoutBtn.style.display = "none";
         payBtn.style.display = "none";
