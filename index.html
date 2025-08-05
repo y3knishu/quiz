@@ -14,7 +14,11 @@
     }
     h1 {
       font-size: 2em;
-      margin-bottom: 30px;
+      margin-bottom: 10px;
+    }
+    #user-info {
+      font-size: 0.9em;
+      margin-bottom: 20px;
     }
     .subjects {
       display: grid;
@@ -41,23 +45,26 @@
       pointer-events: none;
       opacity: 0.6;
     }
-    #payBtn {
-      margin-top: 20px;
-      padding: 10px 20px;
-      font-size: 1em;
+    #payBtn, #loginBtn, #logoutBtn {
+      margin: 10px;
+      padding: 8px 16px;
+      font-size: 0.9em;
     }
   </style>
 </head>
 <body>
   <h1>NEET PG Subjects</h1>
+  <div id="user-info">Loading...</div>
   <div id="subject-container" class="subjects"></div>
   <button id="payBtn" style="display:none">💳 Pay ₹99 to Unlock All Subjects</button>
+  <button id="loginBtn" style="display:none">🔐 Login / Sign Up</button>
+  <button id="logoutBtn" style="display:none">🚪 Logout</button>
 
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
@@ -84,23 +91,46 @@
 
     let isPaid = false;
     let userId = null;
+    let currentUser = null;
+
+    const userInfo = document.getElementById("user-info");
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const payBtn = document.getElementById("payBtn");
 
     onAuthStateChanged(auth, async (user) => {
       if (user) {
+        currentUser = user;
         userId = user.uid;
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+        userInfo.textContent = `👋 Logged in as: ${user.email}`;
+
         const docRef = doc(db, "users", user.uid);
         const snap = await getDoc(docRef);
         if (snap.exists() && snap.data().isPaid) {
           isPaid = true;
         } else {
-          document.getElementById("payBtn").style.display = "inline-block";
+          payBtn.style.display = "inline-block";
         }
         renderSubjects();
       } else {
-        alert("Please login to access subjects");
-        location.href = "admin-login.html";
+        userInfo.textContent = "🔐 You are not logged in.";
+        loginBtn.style.display = "inline-block";
+        renderSubjects();
       }
     });
+
+    loginBtn.onclick = () => {
+      window.location.href = "admin-login.html";
+    };
+
+    logoutBtn.onclick = () => {
+      signOut(auth).then(() => {
+        alert("Logged out");
+        window.location.reload();
+      });
+    };
 
     function renderSubjects() {
       const container = document.getElementById("subject-container");
@@ -123,7 +153,7 @@
       });
     }
 
-    document.getElementById("payBtn").onclick = function () {
+    payBtn.onclick = function () {
       const options = {
         key: "rzp_live_7nZptAUoDrsfRb",
         amount: 9900,
@@ -133,7 +163,7 @@
         handler: async function (response) {
           alert("✅ Payment successful! ID: " + response.razorpay_payment_id);
           await setDoc(doc(db, "users", userId), { isPaid: true }, { merge: true });
-          document.getElementById("payBtn").style.display = "none";
+          payBtn.style.display = "none";
           isPaid = true;
           renderSubjects();
         },
