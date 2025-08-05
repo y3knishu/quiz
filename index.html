@@ -69,15 +69,23 @@
     #payBtn:hover, #loginBtn:hover, #logoutBtn:hover {
       background: #2788bb;
     }
+    .top-buttons {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
   </style>
 </head>
 <body>
   <header>
     <h1>NEET PG Subjects</h1>
-    <div class="top-right">
-      <span id="user-info">Loading...</span>
-      <button id="loginBtn" style="display:none">🔐 Login / Sign Up</button>
-      <button id="logoutBtn" style="display:none">🚪 Logout</button>
+    <div class="top-buttons">
+      <div class="top-right">
+        <span id="user-info">Loading...</span>
+        <button id="loginBtn" style="display:none">🔐 Login / Sign Up</button>
+        <button id="logoutBtn" style="display:none">🚪 Logout</button>
+      </div>
+      <button id="payBtn" style="margin-top: 10px;">💳 Pay ₹99 to Unlock All Subjects</button>
     </div>
   </header>
 
@@ -87,9 +95,6 @@
   </div>
 
   <div id="subject-container" class="subjects"></div>
-  <div style="text-align:center; margin-top:20px">
-    <button id="payBtn">💳 Pay ₹99 to Unlock All Subjects</button>
-  </div>
 
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script type="module">
