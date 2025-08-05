@@ -88,7 +88,7 @@
 
   <div id="subject-container" class="subjects"></div>
   <div style="text-align:center; margin-top:20px">
-    <button id="payBtn" style="display:none">💳 Pay ₹99 to Unlock All Subjects</button>
+    <button id="payBtn">💳 Pay ₹99 to Unlock All Subjects</button>
   </div>
 
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
@@ -176,10 +176,12 @@
         }
         renderSubjects();
       } else {
+        currentUser = null;
         userInfo.textContent = "🔐 Not logged in";
         loginBtn.style.display = "inline-block";
         logoutBtn.style.display = "none";
-        payBtn.style.display = "none";
+        isPaid = false;
+        payBtn.style.display = "inline-block";
         renderSubjects();
       }
     });
@@ -196,6 +198,10 @@
     };
 
     payBtn.onclick = function () {
+      if (!currentUser) {
+        alert("🔐 Please login first to make payment.");
+        return;
+      }
       const options = {
         key: "rzp_live_7nZptAUoDrsfRb",
         amount: 9900,
