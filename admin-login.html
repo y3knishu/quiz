@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login | NEET PG App</title>
+  <style>
+    body {
+      background: #111;
+      color: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 1rem;
+      margin: 5px;
+      border: none;
+      border-radius: 5px;
+    }
+    input {
+      width: 220px;
+    }
+    button {
+      background: #3399cc;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #2788bb;
+    }
+    .divider {
+      margin: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Welcome to NEET PG Quiz</h1>
+  <div>
+    <input type="email" id="email" placeholder="Email" /><br>
+    <input type="password" id="password" placeholder="Password" /><br>
+    <button id="emailLogin">Login with Email</button>
+  </div>
+  <div class="divider">OR</div>
+  <button id="googleLogin">Sign in with Google</button>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      signInWithPopup,
+      GoogleAuthProvider,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
+      authDomain: "mcqs-96117.firebaseapp.com",
+      projectId: "mcqs-96117",
+      storageBucket: "mcqs-96117.firebasestorage.app",
+      messagingSenderId: "352256319143",
+      appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582",
+      measurementId: "G-6FZ770H045"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    document.getElementById("googleLogin").onclick = () => {
+      signInWithPopup(auth, provider)
+        .then(result => {
+          alert("✅ Logged in as: " + result.user.email);
+          window.location.href = "index.html";
+        })
+        .catch(error => {
+          alert("Login failed: " + error.message);
+        });
+    };
+
+    document.getElementById("emailLogin").onclick = () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      signInWithEmailAndPassword(auth, email, password)
+        .then(user => {
+          alert("✅ Logged in as: " + email);
+          window.location.href = "index.html";
+        })
+        .catch(error => {
+          alert("Login failed: " + error.message);
+        });
+    };
+
+    // Auto-redirect if already logged in
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        window.location.href = "index.html";
+      }
+    });
+  </script>
+</body>
+</html>
