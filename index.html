@@ -170,10 +170,12 @@
         try {
           const docRef = doc(db, "users", user.uid);
           const snap = await getDoc(docRef);
+          console.log("Payment status from Firestore:", snap.data());
           if (snap.exists() && snap.data().isPaid) {
             isPaid = true;
             payBtn.style.display = "none";
           } else {
+            isPaid = false;
             payBtn.style.display = "inline-block";
           }
         } catch (e) {
@@ -215,6 +217,7 @@
         description: "Unlock all subjects",
         handler: async function (response) {
           alert("✅ Payment successful! ID: " + response.razorpay_payment_id);
+          console.log("Saving isPaid: true to Firestore for", userId);
           await setDoc(doc(db, "users", userId), { isPaid: true }, { merge: true });
           isPaid = true;
           payBtn.style.display = "none";
