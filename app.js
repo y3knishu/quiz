@@ -1,10 +1,8 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getFirestore, doc, getDoc, setDoc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import {
-  getAuth, onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+// Updated app.js with Firebase progress saving, improved responsiveness, and Anatomy access without login
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
@@ -12,13 +10,12 @@ const firebaseConfig = {
   projectId: "mcqs-96117",
   storageBucket: "mcqs-96117.appspot.com",
   messagingSenderId: "352256319143",
-  appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582",
-  measurementId: "G-6FZ770H045"
+  appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const auth = getAuth(app);
+const auth = getAuth();
 
 const urlParams = new URLSearchParams(window.location.search);
 const subject = urlParams.get('subject') || 'Anatomy';
@@ -37,11 +34,6 @@ const qNumber = document.getElementById("question-number");
 const palette = document.getElementById("palette");
 const resultDiv = document.getElementById("result-summary");
 const timer = document.getElementById("timer");
-
-onAuthStateChanged(auth, async (user) => {
-  currentUser = user;
-  await loadQuiz(subject);
-});
 
 function renderPalette() {
   palette.innerHTML = "";
@@ -142,6 +134,7 @@ function submitQuiz() {
     <p>🧮 Score: ${score} / ${questions.length * 4}</p>
     <p>⏱️ Time Taken: ${minutes} min ${seconds} sec</p>
     <canvas id="resultChart" width="300" height="300"></canvas>
+    <button onclick="window.location.href='index.html'">🏠 Return to Home</button>
   `;
 
   new Chart(document.getElementById("resultChart"), {
@@ -155,17 +148,13 @@ function submitQuiz() {
     },
     options: {
       responsive: false,
-      plugins: {
-        legend: {
-          position: "bottom"
-        }
-      }
+      plugins: { legend: { position: "bottom" } }
     }
   });
 
   clearInterval(timerInterval);
   renderPalette();
-  saveProgress(); // Ensure progress is synced
+  saveProgress();
 }
 
 function updateTimer() {
@@ -175,8 +164,8 @@ function updateTimer() {
   timer.textContent = `Time: ${mins}m ${secs}s`;
 }
 
-async function saveProgress() {
-  if (!currentUser || subject === "Anatomy") return;
+function saveProgress() {
+  if (!currentUser) return;
   const summary = {
     attempted: selectedAnswers.filter(a => a !== undefined).length,
     correct: selectedAnswers.filter(a => a && a.correct).length,
@@ -184,33 +173,44 @@ async function saveProgress() {
     total: questions.length,
     answers: selectedAnswers
   };
-  const id = `${currentUser.uid}_${subject}`;
-  await setDoc(doc(db, "user_progress", id), summary, { merge: true });
+  const path = `users/${currentUser.uid}/progress/${subject}`;
+  setDoc(doc(db, path), summary, { merge: true });
 }
 
-async function loadProgressFromFirebase() {
-  if (!currentUser || subject === "Anatomy") return;
-  const id = `${currentUser.uid}_${subject}`;
-  const docRef = doc(db, "user_progress", id);
-  const docSnap = await getDoc(docRef);
-  if (docSnap.exists()) {
-    selectedAnswers = docSnap.data().answers || [];
+async function loadProgress() {
+  if (!currentUser) return;
+  const path = `users/${currentUser.uid}/progress/${subject}`;
+  const snap = await getDoc(doc(db, path));
+  if (snap.exists()) {
+    const data = snap.data();
+    selectedAnswers = data.answers || [];
   }
 }
 
 async function loadQuiz(subjectName) {
   const docRef = doc(db, "questions", subjectName);
   const docSnap = await getDoc(docRef);
+
   if (docSnap.exists()) {
     questions = docSnap.data().questions;
     selectedAnswers = new Array(questions.length);
-    await loadProgressFromFirebase();
+    await loadProgress();
     loadQuestion(0);
     timerInterval = setInterval(updateTimer, 1000);
   } else {
-    alert("❌ No questions found.");
+    alert("No questions found for this subject.");
   }
 }
+
+onAuthStateChanged(auth, (user) => {
+  currentUser = user;
+  if (!user && subject !== "Anatomy") {
+    alert("Please login to access this subject.");
+    window.location.href = "index.html";
+  } else {
+    loadQuiz(subject);
+  }
+});
 
 window.prevQuestion = prevQuestion;
 window.nextQuestion = nextQuestion;
