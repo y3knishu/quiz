@@ -1,11 +1,16 @@
-// Updated app.js with Firebase user-specific progress tracking
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getFirestore, doc, getDoc, setDoc
-} from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {
-  getAuth, onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js";
+  getAuth,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import Chart from "https://cdn.jsdelivr.net/npm/chart.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
@@ -22,14 +27,15 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 const urlParams = new URLSearchParams(window.location.search);
-const subject = urlParams.get('subject') || 'Anatomy';
+const subject = urlParams.get("subject") || "Anatomy";
 
 let questions = [];
 let current = 0;
 let selectedAnswers = [];
 let startTime = Date.now();
 let timerInterval;
-let user = null;
+let userId = null;
+let userEmail = null;
 
 const qText = document.getElementById("question-text");
 const qImage = document.getElementById("question-image");
@@ -38,31 +44,7 @@ const qNumber = document.getElementById("question-number");
 const palette = document.getElementById("palette");
 const resultDiv = document.getElementById("result-summary");
 const timer = document.getElementById("timer");
-
-onAuthStateChanged(auth, async (u) => {
-  user = u;
-  if (!user && subject !== "Anatomy") {
-    alert("❌ Please login to access this subject.");
-    window.location.href = "index.html";
-    return;
-  }
-
-  if (user?.email === "y3knishu@gmail.com") {
-    console.log("✅ Admin override access");
-    loadQuiz(subject);
-    return;
-  }
-
-  if (user && subject !== "Anatomy") {
-    const snap = await getDoc(doc(db, "users", user.uid));
-    if (!snap.exists() || !snap.data().isPaid) {
-      alert("❌ This subject is locked. Please pay to unlock.");
-      window.location.href = "index.html";
-      return;
-    }
-  }
-  loadQuiz(subject);
-});
+const backBtn = document.getElementById("back-home");
 
 function renderPalette() {
   palette.innerHTML = "";
@@ -137,8 +119,10 @@ function resetQuiz() {
   startTime = Date.now();
 }
 function submitQuiz() {
-  let correct = 0, wrong = 0, attempted = 0;
-  selectedAnswers.forEach(a => {
+  let correct = 0,
+    wrong = 0,
+    attempted = 0;
+  selectedAnswers.forEach((a) => {
     if (a !== undefined) {
       attempted++;
       if (a.correct) correct++;
@@ -166,15 +150,21 @@ function submitQuiz() {
     type: "pie",
     data: {
       labels: ["Correct", "Wrong", "Unattempted"],
-      datasets: [{
-        data: [correct, wrong, unattempted],
-        backgroundColor: ["#66bb6a", "#ef5350", "#ffee58"]
-      }]
+      datasets: [
+        {
+          data: [correct, wrong, unattempted],
+          backgroundColor: ["#66bb6a", "#ef5350", "#ffee58"],
+        },
+      ],
     },
     options: {
       responsive: false,
-      plugins: { legend: { position: "bottom" } }
-    }
+      plugins: {
+        legend: {
+          position: "bottom",
+        },
+      },
+    },
   });
 
   clearInterval(timerInterval);
@@ -189,20 +179,20 @@ function updateTimer() {
 }
 
 function saveProgress() {
-  if (!user) return;
+  if (!userId) return;
   const summary = {
-    attempted: selectedAnswers.filter(a => a !== undefined).length,
-    correct: selectedAnswers.filter(a => a && a.correct).length,
-    wrong: selectedAnswers.filter(a => a && !a.correct).length,
+    attempted: selectedAnswers.filter((a) => a !== undefined).length,
+    correct: selectedAnswers.filter((a) => a && a.correct).length,
+    wrong: selectedAnswers.filter((a) => a && !a.correct).length,
     total: questions.length,
-    answers: selectedAnswers
+    answers: selectedAnswers,
   };
-  setDoc(doc(db, "progress", `${user.uid}_${subject}`), summary);
+  setDoc(doc(db, "progress", `${userId}_${subject}`), summary);
 }
 
 async function loadProgress() {
-  if (!user) return;
-  const snap = await getDoc(doc(db, "progress", `${user.uid}_${subject}`));
+  if (!userId) return;
+  const snap = await getDoc(doc(db, "progress", `${userId}_${subject}`));
   if (snap.exists()) {
     const data = snap.data();
     selectedAnswers = data.answers || [];
@@ -212,7 +202,6 @@ async function loadProgress() {
 async function loadQuiz(subjectName) {
   const docRef = doc(db, "questions", subjectName);
   const docSnap = await getDoc(docRef);
-
   if (docSnap.exists()) {
     questions = docSnap.data().questions;
     selectedAnswers = new Array(questions.length);
@@ -224,7 +213,35 @@ async function loadQuiz(subjectName) {
   }
 }
 
-window.prevQuestion = prevQuestion;
-window.nextQuestion = nextQuestion;
-window.resetQuiz = resetQuiz;
-window.submitQuiz = submitQuiz;
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    userId = user.uid;
+    userEmail = user.email;
+    if (userEmail === "y3knishu@gmail.com") {
+      loadQuiz(subject);
+      return;
+    }
+    const snap = await getDoc(doc(db, "users", user.uid));
+    if (snap.exists() && snap.data().isPaid) {
+      loadQuiz(subject);
+    } else if (subject === "Anatomy") {
+      loadQuiz(subject);
+    } else {
+      alert("❌ This subject is locked. Please complete payment to access.");
+      window.location.href = "index.html";
+    }
+  } else {
+    if (subject === "Anatomy") {
+      loadQuiz(subject);
+    } else {
+      alert("❌ Please login to access this subject.");
+      window.location.href = "index.html";
+    }
+  }
+});
+
+document.getElementById("prevBtn").onclick = prevQuestion;
+document.getElementById("nextBtn").onclick = nextQuestion;
+document.getElementById("submitBtn").onclick = submitQuiz;
+document.getElementById("resetBtn").onclick = resetQuiz;
+document.getElementById("back-home").onclick = () => window.location.href = "index.html";
