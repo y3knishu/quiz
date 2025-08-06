@@ -1,247 +1,186 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getFirestore,
-  doc,
-  getDoc,
-  setDoc,
-  onSnapshot
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import {
-  getAuth,
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import Chart from "https://cdn.jsdelivr.net/npm/chart.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
-  authDomain: "mcqs-96117.firebaseapp.com",
-  projectId: "mcqs-96117",
-  storageBucket: "mcqs-96117.firebasestorage.app",
-  messagingSenderId: "352256319143",
-  appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582",
-  measurementId: "G-6FZ770H045"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-
-const urlParams = new URLSearchParams(window.location.search);
-const subject = urlParams.get("subject") || "Anatomy";
-
-let questions = [];
-let current = 0;
-let selectedAnswers = [];
-let startTime = Date.now();
-let timerInterval;
-let userId = null;
-let userEmail = null;
-
-const qText = document.getElementById("question-text");
-const qImage = document.getElementById("question-image");
-const qOptions = document.getElementById("options");
-const qNumber = document.getElementById("question-number");
-const palette = document.getElementById("palette");
-const resultDiv = document.getElementById("result-summary");
-const timer = document.getElementById("timer");
-const backBtn = document.getElementById("back-home");
-
-function renderPalette() {
-  palette.innerHTML = "";
-  questions.forEach((_, i) => {
-    const btn = document.createElement("button");
-    btn.textContent = i + 1;
-    btn.onclick = () => loadQuestion(i);
-    if (selectedAnswers[i] !== undefined) {
-      btn.style.background = selectedAnswers[i].correct ? "#66bb6a" : "#ef5350";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NEET PG Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
     }
-    palette.appendChild(btn);
-  });
-}
 
-function loadQuestion(index) {
-  current = index;
-  const q = questions[index];
-  qNumber.textContent = `Question ${index + 1}`;
-  qText.textContent = q.question;
-  qImage.style.display = q.image ? "block" : "none";
-  qImage.src = q.image || "";
-  qOptions.innerHTML = "";
-
-  q.options.forEach((opt, i) => {
-    const btn = document.createElement("button");
-    btn.textContent = opt;
-    btn.onclick = () => selectAnswer(i, btn);
-    qOptions.appendChild(btn);
-  });
-
-  if (selectedAnswers[index] !== undefined) {
-    const correctIndex = q.answer;
-    const selected = selectedAnswers[index].selectedIndex;
-    const buttons = qOptions.querySelectorAll("button");
-    buttons.forEach((b, i) => {
-      b.disabled = true;
-      if (i === correctIndex) b.classList.add("correct");
-      if (i === selected && selected !== correctIndex) b.classList.add("wrong");
-    });
-  }
-
-  renderPalette();
-}
-
-function selectAnswer(selectedIndex, btn) {
-  const q = questions[current];
-  const isCorrect = selectedIndex === q.answer;
-  selectedAnswers[current] = { selectedIndex, correct: isCorrect };
-
-  const buttons = qOptions.querySelectorAll("button");
-  buttons.forEach((b, i) => {
-    b.disabled = true;
-    if (i === q.answer) b.classList.add("correct");
-    if (i === selectedIndex && !isCorrect) b.classList.add("wrong");
-  });
-
-  saveProgress();
-  renderPalette();
-}
-
-function prevQuestion() {
-  if (current > 0) loadQuestion(current - 1);
-}
-function nextQuestion() {
-  if (current < questions.length - 1) loadQuestion(current + 1);
-}
-function resetQuiz() {
-  selectedAnswers = [];
-  saveProgress();
-  loadQuestion(0);
-  resultDiv.innerHTML = "";
-  startTime = Date.now();
-}
-function submitQuiz() {
-  let correct = 0,
-    wrong = 0,
-    attempted = 0;
-  selectedAnswers.forEach((a) => {
-    if (a !== undefined) {
-      attempted++;
-      if (a.correct) correct++;
-      else wrong++;
+    header {
+      background: rgba(0,0,0,0.6);
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
-  });
-  const unattempted = questions.length - attempted;
-  const score = correct * 4 - wrong;
 
-  const timeTaken = Math.floor((Date.now() - startTime) / 1000);
-  const minutes = Math.floor(timeTaken / 60);
-  const seconds = timeTaken % 60;
-
-  resultDiv.innerHTML = `
-    <h3>Quiz Summary</h3>
-    <p>✅ Correct: ${correct}</p>
-    <p>❌ Wrong: ${wrong}</p>
-    <p>⏳ Unattempted: ${unattempted}</p>
-    <p>🧮 Score: ${score} / ${questions.length * 4}</p>
-    <p>⏱️ Time Taken: ${minutes} min ${seconds} sec</p>
-    <canvas id="resultChart" width="300" height="300"></canvas>
-  `;
-
-  new Chart(document.getElementById("resultChart"), {
-    type: "pie",
-    data: {
-      labels: ["Correct", "Wrong", "Unattempted"],
-      datasets: [
-        {
-          data: [correct, wrong, unattempted],
-          backgroundColor: ["#66bb6a", "#ef5350", "#ffee58"],
-        },
-      ],
-    },
-    options: {
-      responsive: false,
-      plugins: {
-        legend: {
-          position: "bottom",
-        },
-      },
-    },
-  });
-
-  clearInterval(timerInterval);
-  renderPalette();
-}
-
-function updateTimer() {
-  const diff = Math.floor((Date.now() - startTime) / 1000);
-  const mins = Math.floor(diff / 60);
-  const secs = diff % 60;
-  timer.textContent = `Time: ${mins}m ${secs}s`;
-}
-
-function saveProgress() {
-  if (!userId) return;
-  const summary = {
-    attempted: selectedAnswers.filter((a) => a !== undefined).length,
-    correct: selectedAnswers.filter((a) => a && a.correct).length,
-    wrong: selectedAnswers.filter((a) => a && !a.correct).length,
-    total: questions.length,
-    answers: selectedAnswers,
-  };
-  setDoc(doc(db, "progress", `${userId}_${subject}`), summary);
-}
-
-async function loadProgress() {
-  if (!userId) return;
-  const snap = await getDoc(doc(db, "progress", `${userId}_${subject}`));
-  if (snap.exists()) {
-    const data = snap.data();
-    selectedAnswers = data.answers || [];
-  }
-}
-
-async function loadQuiz(subjectName) {
-  const docRef = doc(db, "questions", subjectName);
-  const docSnap = await getDoc(docRef);
-  if (docSnap.exists()) {
-    questions = docSnap.data().questions;
-    selectedAnswers = new Array(questions.length);
-    await loadProgress();
-    loadQuestion(0);
-    timerInterval = setInterval(updateTimer, 1000);
-  } else {
-    alert("No questions found for this subject.");
-  }
-}
-
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    userId = user.uid;
-    userEmail = user.email;
-    if (userEmail === "y3knishu@gmail.com") {
-      loadQuiz(subject);
-      return;
+    header h2 {
+      margin: 0;
+      font-size: 1.5em;
     }
-    const snap = await getDoc(doc(db, "users", user.uid));
-    if (snap.exists() && snap.data().isPaid) {
-      loadQuiz(subject);
-    } else if (subject === "Anatomy") {
-      loadQuiz(subject);
-    } else {
-      alert("❌ This subject is locked. Please complete payment to access.");
-      window.location.href = "index.html";
-    }
-  } else {
-    if (subject === "Anatomy") {
-      loadQuiz(subject);
-    } else {
-      alert("❌ Please login to access this subject.");
-      window.location.href = "index.html";
-    }
-  }
-});
 
-document.getElementById("prevBtn").onclick = prevQuestion;
-document.getElementById("nextBtn").onclick = nextQuestion;
-document.getElementById("submitBtn").onclick = submitQuiz;
-document.getElementById("resetBtn").onclick = resetQuiz;
-document.getElementById("back-home").onclick = () => window.location.href = "index.html";
+    #question-number {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .container {
+      display: flex;
+      flex: 1;
+      padding: 20px;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    #palette {
+      flex: 1;
+      min-width: 100px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      background: rgba(255,255,255,0.05);
+      padding: 10px;
+      border-radius: 8px;
+    }
+
+    #palette button {
+      padding: 8px;
+      background: #444;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    #palette button:hover {
+      background: #666;
+    }
+
+    .quiz-area {
+      flex: 4;
+      background: rgba(255,255,255,0.05);
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    #question-text {
+      font-size: 1.2em;
+      margin-bottom: 10px;
+    }
+
+    #question-image {
+      max-width: 100%;
+      margin-bottom: 15px;
+      display: none;
+      border-radius: 6px;
+    }
+
+    #options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    #options button {
+      background: #1e1e1e;
+      color: white;
+      border: 2px solid transparent;
+      padding: 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: left;
+      transition: 0.3s;
+    }
+
+    #options button.correct {
+      background: #2e7d32;
+      border-color: #66bb6a;
+    }
+
+    #options button.wrong {
+      background: #c62828;
+      border-color: #ef5350;
+    }
+
+    #options button:hover:not(.correct):not(.wrong) {
+      background: #333;
+    }
+
+    .controls {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .controls button {
+      padding: 10px 20px;
+      background: #00c6ff;
+      background: linear-gradient(45deg, #00c6ff, #0072ff);
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .controls button:hover {
+      background: linear-gradient(45deg, #0072ff, #00c6ff);
+    }
+
+    #result-summary {
+      margin-top: 20px;
+      background: rgba(255,255,255,0.1);
+      padding: 20px;
+      border-radius: 8px;
+    }
+
+    #timer {
+      font-size: 1em;
+      font-weight: bold;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>NEET PG Quiz</h2>
+    <div id="timer">Time: 0m 0s</div>
+  </header>
+  <div class="container">
+    <div id="palette"></div>
+    <div class="quiz-area">
+      <div id="question-number"></div>
+      <div id="question-text"></div>
+      <img id="question-image" />
+      <div id="options"></div>
+      <div class="controls">
+        <button onclick="prevQuestion()">⬅️ Previous</button>
+        <button onclick="nextQuestion()">Next ➡️</button>
+        <button onclick="submitQuiz()">✅ Submit</button>
+        <button onclick="resetQuiz()">♻️ Reset</button>
+        <button onclick="window.location.href='index.html'">🏠 Home</button>
+      </div>
+      <div id="result-summary"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
