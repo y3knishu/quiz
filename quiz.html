@@ -3,189 +3,134 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>NEET PG Quiz</title>
+  <title>Quiz</title>
+  <link rel="stylesheet" href="style.css" />
   <style>
     body {
+      font-family: 'Poppins', sans-serif;
+      background: #f7f7ff;
       margin: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-      color: #fff;
+      padding: 0;
     }
-
-    header {
-      background: #111;
-      padding: 12px 20px;
+    .quiz-container {
+      max-width: 900px;
+      margin: auto;
+      padding: 20px;
+      background: white;
+      border-radius: 12px;
+      margin-top: 30px;
+    }
+    h2 {
+      color: #333;
+    }
+    .option {
+      display: block;
+      background: #eee;
+      border: none;
+      margin: 8px 0;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .option.correct {
+      background: #a0e7a0;
+    }
+    .option.wrong {
+      background: #fca3a3;
+    }
+    .navigation {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      margin-top: 15px;
+      flex-wrap: wrap;
     }
-
-    header h2 {
-      margin: 0;
-      font-size: 20px;
+    .navigation button {
+      padding: 10px 18px;
+      font-size: 0.9em;
+      margin: 5px 0;
     }
-
-    header button {
-      background: #ff6f61;
-      border: none;
-      padding: 8px 14px;
-      color: white;
-      font-size: 14px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    .quiz-container {
+    #palette {
       display: flex;
       flex-wrap: wrap;
-      max-width: 1200px;
-      margin: 20px auto;
-      padding: 10px;
-    }
-
-    .palette {
-      flex: 1;
-      min-width: 80px;
-      padding: 10px;
-      text-align: center;
-    }
-
-    .palette button {
-      display: inline-block;
-      width: 32px;
-      height: 32px;
-      margin: 4px;
-      font-weight: bold;
-      font-size: 14px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      background: #555;
-      color: #fff;
-    }
-
-    .question-area {
-      flex: 4;
-      min-width: 280px;
-      padding: 10px 20px;
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 12px;
-    }
-
-    .question-area h3 {
-      margin-top: 0;
-    }
-
-    .options button {
-      display: block;
-      margin: 10px 0;
-      padding: 10px;
-      width: 100%;
-      font-size: 16px;
-      background: #333;
-      border: none;
-      border-radius: 6px;
-      color: white;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-
-    .options button:hover {
-      background: #444;
-    }
-
-    .correct {
-      background: #4caf50 !important;
-    }
-
-    .wrong {
-      background: #f44336 !important;
-    }
-
-    .controls {
+      gap: 5px;
       margin-top: 20px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
     }
-
-    .controls button {
-      flex: 1 1 40%;
-      min-width: 120px;
-      padding: 12px;
-      background: #2196f3;
+    #palette button {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
       border: none;
-      color: white;
-      font-size: 15px;
-      border-radius: 6px;
+      background: #ddd;
       cursor: pointer;
     }
-
-    #result-summary {
-      margin-top: 30px;
-      background: #222;
-      padding: 15px;
-      border-radius: 6px;
+    #palette .answered {
+      background: #76c7c0;
     }
-
-    #question-image {
+    .q-image {
       max-width: 100%;
       margin: 10px 0;
+    }
+    #summary {
+      text-align: center;
       display: none;
-      border-radius: 6px;
+      margin-top: 30px;
     }
-
-    #timer {
+    .percentage {
+      fill: #333;
+      font-size: 0.5em;
+      text-anchor: middle;
+    }
+    .circle-bg {
+      fill: none;
+      stroke: #eee;
+      stroke-width: 3.8;
+    }
+    .circle {
+      fill: none;
+      stroke-width: 2.8;
+      stroke: #4caf50;
+      stroke-linecap: round;
+      animation: progress 1s ease-out forwards;
+    }
+    .circular-chart {
+      display: block;
+      margin: 10px auto;
+      max-width: 80px;
+    }
+    @keyframes progress {
+      0% {
+        stroke-dasharray: 0 100;
+      }
+    }
+    #returnHome {
+      background: #4caf50;
+      color: white;
       font-weight: bold;
-      margin-bottom: 10px;
-    }
-
-    @media screen and (max-width: 600px) {
-      .quiz-container {
-        flex-direction: column;
-        padding: 10px;
-      }
-
-      .palette {
-        order: 2;
-        padding: 10px;
-      }
-
-      .question-area {
-        order: 1;
-        padding: 15px;
-      }
     }
   </style>
 </head>
 <body>
-  <header>
-    <h2>NEET PG Quiz</h2>
-    <button onclick="window.location.href='index.html'">🏠 Back to Homepage</button>
-  </header>
-
-  <div class="quiz-container">
-    <div class="palette" id="palette"></div>
-    <div class="question-area">
-      <div id="question-number"></div>
-      <div id="timer"></div>
-      <h3 id="question-text"></h3>
-      <img id="question-image" alt="Question Image" />
-      <div class="options" id="options"></div>
-
-      <div class="controls">
-        <button onclick="prevQuestion()">⬅ Previous</button>
-        <button onclick="nextQuestion()">Next ➡</button>
-        <button onclick="submitQuiz()">✅ Submit</button>
-        <button onclick="resetQuiz()">🔁 Retry</button>
-      </div>
-
-      <div id="result-summary"></div>
+  <div class="quiz-container" style="display:none">
+    <h2 id="question">Loading question...</h2>
+    <div id="questionImage"></div>
+    <div id="options"></div>
+    <div class="navigation">
+      <button id="prevBtn">⏮ Prev</button>
+      <button id="submitBtn">✅ Submit</button>
+      <button id="nextBtn">Next ⏭</button>
     </div>
+    <div id="palette"></div>
+    <button id="returnHome">🏠 Return to Home</button>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <div id="summary">
+    <h2>Quiz Summary</h2>
+    <div id="chart"></div>
+    <p id="summaryText"></p>
+    <button id="retryBtn">🔁 Retry</button>
+    <button id="returnHome">🏠 Return to Home</button>
+  </div>
+
   <script type="module" src="app.js"></script>
 </body>
 </html>
