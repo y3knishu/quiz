@@ -2,110 +2,160 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>NEET PG Quiz</title>
   <style>
     body {
-      background: linear-gradient(to right, #0f0c29, #302b63, #24243e);
-      color: #fff;
-      font-family: Arial, sans-serif;
-      padding: 0;
       margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      color: #fff;
     }
+
     header {
       background: #111;
-      padding: 15px;
+      padding: 12px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
+
     header h2 {
       margin: 0;
+      font-size: 20px;
     }
+
     header button {
       background: #ff6f61;
       border: none;
-      padding: 8px 12px;
+      padding: 8px 14px;
       color: white;
+      font-size: 14px;
       border-radius: 4px;
       cursor: pointer;
     }
+
     .quiz-container {
       display: flex;
+      flex-wrap: wrap;
       max-width: 1200px;
       margin: 20px auto;
-      padding: 20px;
-      background: rgba(0,0,0,0.6);
-      border-radius: 12px;
+      padding: 10px;
     }
+
     .palette {
       flex: 1;
-      padding-right: 20px;
-      border-right: 2px solid #555;
+      min-width: 80px;
+      padding: 10px;
+      text-align: center;
     }
+
     .palette button {
       display: inline-block;
       width: 32px;
       height: 32px;
       margin: 4px;
+      font-weight: bold;
+      font-size: 14px;
       border: none;
       border-radius: 4px;
       cursor: pointer;
+      background: #555;
+      color: #fff;
     }
+
     .question-area {
       flex: 4;
-      padding-left: 20px;
+      min-width: 280px;
+      padding: 10px 20px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
     }
+
     .question-area h3 {
       margin-top: 0;
     }
+
     .options button {
       display: block;
       margin: 10px 0;
       padding: 10px;
-      border-radius: 6px;
       width: 100%;
-      border: none;
-      cursor: pointer;
+      font-size: 16px;
       background: #333;
+      border: none;
+      border-radius: 6px;
       color: white;
+      cursor: pointer;
       transition: 0.3s;
     }
+
     .options button:hover {
       background: #444;
     }
+
     .correct {
       background: #4caf50 !important;
     }
+
     .wrong {
       background: #f44336 !important;
     }
+
     .controls {
       margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
     }
+
     .controls button {
-      margin-right: 10px;
-      padding: 10px 20px;
+      flex: 1 1 40%;
+      min-width: 120px;
+      padding: 12px;
       background: #2196f3;
       border: none;
       color: white;
+      font-size: 15px;
       border-radius: 6px;
       cursor: pointer;
     }
+
     #result-summary {
       margin-top: 30px;
       background: #222;
       padding: 15px;
       border-radius: 6px;
     }
+
     #question-image {
       max-width: 100%;
       margin: 10px 0;
-      display: block;
+      display: none;
+      border-radius: 6px;
     }
+
     #timer {
       font-weight: bold;
-      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+
+    @media screen and (max-width: 600px) {
+      .quiz-container {
+        flex-direction: column;
+        padding: 10px;
+      }
+
+      .palette {
+        order: 2;
+        padding: 10px;
+      }
+
+      .question-area {
+        order: 1;
+        padding: 15px;
+      }
     }
   </style>
 </head>
@@ -114,20 +164,23 @@
     <h2>NEET PG Quiz</h2>
     <button onclick="window.location.href='index.html'">🏠 Back to Homepage</button>
   </header>
+
   <div class="quiz-container">
     <div class="palette" id="palette"></div>
     <div class="question-area">
       <div id="question-number"></div>
       <div id="timer"></div>
       <h3 id="question-text"></h3>
-      <img id="question-image" style="display:none" />
+      <img id="question-image" alt="Question Image" />
       <div class="options" id="options"></div>
+
       <div class="controls">
         <button onclick="prevQuestion()">⬅ Previous</button>
         <button onclick="nextQuestion()">Next ➡</button>
         <button onclick="submitQuiz()">✅ Submit</button>
         <button onclick="resetQuiz()">🔁 Retry</button>
       </div>
+
       <div id="result-summary"></div>
     </div>
   </div>
