@@ -1,3 +1,4 @@
+// Updated app.js with Firebase user-specific progress tracking
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
 import {
   getFirestore, doc, getDoc, setDoc
@@ -28,7 +29,7 @@ let current = 0;
 let selectedAnswers = [];
 let startTime = Date.now();
 let timerInterval;
-let currentUser = null;
+let user = null;
 
 const qText = document.getElementById("question-text");
 const qImage = document.getElementById("question-image");
@@ -37,6 +38,31 @@ const qNumber = document.getElementById("question-number");
 const palette = document.getElementById("palette");
 const resultDiv = document.getElementById("result-summary");
 const timer = document.getElementById("timer");
+
+onAuthStateChanged(auth, async (u) => {
+  user = u;
+  if (!user && subject !== "Anatomy") {
+    alert("❌ Please login to access this subject.");
+    window.location.href = "index.html";
+    return;
+  }
+
+  if (user?.email === "y3knishu@gmail.com") {
+    console.log("✅ Admin override access");
+    loadQuiz(subject);
+    return;
+  }
+
+  if (user && subject !== "Anatomy") {
+    const snap = await getDoc(doc(db, "users", user.uid));
+    if (!snap.exists() || !snap.data().isPaid) {
+      alert("❌ This subject is locked. Please pay to unlock.");
+      window.location.href = "index.html";
+      return;
+    }
+  }
+  loadQuiz(subject);
+});
 
 function renderPalette() {
   palette.innerHTML = "";
@@ -147,11 +173,7 @@ function submitQuiz() {
     },
     options: {
       responsive: false,
-      plugins: {
-        legend: {
-          position: "bottom"
-        }
-      }
+      plugins: { legend: { position: "bottom" } }
     }
   });
 
@@ -166,8 +188,8 @@ function updateTimer() {
   timer.textContent = `Time: ${mins}m ${secs}s`;
 }
 
-async function saveProgress() {
-  const key = `progress_${subject}`;
+function saveProgress() {
+  if (!user) return;
   const summary = {
     attempted: selectedAnswers.filter(a => a !== undefined).length,
     correct: selectedAnswers.filter(a => a && a.correct).length,
@@ -175,30 +197,15 @@ async function saveProgress() {
     total: questions.length,
     answers: selectedAnswers
   };
-
-  if (currentUser) {
-    const progressRef = doc(db, "userProgress", `${currentUser.uid}_${subject}`);
-    await setDoc(progressRef, summary);
-  } else {
-    localStorage.setItem(key, JSON.stringify(summary));
-  }
+  setDoc(doc(db, "progress", `${user.uid}_${subject}`), summary);
 }
 
 async function loadProgress() {
-  const key = `progress_${subject}`;
-
-  if (currentUser) {
-    const progressRef = doc(db, "userProgress", `${currentUser.uid}_${subject}`);
-    const snap = await getDoc(progressRef);
-    if (snap.exists()) {
-      selectedAnswers = snap.data().answers || [];
-    }
-  } else {
-    const saved = localStorage.getItem(key);
-    if (saved) {
-      const data = JSON.parse(saved);
-      selectedAnswers = data.answers || [];
-    }
+  if (!user) return;
+  const snap = await getDoc(doc(db, "progress", `${user.uid}_${subject}`));
+  if (snap.exists()) {
+    const data = snap.data();
+    selectedAnswers = data.answers || [];
   }
 }
 
@@ -217,14 +224,7 @@ async function loadQuiz(subjectName) {
   }
 }
 
-onAuthStateChanged(auth, async (user) => {
-  currentUser = user;
-  await loadQuiz(subject);
-});
-
-// Expose functions
 window.prevQuestion = prevQuestion;
 window.nextQuestion = nextQuestion;
 window.resetQuiz = resetQuiz;
 window.submitQuiz = submitQuiz;
-window.toggleDarkMode = toggleDarkMode;
