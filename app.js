@@ -24,7 +24,7 @@ let current = 0;
 let selectedAnswers = [];
 let startTime = Date.now();
 let timerInterval;
-let currentUserId = null;
+let userId = null;
 
 const qText = document.getElementById("question-text");
 const qImage = document.getElementById("question-image");
@@ -143,7 +143,11 @@ function submitQuiz() {
     },
     options: {
       responsive: false,
-      plugins: { legend: { position: "bottom" } }
+      plugins: {
+        legend: {
+          position: "bottom"
+        }
+      }
     }
   });
 
@@ -159,8 +163,8 @@ function updateTimer() {
   timer.textContent = `Time: ${mins}m ${secs}s`;
 }
 
-function saveProgress() {
-  const key = `progress_${subject}`;
+async function saveProgress() {
+  if (!userId) return;
   const summary = {
     attempted: selectedAnswers.filter(a => a !== undefined).length,
     correct: selectedAnswers.filter(a => a && a.correct).length,
@@ -168,20 +172,15 @@ function saveProgress() {
     total: questions.length,
     answers: selectedAnswers
   };
-  localStorage.setItem(key, JSON.stringify(summary));
-
-  if (currentUserId) {
-    setDoc(doc(db, "progress", `${currentUserId}_${subject}`), summary, { merge: true })
-      .then(() => console.log("✅ Progress saved to Firestore"))
-      .catch(err => console.error("❌ Firestore save error:", err));
-  }
+  await setDoc(doc(db, "users", userId, "progress", subject), summary);
 }
 
-function loadProgress() {
-  const key = `progress_${subject}`;
-  const saved = localStorage.getItem(key);
-  if (saved) {
-    const data = JSON.parse(saved);
+async function loadProgress() {
+  if (!userId) return;
+  const ref = doc(db, "users", userId, "progress", subject);
+  const snap = await getDoc(ref);
+  if (snap.exists()) {
+    const data = snap.data();
     selectedAnswers = data.answers || [];
   }
 }
@@ -193,7 +192,7 @@ async function loadQuiz(subjectName) {
   if (docSnap.exists()) {
     questions = docSnap.data().questions;
     selectedAnswers = new Array(questions.length);
-    loadProgress();
+    await loadProgress();
     loadQuestion(0);
     timerInterval = setInterval(updateTimer, 1000);
   } else {
@@ -201,18 +200,13 @@ async function loadQuiz(subjectName) {
   }
 }
 
-onAuthStateChanged(auth, user => {
+onAuthStateChanged(auth, async (user) => {
   if (user) {
-    currentUserId = user.uid;
-    loadQuiz(subject);
+    userId = user.uid;
+    await loadQuiz(subject);
   } else {
-    const userEmail = localStorage.getItem("guestEmail");
-    if (userEmail === "y3knishu@gmail.com") {
-      loadQuiz(subject);
-    } else {
-      alert("Please login to access subjects");
-      window.location.href = "index.html";
-    }
+    alert("❌ Please login to access this subject.");
+    window.location.href = "index.html";
   }
 });
 
