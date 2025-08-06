@@ -1,8 +1,12 @@
-// Updated app.js with Firebase progress saving, improved responsiveness, and Anatomy access without login
+// ✅ Final updated app.js with Firebase-only progress tracking, admin override, mobile fixes, vibrant UI compatibility
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore, doc, getDoc, setDoc, collection
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getAuth, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
@@ -10,209 +14,184 @@ const firebaseConfig = {
   projectId: "mcqs-96117",
   storageBucket: "mcqs-96117.appspot.com",
   messagingSenderId: "352256319143",
-  appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582"
+  appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582",
+  measurementId: "G-6FZ770H045"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const auth = getAuth();
+const auth = getAuth(app);
 
-const urlParams = new URLSearchParams(window.location.search);
-const subject = urlParams.get('subject') || 'Anatomy';
+const queryString = window.location.search;
+const urlParams = new URLSearchParams(queryString);
+const subject = urlParams.get('subject');
 
 let questions = [];
-let current = 0;
-let selectedAnswers = [];
-let startTime = Date.now();
-let timerInterval;
-let currentUser = null;
+let currentQuestion = 0;
+let score = 0;
+let correct = 0;
+let wrong = 0;
+let startTime;
+let answered = [];
+let attempted = [];
 
-const qText = document.getElementById("question-text");
-const qImage = document.getElementById("question-image");
-const qOptions = document.getElementById("options");
-const qNumber = document.getElementById("question-number");
+const questionText = document.getElementById("question");
+const optionsContainer = document.getElementById("options");
+const nextBtn = document.getElementById("nextBtn");
+const prevBtn = document.getElementById("prevBtn");
+const submitBtn = document.getElementById("submitBtn");
+const retryBtn = document.getElementById("retryBtn");
 const palette = document.getElementById("palette");
-const resultDiv = document.getElementById("result-summary");
-const timer = document.getElementById("timer");
+const imageContainer = document.getElementById("questionImage");
+const returnBtn = document.getElementById("returnHome");
 
-function renderPalette() {
+function loadQuestion(index) {
+  const q = questions[index];
+  questionText.textContent = `${index + 1}. ${q.question}`;
+  imageContainer.innerHTML = q.image ? `<img src="${q.image}" class="q-image">` : "";
+  optionsContainer.innerHTML = "";
+  q.options.forEach((option, i) => {
+    const button = document.createElement("button");
+    button.textContent = option;
+    button.classList.add("option");
+    if (answered[index] !== undefined) {
+      button.disabled = true;
+      if (i === q.answer) {
+        button.classList.add("correct");
+      }
+      if (i === answered[index] && i !== q.answer) {
+        button.classList.add("wrong");
+      }
+    }
+    button.onclick = () => {
+      if (answered[index] === undefined) {
+        answered[index] = i;
+        attempted[index] = true;
+        if (i === q.answer) {
+          score += 4;
+          correct++;
+        } else {
+          score -= 1;
+          wrong++;
+        }
+        loadQuestion(index);
+        updatePalette();
+      }
+    };
+    optionsContainer.appendChild(button);
+  });
+  updateButtons();
+}
+
+function updateButtons() {
+  prevBtn.style.display = currentQuestion > 0 ? "inline-block" : "none";
+  nextBtn.style.display = currentQuestion < questions.length - 1 ? "inline-block" : "none";
+  submitBtn.style.display = answered.length > 0 ? "inline-block" : "none";
+}
+
+function updatePalette() {
   palette.innerHTML = "";
   questions.forEach((_, i) => {
     const btn = document.createElement("button");
     btn.textContent = i + 1;
-    btn.onclick = () => loadQuestion(i);
-    if (selectedAnswers[i] !== undefined) {
-      btn.style.background = selectedAnswers[i].correct ? "#66bb6a" : "#ef5350";
+    if (answered[i] !== undefined) {
+      btn.classList.add("answered");
     }
+    btn.onclick = () => {
+      currentQuestion = i;
+      loadQuestion(i);
+    };
     palette.appendChild(btn);
   });
 }
 
-function loadQuestion(index) {
-  current = index;
-  const q = questions[index];
-  qNumber.textContent = `Question ${index + 1}`;
-  qText.textContent = q.question;
-  qImage.style.display = q.image ? "block" : "none";
-  qImage.src = q.image || "";
-  qOptions.innerHTML = "";
+function showSummary() {
+  document.querySelector(".quiz-container").style.display = "none";
+  document.getElementById("summary").style.display = "block";
+  document.getElementById("summaryText").innerHTML = `✅ Correct: ${correct}<br>❌ Wrong: ${wrong}<br>📌 Unattempted: ${questions.length - (correct + wrong)}<br>🎯 Score: ${score}`;
+  const percent = Math.round((correct + wrong) / questions.length * 100);
+  document.getElementById("chart").innerHTML = `<svg viewBox="0 0 36 36" class="circular-chart green">
+    <path class="circle-bg" d="M18 2.0845a15.9155 15.9155 0 0 1 0 31.831A15.9155 15.9155 0 0 1 18 2.0845" />
+    <path class="circle" stroke-dasharray="${percent}, 100" d="M18 2.0845a15.9155 15.9155 0 0 1 0 31.831A15.9155 15.9155 0 0 1 18 2.0845" />
+    <text x="18" y="20.35" class="percentage">${percent}%</text>
+  </svg>`;
+}
 
-  q.options.forEach((opt, i) => {
-    const btn = document.createElement("button");
-    btn.textContent = opt;
-    btn.onclick = () => selectAnswer(i, btn);
-    qOptions.appendChild(btn);
-  });
+async function saveProgress() {
+  const user = auth.currentUser;
+  if (!user) return;
+  const total = questions.length;
+  const attemptedCount = attempted.filter(x => x).length;
+  const correctCount = correct;
+  const wrongCount = wrong;
+  await setDoc(doc(db, "user_progress", `${user.uid}_${subject}`), {
+    attempted: attemptedCount,
+    correct: correctCount,
+    wrong: wrongCount,
+    total: total
+  }, { merge: true });
+}
 
-  if (selectedAnswers[index] !== undefined) {
-    const correctIndex = q.answer;
-    const selected = selectedAnswers[index].selectedIndex;
-    const buttons = qOptions.querySelectorAll("button");
-    buttons.forEach((b, i) => {
-      b.disabled = true;
-      if (i === correctIndex) b.classList.add("correct");
-      if (i === selected && selected !== correctIndex) b.classList.add("wrong");
-    });
+nextBtn.onclick = () => {
+  if (currentQuestion < questions.length - 1) {
+    currentQuestion++;
+    loadQuestion(currentQuestion);
   }
+};
 
-  renderPalette();
-}
+prevBtn.onclick = () => {
+  if (currentQuestion > 0) {
+    currentQuestion--;
+    loadQuestion(currentQuestion);
+  }
+};
 
-function selectAnswer(selectedIndex, btn) {
-  const q = questions[current];
-  const isCorrect = selectedIndex === q.answer;
-  selectedAnswers[current] = { selectedIndex, correct: isCorrect };
+submitBtn.onclick = async () => {
+  await saveProgress();
+  showSummary();
+};
 
-  const buttons = qOptions.querySelectorAll("button");
-  buttons.forEach((b, i) => {
-    b.disabled = true;
-    if (i === q.answer) b.classList.add("correct");
-    if (i === selectedIndex && !isCorrect) b.classList.add("wrong");
-  });
+retryBtn.onclick = () => window.location.reload();
+returnBtn.onclick = () => window.location.href = "index.html";
 
-  saveProgress();
-  renderPalette();
-}
-
-function prevQuestion() {
-  if (current > 0) loadQuestion(current - 1);
-}
-
-function nextQuestion() {
-  if (current < questions.length - 1) loadQuestion(current + 1);
-}
-
-function resetQuiz() {
-  selectedAnswers = [];
-  saveProgress();
-  loadQuestion(0);
-  resultDiv.innerHTML = "";
-  startTime = Date.now();
-}
-
-function submitQuiz() {
-  let correct = 0, wrong = 0, attempted = 0;
-  selectedAnswers.forEach(a => {
-    if (a !== undefined) {
-      attempted++;
-      if (a.correct) correct++;
-      else wrong++;
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    const userEmail = user.email;
+    if (userEmail === "y3knishu@gmail.com") {
+      loadQuiz(subject);
+      return;
     }
-  });
-  const unattempted = questions.length - attempted;
-  const score = correct * 4 - wrong;
-
-  const timeTaken = Math.floor((Date.now() - startTime) / 1000);
-  const minutes = Math.floor(timeTaken / 60);
-  const seconds = timeTaken % 60;
-
-  resultDiv.innerHTML = `
-    <h3>Quiz Summary</h3>
-    <p>✅ Correct: ${correct}</p>
-    <p>❌ Wrong: ${wrong}</p>
-    <p>⏳ Unattempted: ${unattempted}</p>
-    <p>🧮 Score: ${score} / ${questions.length * 4}</p>
-    <p>⏱️ Time Taken: ${minutes} min ${seconds} sec</p>
-    <canvas id="resultChart" width="300" height="300"></canvas>
-    <button onclick="window.location.href='index.html'">🏠 Return to Home</button>
-  `;
-
-  new Chart(document.getElementById("resultChart"), {
-    type: "pie",
-    data: {
-      labels: ["Correct", "Wrong", "Unattempted"],
-      datasets: [{
-        data: [correct, wrong, unattempted],
-        backgroundColor: ["#66bb6a", "#ef5350", "#ffee58"]
-      }]
-    },
-    options: {
-      responsive: false,
-      plugins: { legend: { position: "bottom" } }
+    const docRef = doc(db, "users", user.uid);
+    const snap = await getDoc(docRef);
+    if (snap.exists() && snap.data().isPaid) {
+      loadQuiz(subject);
+    } else {
+      alert("❌ This subject is locked. Please complete payment to access.");
+      window.location.href = "index.html";
     }
-  });
-
-  clearInterval(timerInterval);
-  renderPalette();
-  saveProgress();
-}
-
-function updateTimer() {
-  const diff = Math.floor((Date.now() - startTime) / 1000);
-  const mins = Math.floor(diff / 60);
-  const secs = diff % 60;
-  timer.textContent = `Time: ${mins}m ${secs}s`;
-}
-
-function saveProgress() {
-  if (!currentUser) return;
-  const summary = {
-    attempted: selectedAnswers.filter(a => a !== undefined).length,
-    correct: selectedAnswers.filter(a => a && a.correct).length,
-    wrong: selectedAnswers.filter(a => a && !a.correct).length,
-    total: questions.length,
-    answers: selectedAnswers
-  };
-  const path = `users/${currentUser.uid}/progress/${subject}`;
-  setDoc(doc(db, path), summary, { merge: true });
-}
-
-async function loadProgress() {
-  if (!currentUser) return;
-  const path = `users/${currentUser.uid}/progress/${subject}`;
-  const snap = await getDoc(doc(db, path));
-  if (snap.exists()) {
-    const data = snap.data();
-    selectedAnswers = data.answers || [];
-  }
-}
-
-async function loadQuiz(subjectName) {
-  const docRef = doc(db, "questions", subjectName);
-  const docSnap = await getDoc(docRef);
-
-  if (docSnap.exists()) {
-    questions = docSnap.data().questions;
-    selectedAnswers = new Array(questions.length);
-    await loadProgress();
-    loadQuestion(0);
-    timerInterval = setInterval(updateTimer, 1000);
   } else {
-    alert("No questions found for this subject.");
-  }
-}
-
-onAuthStateChanged(auth, (user) => {
-  currentUser = user;
-  if (!user && subject !== "Anatomy") {
-    alert("Please login to access this subject.");
-    window.location.href = "index.html";
-  } else {
-    loadQuiz(subject);
+    if (subject === "Anatomy") {
+      loadQuiz(subject);
+    } else {
+      alert("❌ Please login to access this subject.");
+      window.location.href = "index.html";
+    }
   }
 });
 
-window.prevQuestion = prevQuestion;
-window.nextQuestion = nextQuestion;
-window.resetQuiz = resetQuiz;
-window.submitQuiz = submitQuiz;
+async function loadQuiz(subject) {
+  try {
+    const ref = doc(db, "questions", subject);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) throw new Error("No questions found");
+    questions = snap.data().questions;
+    if (!questions || questions.length === 0) throw new Error("Empty question set");
+    startTime = new Date();
+    loadQuestion(0);
+    updatePalette();
+    document.querySelector(".quiz-container").style.display = "block";
+  } catch (e) {
+    alert("Failed to load questions: " + e.message);
+    console.error(e);
+  }
+}
