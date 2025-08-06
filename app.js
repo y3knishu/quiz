@@ -1,12 +1,16 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore, doc, getDoc, setDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getAuth, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
   authDomain: "mcqs-96117.firebaseapp.com",
   projectId: "mcqs-96117",
-  storageBucket: "mcqs-96117.firebasestorage.app",
+  storageBucket: "mcqs-96117.appspot.com",
   messagingSenderId: "352256319143",
   appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582",
   measurementId: "G-6FZ770H045"
@@ -24,7 +28,7 @@ let current = 0;
 let selectedAnswers = [];
 let startTime = Date.now();
 let timerInterval;
-let userId = null;
+let currentUser = null;
 
 const qText = document.getElementById("question-text");
 const qImage = document.getElementById("question-image");
@@ -33,6 +37,11 @@ const qNumber = document.getElementById("question-number");
 const palette = document.getElementById("palette");
 const resultDiv = document.getElementById("result-summary");
 const timer = document.getElementById("timer");
+
+onAuthStateChanged(auth, async (user) => {
+  currentUser = user;
+  await loadQuiz(subject);
+});
 
 function renderPalette() {
   palette.innerHTML = "";
@@ -96,9 +105,11 @@ function selectAnswer(selectedIndex, btn) {
 function prevQuestion() {
   if (current > 0) loadQuestion(current - 1);
 }
+
 function nextQuestion() {
   if (current < questions.length - 1) loadQuestion(current + 1);
 }
+
 function resetQuiz() {
   selectedAnswers = [];
   saveProgress();
@@ -106,6 +117,7 @@ function resetQuiz() {
   resultDiv.innerHTML = "";
   startTime = Date.now();
 }
+
 function submitQuiz() {
   let correct = 0, wrong = 0, attempted = 0;
   selectedAnswers.forEach(a => {
@@ -153,7 +165,7 @@ function submitQuiz() {
 
   clearInterval(timerInterval);
   renderPalette();
-  saveProgress();
+  saveProgress(); // Ensure progress is synced
 }
 
 function updateTimer() {
@@ -164,7 +176,7 @@ function updateTimer() {
 }
 
 async function saveProgress() {
-  if (!userId) return;
+  if (!currentUser || subject === "Anatomy") return;
   const summary = {
     attempted: selectedAnswers.filter(a => a !== undefined).length,
     correct: selectedAnswers.filter(a => a && a.correct).length,
@@ -172,43 +184,33 @@ async function saveProgress() {
     total: questions.length,
     answers: selectedAnswers
   };
-  await setDoc(doc(db, "users", userId, "progress", subject), summary);
+  const id = `${currentUser.uid}_${subject}`;
+  await setDoc(doc(db, "user_progress", id), summary, { merge: true });
 }
 
-async function loadProgress() {
-  if (!userId) return;
-  const ref = doc(db, "users", userId, "progress", subject);
-  const snap = await getDoc(ref);
-  if (snap.exists()) {
-    const data = snap.data();
-    selectedAnswers = data.answers || [];
+async function loadProgressFromFirebase() {
+  if (!currentUser || subject === "Anatomy") return;
+  const id = `${currentUser.uid}_${subject}`;
+  const docRef = doc(db, "user_progress", id);
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    selectedAnswers = docSnap.data().answers || [];
   }
 }
 
 async function loadQuiz(subjectName) {
   const docRef = doc(db, "questions", subjectName);
   const docSnap = await getDoc(docRef);
-
   if (docSnap.exists()) {
     questions = docSnap.data().questions;
     selectedAnswers = new Array(questions.length);
-    await loadProgress();
+    await loadProgressFromFirebase();
     loadQuestion(0);
     timerInterval = setInterval(updateTimer, 1000);
   } else {
-    alert("No questions found for this subject.");
+    alert("❌ No questions found.");
   }
 }
-
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    userId = user.uid;
-    await loadQuiz(subject);
-  } else {
-    alert("❌ Please login to access this subject.");
-    window.location.href = "index.html";
-  }
-});
 
 window.prevQuestion = prevQuestion;
 window.nextQuestion = nextQuestion;
