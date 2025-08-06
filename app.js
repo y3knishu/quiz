@@ -1,6 +1,10 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, setDoc
+} from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
+import {
+  getAuth, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
@@ -24,6 +28,7 @@ let current = 0;
 let selectedAnswers = [];
 let startTime = Date.now();
 let timerInterval;
+let currentUser = null;
 
 const qText = document.getElementById("question-text");
 const qImage = document.getElementById("question-image");
@@ -161,7 +166,7 @@ function updateTimer() {
   timer.textContent = `Time: ${mins}m ${secs}s`;
 }
 
-function saveProgress() {
+async function saveProgress() {
   const key = `progress_${subject}`;
   const summary = {
     attempted: selectedAnswers.filter(a => a !== undefined).length,
@@ -170,15 +175,30 @@ function saveProgress() {
     total: questions.length,
     answers: selectedAnswers
   };
-  localStorage.setItem(key, JSON.stringify(summary));
+
+  if (currentUser) {
+    const progressRef = doc(db, "userProgress", `${currentUser.uid}_${subject}`);
+    await setDoc(progressRef, summary);
+  } else {
+    localStorage.setItem(key, JSON.stringify(summary));
+  }
 }
 
-function loadProgress() {
+async function loadProgress() {
   const key = `progress_${subject}`;
-  const saved = localStorage.getItem(key);
-  if (saved) {
-    const data = JSON.parse(saved);
-    selectedAnswers = data.answers || [];
+
+  if (currentUser) {
+    const progressRef = doc(db, "userProgress", `${currentUser.uid}_${subject}`);
+    const snap = await getDoc(progressRef);
+    if (snap.exists()) {
+      selectedAnswers = snap.data().answers || [];
+    }
+  } else {
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      const data = JSON.parse(saved);
+      selectedAnswers = data.answers || [];
+    }
   }
 }
 
@@ -189,7 +209,7 @@ async function loadQuiz(subjectName) {
   if (docSnap.exists()) {
     questions = docSnap.data().questions;
     selectedAnswers = new Array(questions.length);
-    loadProgress();
+    await loadProgress();
     loadQuestion(0);
     timerInterval = setInterval(updateTimer, 1000);
   } else {
@@ -197,39 +217,14 @@ async function loadQuiz(subjectName) {
   }
 }
 
-// 🔐 Subject access control with admin override
 onAuthStateChanged(auth, async (user) => {
-  if (subject === "Anatomy") {
-    loadQuiz(subject);
-    return;
-  }
-
-  if (user) {
-    const userId = user.uid;
-    const userEmail = user.email;
-
-    if (userEmail === "y3knishu@gmail.com") {
-      console.log("✅ Admin override access granted");
-      loadQuiz(subject);
-      return;
-    }
-
-    const docRef = doc(db, "users", userId);
-    const snap = await getDoc(docRef);
-    if (snap.exists() && snap.data().isPaid) {
-      loadQuiz(subject);
-    } else {
-      alert("❌ This subject is locked. Please complete payment to access.");
-      window.location.href = "index.html";
-    }
-  } else {
-    alert("❌ Please login to access this subject.");
-    window.location.href = "index.html";
-  }
+  currentUser = user;
+  await loadQuiz(subject);
 });
 
-// Expose functions to window
+// Expose functions
 window.prevQuestion = prevQuestion;
 window.nextQuestion = nextQuestion;
 window.resetQuiz = resetQuiz;
 window.submitQuiz = submitQuiz;
+window.toggleDarkMode = toggleDarkMode;
