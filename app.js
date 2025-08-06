@@ -1,138 +1,217 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NEET PG Quiz</title>
-  <style>
-    body {
-      background: linear-gradient(to right, #0f0c29, #302b63, #24243e);
-      color: #fff;
-      font-family: Arial, sans-serif;
-      padding: 0;
-      margin: 0;
-    }
-    header {
-      background: #111;
-      padding: 15px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    header h2 {
-      margin: 0;
-    }
-    header button {
-      background: #ff6f61;
-      border: none;
-      padding: 8px 12px;
-      color: white;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .quiz-container {
-      display: flex;
-      max-width: 1200px;
-      margin: 20px auto;
-      padding: 20px;
-      background: rgba(0,0,0,0.6);
-      border-radius: 12px;
-    }
-    .palette {
-      flex: 1;
-      padding-right: 20px;
-      border-right: 2px solid #555;
-    }
-    .palette button {
-      display: inline-block;
-      width: 32px;
-      height: 32px;
-      margin: 4px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .question-area {
-      flex: 4;
-      padding-left: 20px;
-    }
-    .question-area h3 {
-      margin-top: 0;
-    }
-    .options button {
-      display: block;
-      margin: 10px 0;
-      padding: 10px;
-      border-radius: 6px;
-      width: 100%;
-      border: none;
-      cursor: pointer;
-      background: #333;
-      color: white;
-      transition: 0.3s;
-    }
-    .options button:hover {
-      background: #444;
-    }
-    .correct {
-      background: #4caf50 !important;
-    }
-    .wrong {
-      background: #f44336 !important;
-    }
-    .controls {
-      margin-top: 20px;
-    }
-    .controls button {
-      margin-right: 10px;
-      padding: 10px 20px;
-      background: #2196f3;
-      border: none;
-      color: white;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    #result-summary {
-      margin-top: 30px;
-      background: #222;
-      padding: 15px;
-      border-radius: 6px;
-    }
-    #question-image {
-      max-width: 100%;
-      margin: 10px 0;
-      display: block;
-    }
-    #timer {
-      font-weight: bold;
-      margin-top: 10px;
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <h2>NEET PG Quiz</h2>
-    <button onclick="window.location.href='index.html'">🏠 Back to Homepage</button>
-  </header>
-  <div class="quiz-container">
-    <div class="palette" id="palette"></div>
-    <div class="question-area">
-      <div id="question-number"></div>
-      <div id="timer"></div>
-      <h3 id="question-text"></h3>
-      <img id="question-image" style="display:none" />
-      <div class="options" id="options"></div>
-      <div class="controls">
-        <button onclick="prevQuestion()">⬅ Previous</button>
-        <button onclick="nextQuestion()">Next ➡</button>
-        <button onclick="submitQuiz()">✅ Submit</button>
-        <button onclick="resetQuiz()">🔁 Retry</button>
-      </div>
-      <div id="result-summary"></div>
-    </div>
-  </div>
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js";
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script type="module" src="app.js"></script>
-</body>
-</html>
+const firebaseConfig = {
+  apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
+  authDomain: "mcqs-96117.firebaseapp.com",
+  projectId: "mcqs-96117",
+  storageBucket: "mcqs-96117.firebasestorage.app",
+  messagingSenderId: "352256319143",
+  appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582",
+  measurementId: "G-6FZ770H045"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+const urlParams = new URLSearchParams(window.location.search);
+const subject = urlParams.get('subject') || 'Anatomy';
+
+let questions = [];
+let current = 0;
+let selectedAnswers = [];
+let startTime = Date.now();
+let timerInterval;
+
+const qText = document.getElementById("question-text");
+const qImage = document.getElementById("question-image");
+const qOptions = document.getElementById("options");
+const qNumber = document.getElementById("question-number");
+const palette = document.getElementById("palette");
+const resultDiv = document.getElementById("result-summary");
+const timer = document.getElementById("timer");
+
+function renderPalette() {
+  palette.innerHTML = "";
+  questions.forEach((_, i) => {
+    const btn = document.createElement("button");
+    btn.textContent = i + 1;
+    btn.onclick = () => loadQuestion(i);
+    if (selectedAnswers[i] !== undefined) {
+      btn.style.background = selectedAnswers[i].correct ? "#66bb6a" : "#ef5350";
+    }
+    palette.appendChild(btn);
+  });
+}
+
+function loadQuestion(index) {
+  current = index;
+  const q = questions[index];
+  qNumber.textContent = `Question ${index + 1}`;
+  qText.textContent = q.question;
+  qImage.style.display = q.image ? "block" : "none";
+  qImage.src = q.image || "";
+  qOptions.innerHTML = "";
+
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement("button");
+    btn.textContent = opt;
+    btn.onclick = () => selectAnswer(i, btn);
+    qOptions.appendChild(btn);
+  });
+
+  if (selectedAnswers[index] !== undefined) {
+    const correctIndex = q.answer;
+    const selected = selectedAnswers[index].selectedIndex;
+    const buttons = qOptions.querySelectorAll("button");
+    buttons.forEach((b, i) => {
+      b.disabled = true;
+      if (i === correctIndex) b.classList.add("correct");
+      if (i === selected && selected !== correctIndex) b.classList.add("wrong");
+    });
+  }
+
+  renderPalette();
+}
+
+function selectAnswer(selectedIndex, btn) {
+  const q = questions[current];
+  const isCorrect = selectedIndex === q.answer;
+  selectedAnswers[current] = { selectedIndex, correct: isCorrect };
+
+  const buttons = qOptions.querySelectorAll("button");
+  buttons.forEach((b, i) => {
+    b.disabled = true;
+    if (i === q.answer) b.classList.add("correct");
+    if (i === selectedIndex && !isCorrect) b.classList.add("wrong");
+  });
+
+  saveProgress();
+  renderPalette();
+}
+
+function prevQuestion() {
+  if (current > 0) loadQuestion(current - 1);
+}
+function nextQuestion() {
+  if (current < questions.length - 1) loadQuestion(current + 1);
+}
+function resetQuiz() {
+  selectedAnswers = [];
+  saveProgress();
+  loadQuestion(0);
+  resultDiv.innerHTML = "";
+  startTime = Date.now();
+}
+function submitQuiz() {
+  let correct = 0, wrong = 0, attempted = 0;
+  selectedAnswers.forEach(a => {
+    if (a !== undefined) {
+      attempted++;
+      if (a.correct) correct++;
+      else wrong++;
+    }
+  });
+  const unattempted = questions.length - attempted;
+  const score = correct * 4 - wrong;
+
+  const timeTaken = Math.floor((Date.now() - startTime) / 1000);
+  const minutes = Math.floor(timeTaken / 60);
+  const seconds = timeTaken % 60;
+
+  resultDiv.innerHTML = `
+    <h3>Quiz Summary</h3>
+    <p>✅ Correct: ${correct}</p>
+    <p>❌ Wrong: ${wrong}</p>
+    <p>⏳ Unattempted: ${unattempted}</p>
+    <p>🧮 Score: ${score} / ${questions.length * 4}</p>
+    <p>⏱️ Time Taken: ${minutes} min ${seconds} sec</p>
+    <canvas id="resultChart" width="300" height="300"></canvas>
+  `;
+
+  new Chart(document.getElementById("resultChart"), {
+    type: "pie",
+    data: {
+      labels: ["Correct", "Wrong", "Unattempted"],
+      datasets: [{
+        data: [correct, wrong, unattempted],
+        backgroundColor: ["#66bb6a", "#ef5350", "#ffee58"]
+      }]
+    },
+    options: {
+      responsive: false,
+      plugins: {
+        legend: {
+          position: "bottom"
+        }
+      }
+    }
+  });
+
+  clearInterval(timerInterval);
+  renderPalette();
+}
+
+function updateTimer() {
+  const diff = Math.floor((Date.now() - startTime) / 1000);
+  const mins = Math.floor(diff / 60);
+  const secs = diff % 60;
+  timer.textContent = `Time: ${mins}m ${secs}s`;
+}
+
+function saveProgress() {
+  const key = `progress_${subject}`;
+  const summary = {
+    attempted: selectedAnswers.filter(a => a !== undefined).length,
+    correct: selectedAnswers.filter(a => a && a.correct).length,
+    wrong: selectedAnswers.filter(a => a && !a.correct).length,
+    total: questions.length,
+    answers: selectedAnswers
+  };
+
+  // Save to localStorage
+  localStorage.setItem(key, JSON.stringify(summary));
+
+  // Save to Firestore if logged in
+  const user = auth.currentUser;
+  if (user) {
+    const progressRef = doc(db, "userProgress", user.uid);
+    setDoc(progressRef, {
+      [subject]: summary
+    }, { merge: true });
+  }
+}
+
+function loadProgress() {
+  const key = `progress_${subject}`;
+  const saved = localStorage.getItem(key);
+  if (saved) {
+    const data = JSON.parse(saved);
+    selectedAnswers = data.answers || [];
+  }
+}
+
+async function loadQuiz(subjectName) {
+  const docRef = doc(db, "questions", subjectName);
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    questions = docSnap.data().questions;
+    selectedAnswers = new Array(questions.length);
+    loadProgress();
+    loadQuestion(0);
+    timerInterval = setInterval(updateTimer, 1000);
+  } else {
+    alert("No questions found for this subject.");
+  }
+}
+
+loadQuiz(subject);
+
+// Expose functions
+window.prevQuestion = prevQuestion;
+window.nextQuestion = nextQuestion;
+window.resetQuiz = resetQuiz;
+window.submitQuiz = submitQuiz;
