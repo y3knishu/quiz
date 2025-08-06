@@ -24,6 +24,7 @@ let current = 0;
 let selectedAnswers = [];
 let startTime = Date.now();
 let timerInterval;
+let currentUserId = null;
 
 const qText = document.getElementById("question-text");
 const qImage = document.getElementById("question-image");
@@ -142,16 +143,13 @@ function submitQuiz() {
     },
     options: {
       responsive: false,
-      plugins: {
-        legend: {
-          position: "bottom"
-        }
-      }
+      plugins: { legend: { position: "bottom" } }
     }
   });
 
   clearInterval(timerInterval);
   renderPalette();
+  saveProgress();
 }
 
 function updateTimer() {
@@ -170,17 +168,12 @@ function saveProgress() {
     total: questions.length,
     answers: selectedAnswers
   };
-
-  // Save to localStorage
   localStorage.setItem(key, JSON.stringify(summary));
 
-  // Save to Firestore if logged in
-  const user = auth.currentUser;
-  if (user) {
-    const progressRef = doc(db, "userProgress", user.uid);
-    setDoc(progressRef, {
-      [subject]: summary
-    }, { merge: true });
+  if (currentUserId) {
+    setDoc(doc(db, "progress", `${currentUserId}_${subject}`), summary, { merge: true })
+      .then(() => console.log("✅ Progress saved to Firestore"))
+      .catch(err => console.error("❌ Firestore save error:", err));
   }
 }
 
@@ -208,9 +201,21 @@ async function loadQuiz(subjectName) {
   }
 }
 
-loadQuiz(subject);
+onAuthStateChanged(auth, user => {
+  if (user) {
+    currentUserId = user.uid;
+    loadQuiz(subject);
+  } else {
+    const userEmail = localStorage.getItem("guestEmail");
+    if (userEmail === "y3knishu@gmail.com") {
+      loadQuiz(subject);
+    } else {
+      alert("Please login to access subjects");
+      window.location.href = "index.html";
+    }
+  }
+});
 
-// Expose functions
 window.prevQuestion = prevQuestion;
 window.nextQuestion = nextQuestion;
 window.resetQuiz = resetQuiz;
