@@ -4,107 +4,81 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NEET PG Subjects</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
     body {
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #ff9a9e, #fad0c4, #a1c4fd, #c2e9fb);
-      background-size: 600% 600%;
-      animation: gradientBG 20s ease infinite;
-      color: #333;
-      padding: 20px;
       margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #ff9a9e, #fad0c4, #fad0c4, #fbc2eb, #a1c4fd, #c2e9fb);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      color: #fff;
+      min-height: 100vh;
+      padding: 20px;
     }
-
     @keyframes gradientBG {
       0% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
     }
-
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
+      margin-bottom: 20px;
     }
-
     h1 {
-      font-size: 2.2em;
-      color: #fff;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      font-size: 2rem;
     }
-
     .top-buttons {
       display: flex;
       flex-direction: column;
       align-items: flex-end;
     }
-
-    .top-buttons button {
-      padding: 8px 14px;
-      font-size: 0.9em;
-      background: #6a11cb;
-      background: linear-gradient(to right, #2575fc, #6a11cb);
-      color: #fff;
+    .top-right button {
+      margin: 5px;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      background: #fff;
       border: none;
       border-radius: 6px;
-      margin-top: 5px;
+      color: #333;
       cursor: pointer;
-      transition: 0.3s;
+      font-weight: bold;
     }
-
-    .top-buttons button:hover {
-      filter: brightness(1.1);
-    }
-
     .subjects {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
-      max-width: 1200px;
-      margin: 30px auto 0;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
     }
-
     .card {
-      background: linear-gradient(45deg, #f6d365 0%, #fda085 100%);
-      border-radius: 12px;
       padding: 20px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      color: #fff;
-      font-weight: 600;
-      text-align: center;
-      transition: transform 0.2s ease-in-out;
-      text-decoration: none;
+      border-radius: 16px;
+      color: white;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+      transition: transform 0.2s ease;
+      position: relative;
     }
-
     .card:hover {
-      transform: scale(1.05);
+      transform: translateY(-5px);
     }
-
-    .card.locked {
-      background: linear-gradient(to right, #bdc3c7, #2c3e50);
-      opacity: 0.7;
-      cursor: not-allowed;
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-bottom: 10px;
     }
-
-    .info-message {
-      background: rgba(255,255,255,0.9);
-      border-radius: 8px;
-      padding: 15px;
-      text-align: center;
-      font-size: 1rem;
-      color: #333;
+    .progress-container {
+      background: rgba(255,255,255,0.3);
+      border-radius: 20px;
+      overflow: hidden;
+      height: 12px;
       margin-top: 10px;
     }
-
-    @media screen and (max-width: 600px) {
-      .top-buttons {
-        align-items: center;
-      }
-      h1 {
-        font-size: 1.5em;
-      }
+    .progress-bar {
+      height: 100%;
+      transition: width 0.5s;
     }
   </style>
 </head>
@@ -112,7 +86,7 @@
   <header>
     <h1>NEET PG Subjects</h1>
     <div class="top-buttons">
-      <div>
+      <div class="top-right">
         <span id="user-info">Loading...</span>
         <button id="loginBtn" style="display:none">🔐 Login / Sign Up</button>
         <button id="logoutBtn" style="display:none">🚪 Logout</button>
@@ -121,24 +95,18 @@
     </div>
   </header>
 
-  <div class="info-message">
-    🔓 <strong>Anatomy</strong> is free. Pay ₹99 once to unlock access to all other subjects.<br>
-    Please login first to make the payment.
-  </div>
+  <div class="subjects" id="subject-container"></div>
 
-  <div id="subject-container" class="subjects"></div>
-
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
       authDomain: "mcqs-96117.firebaseapp.com",
       projectId: "mcqs-96117",
-      storageBucket: "mcqs-96117.firebasestorage.app",
+      storageBucket: "mcqs-96117.appspot.com",
       messagingSenderId: "352256319143",
       appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582",
       measurementId: "G-6FZ770H045"
@@ -148,17 +116,19 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
+    const subjectColors = [
+      "#f44336", "#e91e63", "#9c27b0", "#673ab7", "#3f51b5", "#2196f3",
+      "#03a9f4", "#00bcd4", "#009688", "#4caf50", "#8bc34a", "#cddc39",
+      "#ffeb3b", "#ffc107", "#ff9800", "#ff5722", "#795548", "#607d8b", "#b388ff"
+    ];
+
     const subjects = [
-      "Anatomy", "Physiology", "Biochemistry",
-      "Pathology", "Pharmacology", "Microbiology", "Forensic Medicine",
-      "Community Medicine", "ENT", "Ophthalmology",
-      "General Medicine", "General Surgery", "Obstetrics & Gynaecology",
-      "Pediatrics", "Orthopaedics", "Dermatology",
+      "Anatomy", "Physiology", "Biochemistry", "Pathology", "Pharmacology", "Microbiology", "Forensic Medicine",
+      "Community Medicine", "ENT", "Ophthalmology", "General Medicine", "General Surgery",
+      "Obstetrics & Gynaecology", "Pediatrics", "Orthopaedics", "Dermatology",
       "Psychiatry", "Respiratory Medicine", "Anesthesiology"
     ];
 
-    let isPaid = false;
-    let userId = null;
     let currentUser = null;
 
     const userInfo = document.getElementById("user-info");
@@ -167,104 +137,52 @@
     const payBtn = document.getElementById("payBtn");
     const container = document.getElementById("subject-container");
 
-    function renderSubjects() {
-      container.innerHTML = "";
-      subjects.forEach(subject => {
-        const card = document.createElement("a");
-        card.className = "card";
-        const isFree = subject === "Anatomy";
-        const locked = !isFree && !isPaid;
-        card.classList.toggle("locked", locked);
-        card.innerHTML = `
-          <div class="card-title">${subject}</div>
-          <div class="card-sub">${locked ? "🔒 Locked" : "✅ Open"}</div>
-        `;
-        if (!locked) {
-          card.href = `quiz.html?subject=${encodeURIComponent(subject)}`;
-        } else {
-          card.onclick = (e) => {
-            e.preventDefault();
-            alert("🔒 This subject is locked. Please login and pay ₹99 to unlock all subjects.");
-          };
-        }
-        container.appendChild(card);
-      });
+    function createCard(subject, color, progress = 0) {
+      const card = document.createElement("a");
+      card.className = "card";
+      card.href = `quiz.html?subject=${encodeURIComponent(subject)}`;
+      card.style.background = color;
+      card.innerHTML = `
+        <div class="card-title">${subject}</div>
+        <div class="progress-container">
+          <div class="progress-bar" style="width: ${progress}%; background: white;"></div>
+        </div>
+      `;
+      container.appendChild(card);
     }
 
     onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        currentUser = user;
-        userId = user.uid;
-        loginBtn.style.display = "none";
-        logoutBtn.style.display = "inline-block";
-        userInfo.textContent = `👋 ${user.email}`;
-
-        if (user.email === "y3knishu@gmail.com") {
-          isPaid = true;
-          payBtn.style.display = "none";
-        } else {
-          try {
-            const docRef = doc(db, "users", userId);
-            const snap = await getDoc(docRef);
-            if (snap.exists() && snap.data().isPaid) {
-              isPaid = true;
-              payBtn.style.display = "none";
-            } else {
-              payBtn.style.display = "inline-block";
-            }
-          } catch (e) {
-            console.warn("Error checking payment status:", e);
-          }
-        }
-
-        renderSubjects();
-      } else {
-        currentUser = null;
+      currentUser = user;
+      if (!user) {
         userInfo.textContent = "🔐 Not logged in";
         loginBtn.style.display = "inline-block";
         logoutBtn.style.display = "none";
-        isPaid = false;
-        payBtn.style.display = "inline-block";
-        renderSubjects();
+        return;
+      }
+
+      userInfo.textContent = `👋 ${user.email}`;
+      loginBtn.style.display = "none";
+      logoutBtn.style.display = "inline-block";
+
+      for (let i = 0; i < subjects.length; i++) {
+        const subject = subjects[i];
+        let progress = 0;
+        try {
+          const ref = doc(db, `users/${user.uid}/progress`, subject);
+          const snap = await getDoc(ref);
+          if (snap.exists()) {
+            const data = snap.data();
+            progress = Math.round((data.attempted || 0) / (data.total || 1) * 100);
+          }
+        } catch (e) {
+          console.warn("No progress for", subject);
+        }
+        createCard(subject, subjectColors[i % subjectColors.length], progress);
       }
     });
 
-    loginBtn.onclick = () => {
-      window.location.href = "admin-login.html";
-    };
-
-    logoutBtn.onclick = () => {
-      signOut(auth).then(() => {
-        alert("Logged out");
-        window.location.reload();
-      });
-    };
-
-    payBtn.onclick = function () {
-      if (!currentUser) {
-        alert("🔐 Please login first to make payment.");
-        return;
-      }
-      const options = {
-        key: "rzp_live_7nZptAUoDrsfRb",
-        amount: 9900,
-        currency: "INR",
-        name: "NEET PG Quiz",
-        description: "Unlock all subjects",
-        handler: async function (response) {
-          alert("✅ Payment successful! ID: " + response.razorpay_payment_id);
-          await setDoc(doc(db, "users", userId), { isPaid: true }, { merge: true });
-          isPaid = true;
-          payBtn.style.display = "none";
-          renderSubjects();
-        },
-        theme: {
-          color: "#3399cc"
-        }
-      };
-      const rzp = new Razorpay(options);
-      rzp.open();
-    };
+    loginBtn.onclick = () => window.location.href = "admin-login.html";
+    logoutBtn.onclick = () => signOut(auth).then(() => location.reload());
   </script>
 </body>
 </html>
