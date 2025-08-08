@@ -7,74 +7,116 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #111;
+      background: #0f172a;
       color: white;
-      padding: 20px;
       margin: 0;
+      padding: 0;
     }
     header {
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
       align-items: center;
-      margin-bottom: 10px;
-    }
-    h1 {
-      font-size: 2em;
-    }
-    .top-right {
-      text-align: right;
-    }
-    .top-right button {
-      margin-left: 8px;
-    }
-    .info-message {
-      text-align: center;
-      margin-bottom: 20px;
-      color: #ccc;
-    }
-    .subjects {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 15px;
-      max-width: 1000px;
-      margin: auto;
-    }
-    .card {
-      background: #222;
+      background: linear-gradient(90deg, #1e293b, #0f172a);
       padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(255,255,255,0.05);
-      cursor: pointer;
-      transition: 0.2s;
-      text-decoration: none;
-      color: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
     }
-    .card:hover {
-      box-shadow: 0 4px 10px rgba(255,255,255,0.2);
-    }
-    .card.locked {
-      background: #444;
-      pointer-events: auto;
-      opacity: 0.6;
-    }
-    #payBtn, #loginBtn, #logoutBtn {
-      padding: 8px 16px;
-      font-size: 0.9em;
-      background: #3399cc;
-      border: none;
-      border-radius: 4px;
-      color: white;
-      cursor: pointer;
-    }
-    #payBtn:hover, #loginBtn:hover, #logoutBtn:hover {
-      background: #2788bb;
+    header h1 {
+      margin: 5px 0;
+      font-size: 1.8em;
+      text-align: center;
     }
     .top-buttons {
       display: flex;
       flex-direction: column;
-      align-items: flex-end;
+      align-items: center;
+      gap: 8px;
+      margin-top: 5px;
+    }
+    .top-right {
+      text-align: center;
+    }
+    #payBtn, #loginBtn, #logoutBtn {
+      padding: 8px 14px;
+      font-size: 0.9em;
+      background: #10b981;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #payBtn:hover, #loginBtn:hover, #logoutBtn:hover {
+      background: #059669;
+    }
+    .info-message {
+      text-align: center;
+      margin: 15px;
+      color: #cbd5e1;
+      font-size: 0.95em;
+    }
+    .subjects {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 15px;
+      padding: 15px;
+      max-width: 1000px;
+      margin: auto;
+    }
+    .card {
+      background: #1e293b;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      cursor: pointer;
+      text-decoration: none;
+      color: white;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+    .card.locked {
+      background: #334155;
+      opacity: 0.6;
+    }
+    .card-title {
+      font-size: 1.1em;
+      margin-bottom: 5px;
+    }
+    .card-sub {
+      font-size: 0.85em;
+      color: #cbd5e1;
+    }
+    /* WhatsApp Floating Button */
+    .whatsapp-float {
+      position: fixed;
+      width: 55px;
+      height: 55px;
+      bottom: 20px;
+      right: 20px;
+      background-color: #25d366;
+      color: white;
+      border-radius: 50px;
+      text-align: center;
+      font-size: 30px;
+      box-shadow: 2px 2px 3px #999;
+      z-index: 100;
+    }
+    .whatsapp-float i {
+      margin-top: 12px;
+    }
+    @media (max-width: 600px) {
+      header h1 {
+        font-size: 1.4em;
+      }
+      #payBtn, #loginBtn, #logoutBtn {
+        font-size: 0.85em;
+        padding: 6px 12px;
+      }
     }
   </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
   <header>
@@ -85,7 +127,7 @@
         <button id="loginBtn" style="display:none">🔐 Login / Sign Up</button>
         <button id="logoutBtn" style="display:none">🚪 Logout</button>
       </div>
-      <button id="payBtn" style="margin-top: 10px;">💳 Pay ₹99 to Unlock All Subjects</button>
+      <button id="payBtn">💳 Pay ₹99 to Unlock All Subjects</button>
     </div>
   </header>
 
@@ -95,6 +137,11 @@
   </div>
 
   <div id="subject-container" class="subjects"></div>
+
+  <!-- WhatsApp Floating Button -->
+  <a href="https://wa.me/919431328569" class="whatsapp-float" target="_blank">
+    <i class="fab fa-whatsapp"></i>
+  </a>
 
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script type="module">
@@ -148,7 +195,7 @@
           <div class="card-sub">${locked ? "🔒 Locked" : "✅ Open"}</div>
         `;
         if (!locked) {
-          card.href = `quiz.html?subject=${encodeURIComponent(subject)}`;
+          card.href = \`quiz.html?subject=\${encodeURIComponent(subject)}\`;
         } else {
           card.onclick = (e) => {
             e.preventDefault();
@@ -165,14 +212,13 @@
         userId = user.uid;
         loginBtn.style.display = "none";
         logoutBtn.style.display = "inline-block";
-        userInfo.textContent = `👋 ${user.email}`;
+        userInfo.textContent = \`👋 \${user.email}\`;
 
         try {
           const docRef = doc(db, "users", user.uid);
           const snap = await getDoc(docRef);
 
           if (user.email === "y3knishu@gmail.com") {
-            console.log("✅ Admin override access granted");
             isPaid = true;
             payBtn.style.display = "none";
           } else if (snap.exists() && snap.data().isPaid) {
@@ -228,7 +274,7 @@
           renderSubjects();
         },
         theme: {
-          color: "#3399cc"
+          color: "#10b981"
         }
       };
       const rzp = new Razorpay(options);
