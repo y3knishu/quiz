@@ -7,127 +7,93 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #0f172a;
+      background: #111;
       color: white;
+      padding: 20px;
       margin: 0;
-      padding: 0;
     }
     header {
       display: flex;
-      flex-direction: column;
+      justify-content: space-between;
       align-items: center;
-      background: linear-gradient(90deg, #1e293b, #0f172a);
-      padding: 15px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      margin-bottom: 10px;
     }
-    header h1 {
-      margin: 5px 0;
-      font-size: 1.8em;
-      text-align: center;
-    }
-    .top-buttons {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      margin-top: 5px;
+    h1 {
+      font-size: 2em;
     }
     .top-right {
-      text-align: center;
+      text-align: right;
     }
-    #payBtn, #loginBtn, #logoutBtn {
-      padding: 8px 14px;
-      font-size: 0.9em;
-      background: #10b981;
-      border: none;
-      border-radius: 6px;
-      color: white;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    #payBtn:hover, #loginBtn:hover, #logoutBtn:hover {
-      background: #059669;
+    .top-right button {
+      margin-left: 8px;
     }
     .info-message {
       text-align: center;
-      margin: 15px;
-      color: #cbd5e1;
-      font-size: 0.95em;
+      margin-bottom: 20px;
+      color: #ccc;
     }
     .subjects {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 15px;
-      padding: 15px;
       max-width: 1000px;
       margin: auto;
     }
     .card {
-      background: #1e293b;
+      background: linear-gradient(135deg, #ff9e9e, #ffd79e);
       padding: 15px;
       border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      cursor: pointer;
-      text-decoration: none;
-      color: white;
-      transition: transform 0.2s, box-shadow 0.2s;
+      text-align: center;
+      margin: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease;
     }
     .card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      transform: scale(1.05);
     }
-    .card.locked {
-      background: #334155;
-      opacity: 0.6;
+    .status {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
     }
-    .card-title {
-      font-size: 1.1em;
-      margin-bottom: 5px;
+    .status .open-label {
+      background-color: #66bb6a;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 5px;
     }
-    .card-sub {
-      font-size: 0.85em;
-      color: #cbd5e1;
+    .status .locked-label {
+      background-color: #ef5350;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 5px;
     }
-    /* WhatsApp Floating Button */
-    .whatsapp-float {
+    #whatsapp-button {
       position: fixed;
-      width: 55px;
-      height: 55px;
       bottom: 20px;
       right: 20px;
       background-color: #25d366;
+      padding: 15px;
+      border-radius: 50%;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
       color: white;
-      border-radius: 50px;
+      font-size: 24px;
       text-align: center;
-      font-size: 30px;
-      box-shadow: 2px 2px 3px #999;
+      cursor: pointer;
       z-index: 100;
     }
-    .whatsapp-float i {
-      margin-top: 12px;
-    }
-    @media (max-width: 600px) {
-      header h1 {
-        font-size: 1.4em;
-      }
-      #payBtn, #loginBtn, #logoutBtn {
-        font-size: 0.85em;
-        padding: 6px 12px;
-      }
+    #whatsapp-button:hover {
+      background-color: #128c7e;
     }
   </style>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
   <header>
     <h1>NEET PG / INICET PYQs</h1>
-    <div class="top-buttons">
-      <div class="top-right">
-        <span id="user-info">Loading...</span>
-        <button id="loginBtn" style="display:none">🔐 Login / Sign Up</button>
-        <button id="logoutBtn" style="display:none">🚪 Logout</button>
-      </div>
-      <button id="payBtn">💳 Pay ₹99 to Unlock All Subjects</button>
+    <div class="top-right">
+      <span id="user-info">Loading...</span>
+      <button id="loginBtn" style="display:none">🔐 Login / Sign Up</button>
+      <button id="logoutBtn" style="display:none">🚪 Logout</button>
     </div>
   </header>
 
@@ -138,10 +104,9 @@
 
   <div id="subject-container" class="subjects"></div>
 
-  <!-- WhatsApp Floating Button -->
-  <a href="https://wa.me/919431328569" class="whatsapp-float" target="_blank">
-    <i class="fab fa-whatsapp"></i>
-  </a>
+  <div id="whatsapp-button">
+    <a href="https://wa.me/919431328569" target="_blank" style="text-decoration: none; color: white;">💬</a>
+  </div>
 
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script type="module">
@@ -179,7 +144,6 @@
     const userInfo = document.getElementById("user-info");
     const loginBtn = document.getElementById("loginBtn");
     const logoutBtn = document.getElementById("logoutBtn");
-    const payBtn = document.getElementById("payBtn");
 
     function renderSubjects() {
       const container = document.getElementById("subject-container");
@@ -195,7 +159,7 @@
           <div class="card-sub">${locked ? "🔒 Locked" : "✅ Open"}</div>
         `;
         if (!locked) {
-          card.href = \`quiz.html?subject=\${encodeURIComponent(subject)}\`;
+          card.href = `quiz.html?subject=${encodeURIComponent(subject)}`;
         } else {
           card.onclick = (e) => {
             e.preventDefault();
@@ -212,34 +176,32 @@
         userId = user.uid;
         loginBtn.style.display = "none";
         logoutBtn.style.display = "inline-block";
-        userInfo.textContent = \`👋 \${user.email}\`;
+        userInfo.textContent = `👋 ${user.email}`;
 
         try {
           const docRef = doc(db, "users", user.uid);
           const snap = await getDoc(docRef);
 
           if (user.email === "y3knishu@gmail.com") {
+            console.log("✅ Admin override access granted");
             isPaid = true;
-            payBtn.style.display = "none";
+            renderSubjects();
           } else if (snap.exists() && snap.data().isPaid) {
             isPaid = true;
-            payBtn.style.display = "none";
+            renderSubjects();
           } else {
             isPaid = false;
-            payBtn.style.display = "inline-block";
+            renderSubjects();
           }
         } catch (e) {
           console.warn("Error checking payment status:", e);
         }
-
-        renderSubjects();
       } else {
         currentUser = null;
         userInfo.textContent = "🔐 Not logged in";
         loginBtn.style.display = "inline-block";
         logoutBtn.style.display = "none";
         isPaid = false;
-        payBtn.style.display = "inline-block";
         renderSubjects();
       }
     });
@@ -253,32 +215,6 @@
         alert("Logged out");
         window.location.reload();
       });
-    };
-
-    payBtn.onclick = function () {
-      if (!currentUser) {
-        alert("🔐 Please login first to make payment.");
-        return;
-      }
-      const options = {
-        key: "rzp_live_7nZptAUoDrsfRb",
-        amount: 9900,
-        currency: "INR",
-        name: "NEET PG / INICET PREVIOUSLY ASKED QUESTIONS",
-        description: "Unlock all subjects",
-        handler: async function (response) {
-          alert("✅ Payment successful! ID: " + response.razorpay_payment_id);
-          await setDoc(doc(db, "users", userId), { isPaid: true }, { merge: true });
-          isPaid = true;
-          payBtn.style.display = "none";
-          renderSubjects();
-        },
-        theme: {
-          color: "#10b981"
-        }
-      };
-      const rzp = new Razorpay(options);
-      rzp.open();
     };
   </script>
 </body>
