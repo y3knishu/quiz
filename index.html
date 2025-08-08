@@ -40,17 +40,16 @@
       margin: auto;
     }
     .card {
-      background: #222;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(255,255,255,0.05);
-      cursor: pointer;
-      transition: 0.2s;
-      text-decoration: none;
-      color: white;
+      background: #2C3E50;
+      color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      transition: 0.3s;
     }
     .card:hover {
-      box-shadow: 0 4px 10px rgba(255,255,255,0.2);
+      background-color: #16A085;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
     .card.locked {
       background: #444;
@@ -74,6 +73,18 @@
       flex-direction: column;
       align-items: flex-end;
     }
+    .whatsapp-button {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #25D366;
+      padding: 15px;
+      border-radius: 50%;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+    }
+    .whatsapp-button img {
+      width: 40px;
+    }
   </style>
 </head>
 <body>
@@ -96,6 +107,12 @@
 
   <div id="subject-container" class="subjects"></div>
 
+  <a href="https://wa.me/919431328569" target="_blank">
+    <div class="whatsapp-button">
+      <img src="whatsapp-icon.png" alt="WhatsApp" />
+    </div>
+  </a>
+
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -117,12 +134,25 @@
     const auth = getAuth(app);
 
     const subjects = [
-      "Anatomy", "Physiology", "Biochemistry",
-      "Pathology", "Pharmacology", "Microbiology", "Forensic Medicine",
-      "Community Medicine", "ENT", "Ophthalmology",
-      "General Medicine", "General Surgery", "Obstetrics & Gynaecology",
-      "Pediatrics", "Orthopaedics", "Dermatology",
-      "Psychiatry", "Respiratory Medicine", "Anesthesiology"
+      { id: "anatomy", name: "Anatomy" },
+      { id: "physiology", name: "Physiology" },
+      { id: "biochemistry", name: "Biochemistry" },
+      { id: "pathology", name: "Pathology" },
+      { id: "pharmacology", name: "Pharmacology" },
+      { id: "microbiology", name: "Microbiology" },
+      { id: "forensic", name: "Forensic Medicine" },
+      { id: "community", name: "Community Medicine" },
+      { id: "ent", name: "ENT" },
+      { id: "ophthalmology", name: "Ophthalmology" },
+      { id: "medicine", name: "General Medicine" },
+      { id: "surgery", name: "General Surgery" },
+      { id: "obg", name: "Obstetrics & Gynaecology" },
+      { id: "pediatrics", name: "Pediatrics" },
+      { id: "orthopaedics", name: "Orthopaedics" },
+      { id: "dermatology", name: "Dermatology" },
+      { id: "psychiatry", name: "Psychiatry" },
+      { id: "respiratory", name: "Respiratory Medicine" },
+      { id: "anesthesiology", name: "Anesthesiology" }
     ];
 
     let isPaid = false;
@@ -138,17 +168,17 @@
       const container = document.getElementById("subject-container");
       container.innerHTML = "";
       subjects.forEach(subject => {
-        const card = document.createElement("a");
-        card.className = "card";
-        const isFree = subject === "Anatomy";
+        const card = document.createElement("div");
+        card.classList.add("card");
+        const isFree = subject.id === "anatomy";
         const locked = !isFree && !isPaid;
         card.classList.toggle("locked", locked);
         card.innerHTML = `
-          <div class="card-title">${subject}</div>
+          <div class="card-title">${subject.name}</div>
           <div class="card-sub">${locked ? "🔒 Locked" : "✅ Open"}</div>
         `;
         if (!locked) {
-          card.href = `quiz.html?subject=${encodeURIComponent(subject)}`;
+          card.href = `quiz.html?subject=${subject.id}`;
         } else {
           card.onclick = (e) => {
             e.preventDefault();
