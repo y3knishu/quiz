@@ -32,6 +32,7 @@ const qNumber = document.getElementById("question-number");
 const palette = document.getElementById("palette");
 const resultDiv = document.getElementById("result-summary");
 const timer = document.getElementById("timer");
+const progressBar = document.getElementById("progress-bar"); // Make sure this element exists
 
 // Function to save user details to Firestore
 async function saveUserDetails(user) {
@@ -147,6 +148,15 @@ function selectAnswer(selectedIndex, btn) {
 
   saveProgress();
   renderPalette();
+  updateProgressBar();
+}
+
+// Update progress bar after each answered question
+function updateProgressBar() {
+  const totalQuestions = questions.length;
+  const answeredQuestions = selectedAnswers.filter(a => a !== undefined).length;
+  const progress = (answeredQuestions / totalQuestions) * 100;
+  progressBar.style.width = progress + '%'; // Update the width of the progress bar
 }
 
 // Navigate to previous question
