@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js";
 
 const firebaseConfig = {
@@ -33,6 +33,45 @@ const palette = document.getElementById("palette");
 const resultDiv = document.getElementById("result-summary");
 const timer = document.getElementById("timer");
 
+// Function to save user details to Firestore
+async function saveUserDetails(user) {
+  const userRef = doc(db, "users", user.uid);
+  
+  // Save user data (name, email, etc.)
+  await setDoc(userRef, {
+    email: user.email,
+    name: user.displayName || 'Guest', // 'Guest' if no display name is set
+    photoURL: user.photoURL || 'default-photo-url', // Default photo URL
+    lastLogin: new Date(),
+    quizProgress: [] // Initialize quiz progress
+  }, { merge: true });
+
+  console.log("User details saved to Firestore");
+}
+
+// Function to save quiz progress to Firestore
+async function saveQuizProgress(userId, quizData) {
+  const userProgressRef = doc(db, "user_progress", userId);
+  
+  await setDoc(userProgressRef, {
+    quizData: quizData, // Quiz data (e.g., answers, current question)
+    lastUpdated: new Date()
+  }, { merge: true });
+
+  console.log("Quiz progress saved to Firestore");
+}
+
+// Function to store quiz data (user's selected answers)
+function storeQuizData(userId, questionId, selectedAnswer) {
+  const quizData = {
+    questionId: questionId,
+    selectedAnswer: selectedAnswer
+  };
+
+  saveQuizProgress(userId, quizData);
+}
+
+// Function to render question palette
 function renderPalette() {
   palette.innerHTML = "";
   questions.forEach((_, i) => {
@@ -46,6 +85,7 @@ function renderPalette() {
   });
 }
 
+// Function to load question
 function loadQuestion(index) {
   current = index;
   const q = questions[index];
@@ -76,6 +116,7 @@ function loadQuestion(index) {
   renderPalette();
 }
 
+// Function to select an answer
 function selectAnswer(selectedIndex, btn) {
   const q = questions[current];
   const isCorrect = selectedIndex === q.answer;
@@ -92,12 +133,17 @@ function selectAnswer(selectedIndex, btn) {
   renderPalette();
 }
 
+// Navigate to previous question
 function prevQuestion() {
   if (current > 0) loadQuestion(current - 1);
 }
+
+// Navigate to next question
 function nextQuestion() {
   if (current < questions.length - 1) loadQuestion(current + 1);
 }
+
+// Reset the quiz
 function resetQuiz() {
   selectedAnswers = [];
   saveProgress();
@@ -105,6 +151,8 @@ function resetQuiz() {
   resultDiv.innerHTML = "";
   startTime = Date.now();
 }
+
+// Submit the quiz and show results
 function submitQuiz() {
   let correct = 0, wrong = 0, attempted = 0;
   selectedAnswers.forEach(a => {
@@ -154,6 +202,7 @@ function submitQuiz() {
   renderPalette();
 }
 
+// Timer update
 function updateTimer() {
   const diff = Math.floor((Date.now() - startTime) / 1000);
   const mins = Math.floor(diff / 60);
@@ -161,6 +210,7 @@ function updateTimer() {
   timer.textContent = `Time: ${mins}m ${secs}s`;
 }
 
+// Save progress to localStorage
 function saveProgress() {
   const key = `progress_${subject}`;
   const summary = {
@@ -173,6 +223,7 @@ function saveProgress() {
   localStorage.setItem(key, JSON.stringify(summary));
 }
 
+// Load progress from localStorage
 function loadProgress() {
   const key = `progress_${subject}`;
   const saved = localStorage.getItem(key);
@@ -182,6 +233,7 @@ function loadProgress() {
   }
 }
 
+// Load quiz questions from Firestore
 async function loadQuiz(subjectName) {
   const docRef = doc(db, "questions", subjectName);
   const docSnap = await getDoc(docRef);
@@ -197,8 +249,13 @@ async function loadQuiz(subjectName) {
   }
 }
 
-// 🔐 Subject access control with admin override
+// Subject access control with admin override
 onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    const userId = user.uid;
+    await saveUserDetails(user);
+  }
+  
   if (subject === "Anatomy") {
     loadQuiz(subject);
     return;
