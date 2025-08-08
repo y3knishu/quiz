@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js";
 
 const firebaseConfig = {
@@ -32,7 +32,6 @@ const qNumber = document.getElementById("question-number");
 const palette = document.getElementById("palette");
 const resultDiv = document.getElementById("result-summary");
 const timer = document.getElementById("timer");
-const progressBar = document.getElementById("progress-bar"); // Make sure this element exists
 
 // Function to save user details to Firestore
 async function saveUserDetails(user) {
@@ -84,7 +83,6 @@ function storeQuizData(userId, questionId, selectedAnswer) {
     questionId: questionId,
     selectedAnswer: selectedAnswer
   };
-
   saveQuizProgress(userId, quizData);
 }
 
@@ -112,6 +110,7 @@ function loadQuestion(index) {
   qImage.src = q.image || "";
   qOptions.innerHTML = "";
 
+  // Display options as buttons
   q.options.forEach((opt, i) => {
     const btn = document.createElement("button");
     btn.textContent = opt;
@@ -119,18 +118,8 @@ function loadQuestion(index) {
     qOptions.appendChild(btn);
   });
 
-  if (selectedAnswers[index] !== undefined) {
-    const correctIndex = q.answer;
-    const selected = selectedAnswers[index].selectedIndex;
-    const buttons = qOptions.querySelectorAll("button");
-    buttons.forEach((b, i) => {
-      b.disabled = true;
-      if (i === correctIndex) b.classList.add("correct");
-      if (i === selected && selected !== correctIndex) b.classList.add("wrong");
-    });
-  }
-
   renderPalette();
+  updateProgressBar();
 }
 
 // Function to select an answer
@@ -151,7 +140,7 @@ function selectAnswer(selectedIndex, btn) {
   updateProgressBar();
 }
 
-// Update progress bar after each answered question
+// Update the progress bar
 function updateProgressBar() {
   const totalQuestions = questions.length;
   const answeredQuestions = selectedAnswers.filter(a => a !== undefined).length;
@@ -227,7 +216,6 @@ function submitQuiz() {
     }
   });
 
-  // Clear the timer interval once quiz is submitted
   clearInterval(timerInterval);
   renderPalette();
 }
