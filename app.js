@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js";
 
 const firebaseConfig = {
@@ -32,6 +32,7 @@ const qNumber = document.getElementById("question-number");
 const palette = document.getElementById("palette");
 const resultDiv = document.getElementById("result-summary");
 const timer = document.getElementById("timer");
+const progressBar = document.getElementById("progress-bar"); // Progress bar for quiz progress
 
 // Function to save user details to Firestore
 async function saveUserDetails(user) {
@@ -110,7 +111,6 @@ function loadQuestion(index) {
   qImage.src = q.image || "";
   qOptions.innerHTML = "";
 
-  // Display options as buttons
   q.options.forEach((opt, i) => {
     const btn = document.createElement("button");
     btn.textContent = opt;
