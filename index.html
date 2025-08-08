@@ -38,7 +38,6 @@
       margin: 20px;
     }
     .card {
-      background: linear-gradient(135deg, #ff6f91, #ff99c8, #ffccbc);
       padding: 15px;
       border-radius: 10px;
       text-align: center;
@@ -50,6 +49,9 @@
     .card:hover {
       transform: scale(1.05);
     }
+    .card-title {
+      font-size: 1.5em;
+    }
     .progress {
       background-color: #f1f1f1;
       height: 10px;
@@ -58,30 +60,30 @@
       width: 100%;
     }
     .progress-bar {
-      background-color: #66bb6a;
       height: 100%;
       border-radius: 5px;
     }
-    .card-title {
-      font-size: 1.5em;
-    }
-    .status {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 10px;
-    }
-    .status .open-label {
-      background-color: #66bb6a;
-      color: white;
-      padding: 5px 10px;
-      border-radius: 5px;
-    }
-    .status .locked-label {
-      background-color: #ef5350;
-      color: white;
-      padding: 5px 10px;
-      border-radius: 5px;
-    }
+    /* Different colors for each subject card */
+    .card.anatomy { background: #ff6f91; }
+    .card.physiology { background: #ff99c8; }
+    .card.biochemistry { background: #ffccbc; }
+    .card.pathology { background: #ff8a65; }
+    .card.pharmacology { background: #ffb74d; }
+    .card.microbiology { background: #a5d6a7; }
+    .card.forensic { background: #81c784; }
+    .card.community { background: #64b5f6; }
+    .card.ent { background: #4db6ac; }
+    .card.ophthalmology { background: #80deea; }
+    .card.medicine { background: #ffca28; }
+    .card.surgery { background: #ff7043; }
+    .card.obg { background: #f44336; }
+    .card.pediatrics { background: #ab47bc; }
+    .card.orthopaedics { background: #8e24aa; }
+    .card.dermatology { background: #42a5f5; }
+    .card.psychiatry { background: #66bb6a; }
+    .card.respiratory { background: #ffeb3b; }
+    .card.anesthesiology { background: #f57c00; }
+
     #whatsapp-button {
       position: fixed;
       bottom: 20px;
@@ -162,14 +164,16 @@
     function renderSubjects() {
       const container = document.getElementById("subject-container");
       container.innerHTML = "";
-      subjects.forEach(subject => {
+      subjects.forEach(async subject => {
         const card = document.createElement("div");
-        card.className = "card";
+        card.className = `card ${subject.toLowerCase().replace(/ /g, "")}`;
         const isFree = subject === "Anatomy";
         const locked = !isFree && !isPaid;
-        card.classList.toggle("locked", locked);
-        const progress = 50; // This should be dynamically calculated based on user progress
 
+        // Get the user's progress
+        const progress = await getUserProgress(currentUser.uid, subject);
+
+        card.classList.toggle("locked", locked);
         card.innerHTML = `
           <div class="card-title">${subject}</div>
           <div class="status">
@@ -193,6 +197,24 @@
 
         container.appendChild(card);
       });
+    }
+
+    // Function to fetch and calculate quiz progress from Firestore
+    async function getUserProgress(userId, subject) {
+      const userProgressRef = doc(db, "user_progress", userId);
+      const docSnap = await getDoc(userProgressRef);
+      
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        const quizData = data.quizData || [];
+        const totalQuestions = questions.length;
+        const answered = quizData.filter(item => item.selectedAnswer).length; 
+
+        const progress = (answered / totalQuestions) * 100;
+        return progress;
+      } else {
+        return 0; 
+      }
     }
 
     // Check auth state and load subjects
