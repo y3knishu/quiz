@@ -10,91 +10,144 @@
       display: flex;
       margin: 0;
       transition: background 0.3s, color 0.3s;
-    }
-    .dark {
-      background: #121212;
-      color: #eee;
-    }
-    .sidebar {
-      width: 100px;
-      background: #fff;
-      border-right: 1px solid #ddd;
-      padding: 10px;
-      overflow-y: auto;
-    }
-    .dark .sidebar {
-      background: #1e1e1e;
-      border-color: #444;
-    }
-    #palette button {
-      margin: 5px;
-      width: 40px;
-      height: 40px;
-    }
-    .main {
+      background-color: #f0f4c3; /* Light, vibrant background */
+      color: #333;
+      height: 100vh;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
       padding: 20px;
-      flex: 1;
     }
-    .question { font-size: 1.1em; margin-bottom: 10px; }
-    .image { max-width: 100%; margin-bottom: 20px; display: none; }
+
+    header {
+      font-size: 2em;
+      margin-bottom: 20px;
+      text-align: center;
+      color: #388e3c; /* Green header color */
+    }
+
+    .main {
+      width: 100%;
+      max-width: 600px; /* Limiting the max width of quiz content */
+      background-color: #ffffff; /* White background for quiz content */
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      padding: 20px;
+      text-align: center;
+    }
+
+    .question {
+      font-size: 1.2em;
+      margin-bottom: 20px;
+      color: #388e3c;
+    }
+
     .options button {
       display: block;
       margin: 10px 0;
-      padding: 10px;
+      padding: 12px;
       width: 100%;
-      font-size: 1em;
-    }
-    .correct { background: #c8e6c9; }
-    .wrong { background: #ffcdd2; }
-    .summary {
-      margin-top: 20px;
-      padding: 10px;
-      background: #f4f4f4;
+      background-color: #ff7043; /* Vibrant button color */
+      border: none;
       border-radius: 8px;
+      color: white;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
     }
-    .dark .summary {
-      background: #2b2b2b;
+
+    .options button:hover {
+      background-color: #f4511e;
     }
-    #toggle-dark {
-      position: fixed;
-      top: 10px;
-      right: 10px;
+
+    .correct {
+      background-color: #66bb6a !important; /* Green for correct answers */
+    }
+
+    .wrong {
+      background-color: #ef5350 !important; /* Red for wrong answers */
+    }
+
+    .progress {
+      background-color: #eeeeee;
+      height: 10px;
+      border-radius: 5px;
+      margin-top: 20px;
+    }
+
+    .progress-bar {
+      background-color: #ffeb3b;
+      height: 100%;
+      border-radius: 5px;
+    }
+
+    .timer {
+      font-size: 1.1em;
+      margin-top: 20px;
+      color: #388e3c;
+    }
+
+    #result-summary {
+      margin-top: 30px;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      header {
+        font-size: 1.5em;
+      }
+
+      .question {
+        font-size: 1.1em;
+      }
+
+      .options button {
+        font-size: 1em;
+      }
+
+      .main {
+        width: 90%;
+        padding: 15px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .options button {
+        font-size: 1.1em;
+      }
+
+      .main {
+        width: 100%;
+        padding: 10px;
+      }
+
+      .timer {
+        font-size: 1em;
+      }
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="dark">
-  <div class="sidebar">
-    <h4>Palette</h4>
-    <div id="palette"></div>
-  </div>
+<body>
+  <header>
+    <h1>Quiz Time!</h1>
+  </header>
+
   <div class="main">
     <div id="question-number"></div>
     <div id="question-text" class="question"></div>
-    <img id="question-image" class="image" />
-    <div id="options" class="options"></div>
-    <p id="timer">Time: 0 sec</p>
+    <div class="options" id="options"></div>
+    <div class="progress">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+    <p id="timer" class="timer">Time: 0 sec</p>
     <button onclick="prevQuestion()">⬅️ Prev</button>
     <button onclick="nextQuestion()">Next ➡️</button>
     <button onclick="submitQuiz()">✅ Submit Quiz</button>
     <button onclick="resetQuiz()">🔄 Retry</button>
-    <button onclick="location.href='index.html'">🏠 Home</button>
-    <div id="result-summary" class="summary"></div>
+    <div id="result-summary"></div>
   </div>
-  <button id="toggle-dark" onclick="toggleDarkMode()">☀️</button>
 
-  <script>
-    // Restore saved dark mode
-    if (localStorage.getItem("dark") === "false") {
-      document.body.classList.remove("dark");
-      document.getElementById("toggle-dark").textContent = "🌙";
-    }
-    function toggleDarkMode() {
-      const isDark = document.body.classList.toggle("dark");
-      localStorage.setItem("dark", isDark);
-      document.getElementById("toggle-dark").textContent = isDark ? "☀️" : "🌙";
-    }
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -124,36 +177,35 @@
     let timerInterval;
 
     const qText = document.getElementById("question-text");
-    const qImage = document.getElementById("question-image");
     const qOptions = document.getElementById("options");
     const qNumber = document.getElementById("question-number");
-    const palette = document.getElementById("palette");
-    const resultDiv = document.getElementById("result-summary");
+    const progressBar = document.getElementById("progress-bar");
     const timer = document.getElementById("timer");
 
-    // Load quiz questions from Firestore
-    async function loadQuiz() {
-      const docRef = doc(db, "questions", subject);
-      const docSnap = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        questions = docSnap.data().questions;
-        selectedAnswers = new Array(questions.length);
-        loadQuestion(0);
-        timerInterval = setInterval(updateTimer, 1000);
-      } else {
-        alert("No questions found for this subject.");
-      }
+    // Function to save quiz progress to Firestore
+    async function saveQuizProgress(userId, quizData) {
+      const userProgressRef = doc(db, "user_progress", userId);
+      await setDoc(userProgressRef, {
+        quizData: quizData,
+        lastUpdated: new Date()
+      }, { merge: true });
     }
 
-    // Load question function
+    // Function to store quiz data (user's selected answers)
+    function storeQuizData(userId, questionId, selectedAnswer) {
+      const quizData = {
+        questionId: questionId,
+        selectedAnswer: selectedAnswer
+      };
+      saveQuizProgress(userId, quizData);
+    }
+
+    // Function to load question
     function loadQuestion(index) {
       current = index;
       const q = questions[index];
       qNumber.textContent = `Question ${index + 1}`;
       qText.textContent = q.question;
-      qImage.style.display = q.image ? "block" : "none";
-      qImage.src = q.image || "";
       qOptions.innerHTML = "";
 
       q.options.forEach((opt, i) => {
@@ -164,9 +216,10 @@
       });
 
       renderPalette();
+      updateProgressBar();
     }
 
-    // Handle answer selection
+    // Function to select an answer
     function selectAnswer(selectedIndex, btn) {
       const q = questions[current];
       const isCorrect = selectedIndex === q.answer;
@@ -181,41 +234,20 @@
 
       saveProgress();
       renderPalette();
+      updateProgressBar();
     }
 
-    // Save progress
-    function saveProgress() {
-      const key = `progress_${subject}`;
-      const summary = {
-        attempted: selectedAnswers.filter(a => a !== undefined).length,
-        correct: selectedAnswers.filter(a => a && a.correct).length,
-        wrong: selectedAnswers.filter(a => a && !a.correct).length,
-        total: questions.length,
-        answers: selectedAnswers
-      };
-      localStorage.setItem(key, JSON.stringify(summary));
+    // Update the progress bar
+    function updateProgressBar() {
+      const totalQuestions = questions.length;
+      const answeredQuestions = selectedAnswers.filter(a => a !== undefined).length;
+      const progress = (answeredQuestions / totalQuestions) * 100;
+      progressBar.style.width = progress + '%'; // Update the width of the progress bar
     }
 
-    // Render the question palette
+    // Function to render question palette
     function renderPalette() {
-      palette.innerHTML = "";
-      questions.forEach((_, i) => {
-        const btn = document.createElement("button");
-        btn.textContent = i + 1;
-        btn.onclick = () => loadQuestion(i);
-        if (selectedAnswers[i] !== undefined) {
-          btn.style.background = selectedAnswers[i].correct ? "#66bb6a" : "#ef5350";
-        }
-        palette.appendChild(btn);
-      });
-    }
-
-    // Timer update
-    function updateTimer() {
-      const diff = Math.floor((Date.now() - startTime) / 1000);
-      const mins = Math.floor(diff / 60);
-      const secs = diff % 60;
-      timer.textContent = `Time: ${mins}m ${secs}s`;
+      // Render buttons to navigate to questions
     }
 
     // Submit the quiz and show results
@@ -268,7 +300,30 @@
       renderPalette();
     }
 
-    // Check user authentication state and load the quiz
+    // Load quiz questions from Firestore
+    async function loadQuiz() {
+      const docRef = doc(db, "questions", subject);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        questions = docSnap.data().questions;
+        selectedAnswers = new Array(questions.length);
+        loadQuestion(0);
+        timerInterval = setInterval(updateTimer, 1000);
+      } else {
+        alert("No questions found for this subject.");
+      }
+    }
+
+    // Timer update
+    function updateTimer() {
+      const diff = Math.floor((Date.now() - startTime) / 1000);
+      const mins = Math.floor(diff / 60);
+      const secs = diff % 60;
+      timer.textContent = `Time: ${mins}m ${secs}s`;
+    }
+
+    // Check auth state and load quiz
     onAuthStateChanged(auth, (user) => {
       if (user) {
         loadQuiz();
@@ -277,6 +332,8 @@
         window.location.href = "index.html";
       }
     });
+
+    window.submitQuiz = submitQuiz;
   </script>
 </body>
 </html>
