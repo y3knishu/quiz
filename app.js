@@ -36,17 +36,33 @@ const timer = document.getElementById("timer");
 // Function to save user details to Firestore
 async function saveUserDetails(user) {
   const userRef = doc(db, "users", user.uid);
-  
-  // Save user data (name, email, etc.)
   await setDoc(userRef, {
     email: user.email,
-    name: user.displayName || 'Guest', // 'Guest' if no display name is set
-    photoURL: user.photoURL || 'default-photo-url', // Default photo URL
+    name: user.displayName || 'Guest',
+    photoURL: user.photoURL || 'default-photo-url',
     lastLogin: new Date(),
-    quizProgress: [] // Initialize quiz progress
+    quizProgress: [] 
   }, { merge: true });
 
   console.log("User details saved to Firestore");
+}
+
+// Function to fetch and calculate quiz progress from Firestore
+async function getUserProgress(userId, subject) {
+  const userProgressRef = doc(db, "user_progress", userId);
+  const docSnap = await getDoc(userProgressRef);
+  
+  if (docSnap.exists()) {
+    const data = docSnap.data();
+    const quizData = data.quizData || [];
+    const totalQuestions = questions.length;
+    const answered = quizData.filter(item => item.selectedAnswer).length; 
+
+    const progress = (answered / totalQuestions) * 100;
+    return progress;
+  } else {
+    return 0; 
+  }
 }
 
 // Function to save quiz progress to Firestore
@@ -54,7 +70,7 @@ async function saveQuizProgress(userId, quizData) {
   const userProgressRef = doc(db, "user_progress", userId);
   
   await setDoc(userProgressRef, {
-    quizData: quizData, // Quiz data (e.g., answers, current question)
+    quizData: quizData,
     lastUpdated: new Date()
   }, { merge: true });
 
@@ -165,10 +181,12 @@ function submitQuiz() {
   const unattempted = questions.length - attempted;
   const score = correct * 4 - wrong;
 
+  // Time taken calculation
   const timeTaken = Math.floor((Date.now() - startTime) / 1000);
   const minutes = Math.floor(timeTaken / 60);
   const seconds = timeTaken % 60;
 
+  // Show quiz results (correct answers, wrong answers, total score, etc.)
   resultDiv.innerHTML = `
     <h3>Quiz Summary</h3>
     <p>✅ Correct: ${correct}</p>
@@ -179,6 +197,7 @@ function submitQuiz() {
     <canvas id="resultChart" width="300" height="300"></canvas>
   `;
 
+  // Displaying Pie Chart for results
   new Chart(document.getElementById("resultChart"), {
     type: "pie",
     data: {
@@ -198,6 +217,7 @@ function submitQuiz() {
     }
   });
 
+  // Clear the timer interval once quiz is submitted
   clearInterval(timerInterval);
   renderPalette();
 }
@@ -234,8 +254,8 @@ function loadProgress() {
 }
 
 // Load quiz questions from Firestore
-async function loadQuiz(subjectName) {
-  const docRef = doc(db, "questions", subjectName);
+async function loadQuiz() {
+  const docRef = doc(db, "questions", subject);
   const docSnap = await getDoc(docRef);
 
   if (docSnap.exists()) {
@@ -255,9 +275,9 @@ onAuthStateChanged(auth, async (user) => {
     const userId = user.uid;
     await saveUserDetails(user);
   }
-  
+
   if (subject === "Anatomy") {
-    loadQuiz(subject);
+    loadQuiz();
     return;
   }
 
@@ -267,14 +287,14 @@ onAuthStateChanged(auth, async (user) => {
 
     if (userEmail === "y3knishu@gmail.com") {
       console.log("✅ Admin override access granted");
-      loadQuiz(subject);
+      loadQuiz();
       return;
     }
 
     const docRef = doc(db, "users", userId);
     const snap = await getDoc(docRef);
     if (snap.exists() && snap.data().isPaid) {
-      loadQuiz(subject);
+      loadQuiz();
     } else {
       alert("❌ This subject is locked. Please complete payment to access.");
       window.location.href = "index.html";
