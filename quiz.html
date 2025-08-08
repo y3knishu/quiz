@@ -133,8 +133,10 @@
   </header>
 
   <div class="main">
+    <!-- Dynamic content will be loaded here -->
     <div id="question-number"></div>
     <div id="question-text" class="question"></div>
+    <img id="question-image" class="image" />
     <div class="options" id="options"></div>
     <div class="progress">
       <div class="progress-bar" id="progress-bar"></div>
@@ -144,6 +146,7 @@
     <button onclick="nextQuestion()">Next ➡️</button>
     <button onclick="submitQuiz()">✅ Submit Quiz</button>
     <button onclick="resetQuiz()">🔄 Retry</button>
+    <button onclick="location.href='index.html'">🏠 Home</button>
     <div id="result-summary"></div>
   </div>
 
@@ -177,6 +180,7 @@
     let timerInterval;
 
     const qText = document.getElementById("question-text");
+    const qImage = document.getElementById("question-image");
     const qOptions = document.getElementById("options");
     const qNumber = document.getElementById("question-number");
     const progressBar = document.getElementById("progress-bar");
@@ -206,6 +210,8 @@
       const q = questions[index];
       qNumber.textContent = `Question ${index + 1}`;
       qText.textContent = q.question;
+      qImage.style.display = q.image ? "block" : "none";
+      qImage.src = q.image || "";
       qOptions.innerHTML = "";
 
       q.options.forEach((opt, i) => {
@@ -245,9 +251,23 @@
       progressBar.style.width = progress + '%'; // Update the width of the progress bar
     }
 
-    // Function to render question palette
-    function renderPalette() {
-      // Render buttons to navigate to questions
+    // Navigate to previous question
+    function prevQuestion() {
+      if (current > 0) loadQuestion(current - 1);
+    }
+
+    // Navigate to next question
+    function nextQuestion() {
+      if (current < questions.length - 1) loadQuestion(current + 1);
+    }
+
+    // Reset the quiz
+    function resetQuiz() {
+      selectedAnswers = [];
+      saveProgress();
+      loadQuestion(0);
+      resultDiv.innerHTML = "";
+      startTime = Date.now();
     }
 
     // Submit the quiz and show results
@@ -263,10 +283,12 @@
       const unattempted = questions.length - attempted;
       const score = correct * 4 - wrong;
 
+      // Time taken calculation
       const timeTaken = Math.floor((Date.now() - startTime) / 1000);
       const minutes = Math.floor(timeTaken / 60);
       const seconds = timeTaken % 60;
 
+      // Show quiz results (correct answers, wrong answers, total score, etc.)
       resultDiv.innerHTML = `
         <h3>Quiz Summary</h3>
         <p>✅ Correct: ${correct}</p>
@@ -277,6 +299,7 @@
         <canvas id="resultChart" width="300" height="300"></canvas>
       `;
 
+      // Displaying Pie Chart for results
       new Chart(document.getElementById("resultChart"), {
         type: "pie",
         data: {
@@ -300,21 +323,6 @@
       renderPalette();
     }
 
-    // Load quiz questions from Firestore
-    async function loadQuiz() {
-      const docRef = doc(db, "questions", subject);
-      const docSnap = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        questions = docSnap.data().questions;
-        selectedAnswers = new Array(questions.length);
-        loadQuestion(0);
-        timerInterval = setInterval(updateTimer, 1000);
-      } else {
-        alert("No questions found for this subject.");
-      }
-    }
-
     // Timer update
     function updateTimer() {
       const diff = Math.floor((Date.now() - startTime) / 1000);
@@ -323,16 +331,85 @@
       timer.textContent = `Time: ${mins}m ${secs}s`;
     }
 
-    // Check auth state and load quiz
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        loadQuiz();
+    // Save progress to localStorage
+    function saveProgress() {
+      const key = `progress_${subject}`;
+      const summary = {
+        attempted: selectedAnswers.filter(a => a !== undefined).length,
+        correct: selectedAnswers.filter(a => a && a.correct).length,
+        wrong: selectedAnswers.filter(a => a && !a.correct).length,
+        total: questions.length,
+        answers: selectedAnswers
+      };
+      localStorage.setItem(key, JSON.stringify(summary));
+    }
+
+    // Load progress from localStorage
+    function loadProgress() {
+      const key = `progress_${subject}`;
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        const data = JSON.parse(saved);
+        selectedAnswers = data.answers || [];
+      }
+    }
+
+    // Load quiz questions from Firestore
+    async function loadQuiz() {
+      const docRef = doc(db, "questions", subject);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        questions = docSnap.data().questions;
+        selectedAnswers = new Array(questions.length);
+        loadProgress();
+        loadQuestion(0);
+        timerInterval = setInterval(updateTimer, 1000);
       } else {
-        alert("❌ Please login to access this quiz.");
+        alert("No questions found for this subject.");
+      }
+    }
+
+    // Subject access control with admin override
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const userId = user.uid;
+        await saveUserDetails(user);
+      }
+
+      if (subject === "Anatomy") {
+        loadQuiz();
+        return;
+      }
+
+      if (user) {
+        const userId = user.uid;
+        const userEmail = user.email;
+
+        if (userEmail === "y3knishu@gmail.com") {
+          console.log("✅ Admin override access granted");
+          loadQuiz();
+          return;
+        }
+
+        const docRef = doc(db, "users", userId);
+        const snap = await getDoc(docRef);
+        if (snap.exists() && snap.data().isPaid) {
+          loadQuiz();
+        } else {
+          alert("❌ This subject is locked. Please complete payment to access.");
+          window.location.href = "index.html";
+        }
+      } else {
+        alert("❌ Please login to access this subject.");
         window.location.href = "index.html";
       }
     });
 
+    // Expose functions to window
+    window.prevQuestion = prevQuestion;
+    window.nextQuestion = nextQuestion;
+    window.resetQuiz = resetQuiz;
     window.submitQuiz = submitQuiz;
   </script>
 </body>
