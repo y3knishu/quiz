@@ -16,42 +16,53 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
+      padding: 10px;
     }
+
     header {
       font-size: 2em;
       margin-bottom: 20px;
       text-align: center;
     }
+
     .top-right {
       text-align: right;
     }
+
     .info-message {
       text-align: center;
       margin-bottom: 20px;
       color: #ccc;
     }
+
     .subjects {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 20px;
       max-width: 1200px;
       margin: 20px;
+      width: 100%;
     }
+
     .card {
       padding: 15px;
       border-radius: 10px;
       text-align: center;
       margin: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
       position: relative;
       transition: transform 0.3s ease;
     }
+
     .card:hover {
       transform: scale(1.05);
     }
+
     .card-title {
       font-size: 1.5em;
+      margin-bottom: 10px;
     }
+
     .progress {
       background-color: #f1f1f1;
       height: 10px;
@@ -59,10 +70,12 @@
       margin-top: 10px;
       width: 100%;
     }
+
     .progress-bar {
       height: 100%;
       border-radius: 5px;
     }
+
     /* Different colors for each subject card */
     .card.anatomy { background: #ff6f91; }
     .card.physiology { background: #ff99c8; }
@@ -91,15 +104,64 @@
       background-color: #25d366;
       padding: 15px;
       border-radius: 50%;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
       color: white;
       font-size: 24px;
       text-align: center;
       cursor: pointer;
       z-index: 100;
     }
+
     #whatsapp-button:hover {
       background-color: #128c7e;
+    }
+
+    /* Media Queries for responsiveness */
+    @media (max-width: 768px) {
+      header {
+        font-size: 1.5em;
+      }
+
+      .card-title {
+        font-size: 1.2em;
+      }
+
+      .info-message {
+        font-size: 0.9em;
+      }
+
+      .subjects {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 5px;
+      }
+
+      .subjects {
+        grid-template-columns: 1fr;
+      }
+
+      .card {
+        padding: 10px;
+        margin: 5px;
+      }
+
+      .card-title {
+        font-size: 1.1em;
+      }
+
+      .info-message {
+        font-size: 0.8em;
+      }
+
+      #whatsapp-button {
+        bottom: 10px;
+        right: 10px;
+        padding: 10px;
+      }
     }
   </style>
 </head>
