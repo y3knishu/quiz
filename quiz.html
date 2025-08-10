@@ -6,67 +6,142 @@
   <title>Quiz</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Comic Sans MS', sans-serif;
       display: flex;
       margin: 0;
+      flex-direction: column;
+      align-items: center;
+      background: #fce4ec; /* Soft pink background */
+      color: #4caf50; /* Fresh green color for text */
       transition: background 0.3s, color 0.3s;
     }
-    .dark {
-      background: #121212;
-      color: #eee;
-    }
+
     .sidebar {
       width: 100px;
-      background: #fff;
-      border-right: 1px solid #ddd;
+      background: #ffebee; /* Light pink background for the sidebar */
+      border-right: 1px solid #f8bbd0; /* Subtle pink border */
       padding: 10px;
       overflow-y: auto;
+      display: block;
     }
-    .dark .sidebar {
-      background: #1e1e1e;
-      border-color: #444;
-    }
+
     #palette button {
       margin: 5px;
       width: 40px;
       height: 40px;
+      border-radius: 50%;
+      background: #ff80ab; /* Pastel pink palette */
+      border: none;
+      cursor: pointer;
     }
+
     .main {
       padding: 20px;
       flex: 1;
+      width: 100%;
+      max-width: 600px;
+      background: #fff3e0; /* Light orange background */
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
-    .question { font-size: 1.1em; margin-bottom: 10px; }
-    .image { max-width: 100%; margin-bottom: 20px; display: none; }
+
+    .question {
+      font-size: 1.4em;
+      margin-bottom: 10px;
+      color: #e91e63; /* Bright pink for questions */
+      font-weight: bold;
+    }
+
+    .image {
+      max-width: 100%;
+      margin-bottom: 20px;
+      display: none;
+      border-radius: 8px;
+    }
+
     .options button {
       display: block;
       margin: 10px 0;
-      padding: 10px;
+      padding: 12px;
       width: 100%;
       font-size: 1em;
+      background-color: #4caf50; /* Green buttons */
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
     }
-    .correct { background: #c8e6c9; }
-    .wrong { background: #ffcdd2; }
+
+    .options button:hover {
+      background-color: #81c784; /* Light green on hover */
+    }
+
+    .correct {
+      background: #c8e6c9; /* Soft green for correct answers */
+    }
+
+    .wrong {
+      background: #ffcdd2; /* Light red for wrong answers */
+    }
+
     .summary {
       margin-top: 20px;
       padding: 10px;
-      background: #f4f4f4;
+      background: #f4f4f4; /* Light gray for summary */
       border-radius: 8px;
+      font-size: 1.1em;
     }
-    .dark .summary {
-      background: #2b2b2b;
+
+    /* Responsive Styles */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 80px;
+      }
+
+      .main {
+        width: 100%;
+        padding: 10px;
+      }
+
+      .options button {
+        font-size: 0.9em;
+        padding: 8px;
+      }
+
+      #palette button {
+        width: 30px;
+        height: 30px;
+      }
     }
-    #toggle-dark {
-      position: fixed;
-      top: 10px;
-      right: 10px;
+
+    @media (max-width: 480px) {
+      .sidebar {
+        display: none; /* Hide sidebar on small screens */
+      }
+
+      .main {
+        padding: 5px;
+      }
+
+      .options button {
+        font-size: 0.8em;
+        padding: 6px;
+      }
+
+      .question {
+        font-size: 1.2em;
+      }
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="dark">
+<body>
   <div class="sidebar">
     <h4>Palette</h4>
-    <div id="palette"></div>
+    <div id="palette">
+      <button></button>
+      <button></button>
+      <button></button>
+    </div>
   </div>
   <div class="main">
     <div id="question-number"></div>
@@ -81,20 +156,5 @@
     <button onclick="location.href='index.html'">🏠 Home</button>
     <div id="result-summary" class="summary"></div>
   </div>
-  <button id="toggle-dark" onclick="toggleDarkMode()">☀️</button>
-
-  <script>
-    // Restore saved dark mode
-    if (localStorage.getItem("dark") === "false") {
-      document.body.classList.remove("dark");
-      document.getElementById("toggle-dark").textContent = "🌙";
-    }
-    function toggleDarkMode() {
-      const isDark = document.body.classList.toggle("dark");
-      localStorage.setItem("dark", isDark);
-      document.getElementById("toggle-dark").textContent = isDark ? "☀️" : "🌙";
-    }
-  </script>
-  <script type="module" src="app.js"></script>
 </body>
 </html>
