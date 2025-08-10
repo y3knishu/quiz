@@ -18,11 +18,10 @@
 
     .sidebar {
       width: 100px;
-      background: #ffebee; /* Light pink background for the sidebar */
+      background: #ffebee; /* Light pink sidebar */
       border-right: 1px solid #f8bbd0; /* Subtle pink border */
       padding: 10px;
       overflow-y: auto;
-      display: block;
     }
 
     #palette button {
@@ -30,7 +29,7 @@
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      background: #ff80ab; /* Pastel pink palette */
+      background: #ff80ab; /* Pastel pink for buttons */
       border: none;
       cursor: pointer;
     }
@@ -48,7 +47,7 @@
     .question {
       font-size: 1.4em;
       margin-bottom: 10px;
-      color: #e91e63; /* Bright pink for questions */
+      color: #e91e63; /* Bright pink for the question */
       font-weight: bold;
     }
 
@@ -65,7 +64,7 @@
       padding: 12px;
       width: 100%;
       font-size: 1em;
-      background-color: #4caf50; /* Green buttons */
+      background-color: #4caf50; /* Green for the options buttons */
       color: #fff;
       border: none;
       border-radius: 8px;
@@ -73,7 +72,7 @@
     }
 
     .options button:hover {
-      background-color: #81c784; /* Light green on hover */
+      background-color: #81c784; /* Lighter green on hover */
     }
 
     .correct {
@@ -87,7 +86,7 @@
     .summary {
       margin-top: 20px;
       padding: 10px;
-      background: #f4f4f4; /* Light gray for summary */
+      background: #f4f4f4;
       border-radius: 8px;
       font-size: 1.1em;
     }
@@ -137,11 +136,7 @@
 <body>
   <div class="sidebar">
     <h4>Palette</h4>
-    <div id="palette">
-      <button></button>
-      <button></button>
-      <button></button>
-    </div>
+    <div id="palette"></div>
   </div>
   <div class="main">
     <div id="question-number"></div>
@@ -158,31 +153,25 @@
   </div>
 
   <script>
-    // You can dynamically load your questions in the "questions" array below:
-    let questions = []; // Empty initially, you will fill it with your questions
-
+    // Placeholder for dynamic questions
     let currentQuestionIndex = 0;
 
     function displayQuestion() {
-      if (questions.length === 0) return; // Prevent errors if no questions are set
-      const question = questions[currentQuestionIndex];
+      const question = questions[currentQuestionIndex]; // Use your question array here
       document.getElementById("question-text").textContent = question.question;
       document.getElementById("options").innerHTML = question.options
-        .map(
-          (option) =>
-            `<button onclick="checkAnswer('${option}')">${option}</button>`
-        )
-        .join("");
+        .map(option => `<button onclick="checkAnswer('${option}')">${option}</button>`)
+        .join('');
     }
 
     function checkAnswer(selectedOption) {
       const correctAnswer = questions[currentQuestionIndex].correct;
-      const buttons = document.querySelectorAll(".options button");
-      buttons.forEach((button) => {
+      const buttons = document.querySelectorAll('.options button');
+      buttons.forEach(button => {
         if (button.textContent === correctAnswer) {
-          button.classList.add("correct");
+          button.classList.add('correct');
         } else if (button.textContent === selectedOption) {
-          button.classList.add("wrong");
+          button.classList.add('wrong');
         }
       });
     }
@@ -210,17 +199,17 @@
       displayQuestion();
     }
 
-    // Add your questions here in the questions array
-    questions = [
+    // Sample question array
+    const questions = [
       {
-        question: "Your question here?",
-        options: ["Option 1", "Option 2", "Option 3", "Option 4"],
-        correct: "Option 1" // The correct answer
+        question: "What is the capital of France?",
+        options: ["Paris", "London", "Berlin", "Madrid"],
+        correct: "Paris"
       },
       {
-        question: "Another question?",
-        options: ["Option A", "Option B", "Option C", "Option D"],
-        correct: "Option B"
+        question: "What is 2 + 2?",
+        options: ["3", "4", "5", "6"],
+        correct: "4"
       }
     ];
 
