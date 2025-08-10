@@ -1,240 +1,84 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NEET PG / INICET PYQs</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: white;
-      padding: 20px;
-      margin: 0;
-    }
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-    h1 {
-      font-size: 2.5em;
-    }
-    .top-right {
-      text-align: right;
-    }
-    .top-right button {
-      margin-left: 8px;
-    }
-    .info-message {
-      text-align: center;
-      margin-bottom: 30px;
-      color: #ccc;
-    }
-    .subjects {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 15px;
-      max-width: 1000px;
-      margin: auto;
-    }
-    .card {
-      background: linear-gradient(145deg, #222, #444);
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 2px 5px rgba(255,255,255,0.1);
-      cursor: pointer;
-      transition: 0.2s;
-      text-decoration: none;
-      color: white;
-      text-align: center;
-    }
-    .card:hover {
-      box-shadow: 0 4px 15px rgba(255,255,255,0.2);
-    }
-    .card.locked {
-      background: #555;
-      pointer-events: auto;
-      opacity: 0.6;
-    }
-    #payBtn, #loginBtn, #logoutBtn {
-      padding: 8px 16px;
-      font-size: 0.9em;
-      background: #3399cc;
-      border: none;
-      border-radius: 4px;
-      color: white;
-      cursor: pointer;
-    }
-    #payBtn:hover, #loginBtn:hover, #logoutBtn:hover {
-      background: #2788bb;
-    }
-    .top-buttons {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <h1>NEET PG / INICET PYQs</h1>
-    <div class="top-buttons">
-      <div class="top-right">
-        <span id="user-info">Loading...</span>
-        <button id="loginBtn" style="display:none">🔐 Login / Sign Up</button>
-        <button id="logoutBtn" style="display:none">🚪 Logout</button>
-      </div>
-      <button id="payBtn" style="margin-top: 10px;">💳 Pay ₹99 to Unlock All Subjects</button>
-    </div>
-  </header>
+/* General styles for the page */
+body {
+  font-family: Arial, sans-serif;
+  background: #111;
+  color: white;
+  padding: 20px;
+  margin: 0;
+}
 
-  <div class="info-message">
-    🔓 <strong>Anatomy</strong> is free. Pay ₹99 once to unlock access to all other subjects.<br>
-    Please login first to make the payment.
-  </div>
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
 
-  <div id="subject-container" class="subjects"></div>
+h1 {
+  font-size: 2em;
+}
 
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+.top-right {
+  text-align: right;
+}
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
-      authDomain: "mcqs-96117.firebaseapp.com",
-      projectId: "mcqs-96117",
-      storageBucket: "mcqs-96117.firebasestorage.app",
-      messagingSenderId: "352256319143",
-      appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582",
-      measurementId: "G-6FZ770H045"
-    };
+.top-right button {
+  margin-left: 8px;
+}
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
+.info-message {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #ccc;
+}
 
-    const subjects = [
-      "Anatomy", "Physiology", "Biochemistry",
-      "Pathology", "Pharmacology", "Microbiology", "Forensic Medicine",
-      "Community Medicine", "ENT", "Ophthalmology",
-      "General Medicine", "General Surgery", "Obstetrics & Gynaecology",
-      "Pediatrics", "Orthopaedics", "Dermatology",
-      "Psychiatry", "Respiratory Medicine", "Anesthesiology"
-    ];
+.subjects {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 15px;
+  max-width: 1000px;
+  margin: auto;
+}
 
-    let isPaid = false;
-    let userId = null;
-    let currentUser = null;
+.card {
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(255,255,255,0.05);
+  cursor: pointer;
+  transition: 0.2s;
+  text-decoration: none;
+  color: white;
+  text-align: center;
+}
 
-    const userInfo = document.getElementById("user-info");
-    const loginBtn = document.getElementById("loginBtn");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const payBtn = document.getElementById("payBtn");
+.card:hover {
+  box-shadow: 0 4px 10px rgba(255,255,255,0.2);
+}
 
-    function renderSubjects() {
-      const container = document.getElementById("subject-container");
-      container.innerHTML = "";
-      subjects.forEach(subject => {
-        const card = document.createElement("a");
-        card.className = "card";
-        const isFree = subject === "Anatomy";
-        const locked = !isFree && !isPaid;
-        card.classList.toggle("locked", locked);
-        card.innerHTML = `
-          <div class="card-title">${subject}</div>
-          <div class="card-sub">${locked ? "🔒 Locked" : "✅ Open"}</div>
-        `;
-        if (!locked) {
-          card.href = `quiz.html?subject=${encodeURIComponent(subject)}`;
-        } else {
-          card.onclick = (e) => {
-            e.preventDefault();
-            alert("🔒 This subject is locked. Please login and pay ₹99 to unlock all subjects.");
-          };
-        }
-        container.appendChild(card);
-      });
-    }
+.card.locked {
+  opacity: 0.6;
+  pointer-events: none;
+}
 
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        currentUser = user;
-        userId = user.uid;
-        loginBtn.style.display = "none";
-        logoutBtn.style.display = "inline-block";
-        userInfo.textContent = `👋 ${user.email}`;
+.card-title {
+  font-size: 1.2em;
+  font-weight: bold;
+}
 
-        try {
-          const docRef = doc(db, "users", user.uid);
-          const snap = await getDoc(docRef);
+.card-sub {
+  margin-top: 8px;
+}
 
-          if (user.email === "y3knishu@gmail.com") {
-            console.log("✅ Admin override access granted");
-            isPaid = true;
-            payBtn.style.display = "none";
-          } else if (snap.exists() && snap.data().isPaid) {
-            isPaid = true;
-            payBtn.style.display = "none";
-          } else {
-            isPaid = false;
-            payBtn.style.display = "inline-block";
-          }
-        } catch (e) {
-          console.warn("Error checking payment status:", e);
-        }
+button {
+  padding: 8px 16px;
+  font-size: 0.9em;
+  background: #3399cc;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+}
 
-        renderSubjects();
-      } else {
-        currentUser = null;
-        userInfo.textContent = "🔐 Not logged in";
-        loginBtn.style.display = "inline-block";
-        logoutBtn.style.display = "none";
-        isPaid = false;
-        payBtn.style.display = "inline-block";
-        renderSubjects();
-      }
-    });
-
-    loginBtn.onclick = () => {
-      window.location.href = "admin-login.html";
-    };
-
-    logoutBtn.onclick = () => {
-      signOut(auth).then(() => {
-        alert("Logged out");
-        window.location.reload();
-      });
-    };
-
-    payBtn.onclick = function () {
-      if (!currentUser) {
-        alert("🔐 Please login first to make payment.");
-        return;
-      }
-      const options = {
-        key: "rzp_live_7nZptAUoDrsfRb",
-        amount: 9900,
-        currency: "INR",
-        name: "NEET PG / INICET PREVIOUSLY ASKED QUESTIONS",
-        description: "Unlock all subjects",
-        handler: async function (response) {
-          alert("✅ Payment successful! ID: " + response.razorpay_payment_id);
-          await setDoc(doc(db, "users", userId), { isPaid: true }, { merge: true });
-          isPaid = true;
-          payBtn.style.display = "none";
-          renderSubjects();
-        },
-        theme: {
-          color: "#3399cc"
-        }
-      };
-      const rzp = new Razorpay(options);
-      rzp.open();
-    };
-  </script>
-</body>
-</html>
+button:hover {
+  background: #2788bb;
+}
