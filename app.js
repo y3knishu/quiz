@@ -84,8 +84,12 @@ function selectAnswer(selectedIndex, btn) {
   const buttons = qOptions.querySelectorAll("button");
   buttons.forEach((b, i) => {
     b.disabled = true;
-    if (i === q.answer) b.classList.add("correct");
-    if (i === selectedIndex && !isCorrect) b.classList.add("wrong");
+    if (i === q.answer) {
+      b.classList.add("correct");
+    }
+    if (i === selectedIndex && !isCorrect) {
+      b.classList.add("wrong");
+    }
   });
 
   saveProgress();
