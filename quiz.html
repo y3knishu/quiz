@@ -9,14 +9,15 @@
   <style>
     /* General styles for the page */
     body {
-      font-family: 'Poppins', sans-serif; /* Cute and playful font */
-      background: linear-gradient(45deg, #FFB6C1, #FFEBEE); /* Light pastel colors */
+      font-family: 'Poppins', sans-serif; /* Playful font */
+      background: linear-gradient(45deg, #FFE1F0, #FFEBEE); /* Light pastel background */
       color: #333; /* Darker text for contrast */
-      display: flex;
       margin: 0;
       padding: 20px;
+      display: flex;
     }
 
+    /* Sidebar for palette */
     .sidebar {
       width: 100px;
       background: #fff;
@@ -25,12 +26,25 @@
       overflow-y: auto;
     }
 
-    #palette button {
-      margin: 5px;
-      width: 40px;
-      height: 40px;
+    #palette {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
+    #palette button {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+
+    #palette button:hover {
+      transform: scale(1.1);
+    }
+
+    /* Main content area */
     .main {
       padding: 20px;
       flex: 1;
@@ -41,38 +55,34 @@
       margin-bottom: 20px;
     }
 
-    .image {
-      max-width: 100%;
-      margin-bottom: 20px;
-      display: none;
-    }
-
     .options button {
       display: block;
       margin: 10px 0;
       padding: 12px;
       width: 100%;
       font-size: 1.1em;
-      background-color: #FF80AB; /* Soft pink background */
-      color: white;
-      border: none;
-      border-radius: 50px; /* Rounded buttons */
+      background-color: #ffffff; /* White background by default */
+      color: #333;
+      border: 1px solid #ddd; /* Light border */
+      border-radius: 50px;
       transition: 0.3s;
       cursor: pointer;
     }
 
     .options button:hover {
-      background-color: #FF60A3; /* Lighter pink on hover */
+      background-color: #FF80AB; /* Soft pink on hover */
       transform: scale(1.05);
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
     .correct {
       background: #66bb6a; /* Light green for correct answers */
+      border-color: #4caf50; /* Darker green border */
     }
 
     .wrong {
       background: #ef5350; /* Red for wrong answers */
+      border-color: #e53935; /* Darker red border */
     }
 
     .summary {
@@ -83,10 +93,9 @@
       font-size: 1.1em;
     }
 
-    /* Playful button styles for the navigation buttons */
     button {
       padding: 12px 20px;
-      background-color: #FF80AB; /* Soft pink */
+      background-color: #FF80AB; /* Soft pink for buttons */
       color: white;
       border: none;
       border-radius: 50px;
@@ -100,18 +109,59 @@
       transform: scale(1.05);
     }
 
-    /* Navigation bar buttons */
-    #toggle-dark {
-      position: fixed;
-      top: 10px;
-      right: 10px;
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+      .main {
+        padding: 15px;
+      }
+
+      .question {
+        font-size: 1.1em;
+      }
+
+      .options button {
+        font-size: 1em;
+      }
+
+      button {
+        font-size: 1.2em;
+        width: 100%;
+      }
+
+      #palette {
+        flex-direction: row;
+        gap: 8px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .question {
+        font-size: 1em;
+      }
+
+      .options button {
+        font-size: 0.9em;
+        padding: 10px;
+      }
+
+      button {
+        font-size: 1.1em;
+        width: 100%;
+      }
     }
   </style>
 </head>
 <body>
   <div class="sidebar">
     <h4>Palette</h4>
-    <div id="palette"></div>
+    <div id="palette">
+      <button style="background-color: #FF5733;"></button>
+      <button style="background-color: #33FF57;"></button>
+      <button style="background-color: #3357FF;"></button>
+      <button style="background-color: #F1C40F;"></button>
+      <button style="background-color: #9B59B6;"></button>
+      <button style="background-color: #1ABC9C;"></button>
+    </div>
   </div>
   <div class="main">
     <div id="question-number"></div>
@@ -128,19 +178,75 @@
   </div>
 
   <script>
-    // Restore saved dark mode
-    if (localStorage.getItem("dark") === "false") {
-      document.body.classList.remove("dark");
-      document.getElementById("toggle-dark").textContent = "🌙";
+    // Sample data for question display (You can dynamically fetch these)
+    let questions = [
+      {
+        question: "What is the capital of France?",
+        options: ["Berlin", "Madrid", "Paris", "Rome"],
+        answer: 2, // Correct answer index (0-based)
+      },
+      {
+        question: "Which planet is known as the Red Planet?",
+        options: ["Earth", "Mars", "Jupiter", "Venus"],
+        answer: 1, // Correct answer index (0-based)
+      },
+    ];
+
+    let currentQuestionIndex = 0;
+
+    function loadQuestion() {
+      const questionData = questions[currentQuestionIndex];
+      document.getElementById("question-text").innerText = questionData.question;
+      const optionsContainer = document.getElementById("options");
+      optionsContainer.innerHTML = '';
+
+      questionData.options.forEach((option, index) => {
+        const button = document.createElement("button");
+        button.innerText = option;
+        button.onclick = () => checkAnswer(index);
+        optionsContainer.appendChild(button);
+      });
     }
 
-    function toggleDarkMode() {
-      const isDark = document.body.classList.toggle("dark");
-      localStorage.setItem("dark", isDark);
-      document.getElementById("toggle-dark").textContent = isDark ? "☀️" : "🌙";
+    function checkAnswer(selectedIndex) {
+      const questionData = questions[currentQuestionIndex];
+      const buttons = document.querySelectorAll(".options button");
+
+      buttons.forEach((button, index) => {
+        if (index === selectedIndex) {
+          if (index === questionData.answer) {
+            button.classList.add("correct");
+          } else {
+            button.classList.add("wrong");
+          }
+        }
+      });
     }
+
+    function prevQuestion() {
+      if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+        loadQuestion();
+      }
+    }
+
+    function nextQuestion() {
+      if (currentQuestionIndex < questions.length - 1) {
+        currentQuestionIndex++;
+        loadQuestion();
+      }
+    }
+
+    function submitQuiz() {
+      // Logic to calculate score and show results
+    }
+
+    function resetQuiz() {
+      currentQuestionIndex = 0;
+      loadQuestion();
+    }
+
+    loadQuestion(); // Load first question on page load
   </script>
-
-  <script type="module" src="app.js"></script>
 </body>
 </html>
