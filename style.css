@@ -1,22 +1,25 @@
-/* Rainbow gradient for the bright background */
+/* General styles for the page */
 body {
   font-family: Arial, sans-serif;
-  background: linear-gradient(45deg, #ff7e5f, #feb47b, #33FF57, #3357FF, #F1C40F, #9B59B6); 
+  background: linear-gradient(45deg, #ff7e5f, #feb47b, #33FF57, #3357FF, #F1C40F, #9B59B6);
   color: white;
   padding: 20px;
   margin: 0;
 }
 
+/* Header styles */
 header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
+  flex-wrap: wrap;
 }
 
 h1 {
   font-size: 2em;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  margin: 10px 0;
 }
 
 .top-right {
@@ -33,6 +36,7 @@ h1 {
   color: #fff;
 }
 
+/* Responsive grid for subject cards */
 .subjects {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -41,21 +45,20 @@ h1 {
   margin: auto;
 }
 
-/* Subject card styles */
 .card {
   padding: 15px;
   border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(255,255,255,0.05);
+  box-shadow: 0 2px 5px rgba(255, 255, 255, 0.05);
   cursor: pointer;
   transition: 0.2s;
   text-decoration: none;
   color: white;
   text-align: center;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .card:hover {
-  box-shadow: 0 4px 10px rgba(255,255,255,0.2);
+  box-shadow: 0 4px 10px rgba(255, 255, 255, 0.2);
 }
 
 .card.locked {
@@ -72,6 +75,7 @@ h1 {
   margin-top: 8px;
 }
 
+/* Buttons */
 button {
   padding: 8px 16px;
   font-size: 0.9em;
@@ -102,4 +106,81 @@ button:hover {
 
 .whatsapp-btn:hover {
   background-color: #128c7e;
+}
+
+/* Media Queries for Mobile Devices */
+@media (max-width: 768px) {
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  h1 {
+    font-size: 1.8em;
+  }
+
+  .top-right {
+    text-align: left;
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  .subjects {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+  }
+
+  .card {
+    padding: 12px;
+  }
+
+  button {
+    font-size: 1em;
+    width: 100%;
+  }
+
+  .whatsapp-btn {
+    bottom: 15px;
+    right: 15px;
+    font-size: 14px;
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.6em;
+  }
+
+  .top-buttons {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .top-right {
+    text-align: center;
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  .info-message {
+    font-size: 0.9em;
+  }
+
+  .card {
+    padding: 10px;
+    font-size: 0.9em;
+  }
+
+  button {
+    font-size: 1.1em;
+    width: 100%;
+  }
+
+  .whatsapp-btn {
+    font-size: 13px;
+    padding: 10px;
+  }
 }
