@@ -70,6 +70,14 @@
       top: 10px;
       right: 10px;
     }
+    .flash-summary {
+      display: none;
+      background-color: #2196F3;
+      color: white;
+      padding: 10px;
+      margin-top: 20px;
+      border-radius: 5px;
+    }
 
     /* Mobile-Friendly */
     @media (max-width: 768px) {
@@ -115,6 +123,7 @@
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body class="dark">
   <div class="sidebar">
@@ -133,6 +142,8 @@
     <button onclick="resetQuiz()">🔄 Retry</button>
     <button onclick="location.href='index.html'">🏠 Home</button>
     <div id="result-summary" class="summary"></div>
+    <div id="flash-summary" class="flash-summary"></div> <!-- Flash summary -->
+    <button onclick="exportQuizToPDF()">📄 Export Quiz as PDF</button>
   </div>
   <button id="toggle-dark" onclick="toggleDarkMode()">☀️</button>
 
@@ -146,6 +157,31 @@
       const isDark = document.body.classList.toggle("dark");
       localStorage.setItem("dark", isDark);
       document.getElementById("toggle-dark").textContent = isDark ? "☀️" : "🌙";
+    }
+
+    function submitQuiz() {
+      // Example of showing quiz summary when submit is clicked
+      const summary = "You answered 8 out of 10 questions correctly!";  // Replace with actual summary
+      const flashSummary = document.getElementById("flash-summary");
+      flashSummary.innerHTML = summary;
+      flashSummary.style.display = "block";
+
+      // Hide flash after 5 seconds
+      setTimeout(() => {
+        flashSummary.style.display = "none";
+      }, 5000);
+    }
+
+    function exportQuizToPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      // Add content to the PDF (can be expanded based on actual quiz data)
+      doc.text("Quiz Results", 10, 10);
+      doc.text("You answered 8 out of 10 questions correctly!", 10, 20); // Example summary
+
+      // Save the PDF
+      doc.save("quiz-summary.pdf");
     }
   </script>
   <script type="module" src="app.js"></script>
