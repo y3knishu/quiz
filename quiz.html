@@ -6,129 +6,120 @@
   <title>Quiz</title>
   <style>
     body {
-      font-family: 'Comic Sans MS', sans-serif;
-      display: flex;
+      font-family: Arial, sans-serif;
       margin: 0;
+      background: #fffbf1;
+      color: #333;
+      transition: background 0.3s, color 0.3s;
+      display: flex;
       flex-direction: column;
       align-items: center;
-      background: #fce4ec; /* Soft pink background */
-      color: #4caf50; /* Fresh green color for text */
-      transition: background 0.3s, color 0.3s;
+      padding: 20px;
     }
-
     .sidebar {
-      width: 100px;
-      background: #ffebee; /* Light pink sidebar */
-      border-right: 1px solid #f8bbd0; /* Subtle pink border */
+      width: 100%;
+      background: #fff;
+      border-bottom: 2px solid #ddd;
       padding: 10px;
-      overflow-y: auto;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
     }
-
     #palette button {
       margin: 5px;
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      background: #ff80ab; /* Pastel pink for buttons */
+      background-color: #ff9ae8;
       border: none;
       cursor: pointer;
+      transition: background-color 0.3s ease;
     }
-
+    #palette button:hover {
+      background-color: #ff64b3;
+    }
     .main {
-      padding: 20px;
-      flex: 1;
       width: 100%;
       max-width: 600px;
-      background: #fff3e0; /* Light orange background */
+      background: #fff;
+      padding: 20px;
       border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
-
     .question {
-      font-size: 1.4em;
-      margin-bottom: 10px;
-      color: #e91e63; /* Bright pink for the question */
-      font-weight: bold;
+      font-size: 1.2em;
+      margin-bottom: 20px;
+      color: #ff6ac0;
     }
-
-    .image {
-      max-width: 100%;
+    .image { 
+      max-width: 100%; 
       margin-bottom: 20px;
       display: none;
-      border-radius: 8px;
     }
-
     .options button {
       display: block;
       margin: 10px 0;
       padding: 12px;
       width: 100%;
-      font-size: 1em;
-      background-color: #4caf50; /* Green for the options buttons */
-      color: #fff;
+      font-size: 1.1em;
       border: none;
+      background-color: #ffebcc;
       border-radius: 8px;
       cursor: pointer;
+      transition: background-color 0.3s ease;
     }
-
     .options button:hover {
-      background-color: #81c784; /* Lighter green on hover */
+      background-color: #ffdb8d;
     }
-
     .correct {
-      background: #c8e6c9; /* Soft green for correct answers */
+      background: #c8e6c9;
     }
-
     .wrong {
-      background: #ffcdd2; /* Light red for wrong answers */
+      background: #ffcdd2;
     }
-
     .summary {
       margin-top: 20px;
       padding: 10px;
       background: #f4f4f4;
       border-radius: 8px;
+      text-align: center;
       font-size: 1.1em;
+      color: #ff6ac0;
     }
-
-    /* Responsive Styles */
-    @media (max-width: 768px) {
-      .sidebar {
-        width: 80px;
-      }
-
+    #toggle-dark {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background-color: #ff9ae8;
+      border-radius: 50%;
+      border: none;
+      padding: 12px;
+      cursor: pointer;
+    }
+    #toggle-dark:hover {
+      background-color: #ff64b3;
+    }
+    button {
+      background-color: #ffb3e6;
+      border: none;
+      padding: 12px;
+      font-size: 1em;
+      margin-top: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #ff80cc;
+    }
+    @media (max-width: 600px) {
       .main {
-        width: 100%;
         padding: 10px;
+        width: 100%;
       }
-
       .options button {
-        font-size: 0.9em;
-        padding: 8px;
-      }
-
-      #palette button {
-        width: 30px;
-        height: 30px;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .sidebar {
-        display: none; /* Hide sidebar on small screens */
-      }
-
-      .main {
-        padding: 5px;
-      }
-
-      .options button {
-        font-size: 0.8em;
-        padding: 6px;
-      }
-
-      .question {
-        font-size: 1.2em;
+        font-size: 1em;
       }
     }
   </style>
@@ -151,70 +142,20 @@
     <button onclick="location.href='index.html'">🏠 Home</button>
     <div id="result-summary" class="summary"></div>
   </div>
+  <button id="toggle-dark" onclick="toggleDarkMode()">☀️</button>
 
   <script>
-    // Placeholder for dynamic questions
-    let currentQuestionIndex = 0;
+    // Removed dark mode functionality
 
-    function displayQuestion() {
-      const question = questions[currentQuestionIndex]; // Use your question array here
-      document.getElementById("question-text").textContent = question.question;
-      document.getElementById("options").innerHTML = question.options
-        .map(option => `<button onclick="checkAnswer('${option}')">${option}</button>`)
-        .join('');
-    }
-
-    function checkAnswer(selectedOption) {
-      const correctAnswer = questions[currentQuestionIndex].correct;
-      const buttons = document.querySelectorAll('.options button');
-      buttons.forEach(button => {
-        if (button.textContent === correctAnswer) {
-          button.classList.add('correct');
-        } else if (button.textContent === selectedOption) {
-          button.classList.add('wrong');
-        }
-      });
-    }
-
-    function nextQuestion() {
-      if (currentQuestionIndex < questions.length - 1) {
-        currentQuestionIndex++;
-        displayQuestion();
-      }
-    }
-
-    function prevQuestion() {
-      if (currentQuestionIndex > 0) {
-        currentQuestionIndex--;
-        displayQuestion();
-      }
-    }
-
-    function submitQuiz() {
-      alert("Quiz submitted!");
-    }
-
-    function resetQuiz() {
-      currentQuestionIndex = 0;
-      displayQuestion();
-    }
-
-    // Sample question array
-    const questions = [
-      {
-        question: "What is the capital of France?",
-        options: ["Paris", "London", "Berlin", "Madrid"],
-        correct: "Paris"
-      },
-      {
-        question: "What is 2 + 2?",
-        options: ["3", "4", "5", "6"],
-        correct: "4"
-      }
-    ];
-
-    // Initialize first question
-    displayQuestion();
+    // Function to simulate changing color palette (for illustration)
+    const palette = document.getElementById('palette');
+    const colors = ['#ff9ae8', '#ff64b3', '#ff80cc', '#ffb3e6'];
+    colors.forEach(color => {
+      const button = document.createElement('button');
+      button.style.backgroundColor = color;
+      palette.appendChild(button);
+    });
   </script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
