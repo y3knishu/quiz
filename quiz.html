@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -8,23 +8,19 @@
     body {
       font-family: Arial, sans-serif;
       display: flex;
-      flex-direction: column;
       margin: 0;
       transition: background 0.3s, color 0.3s;
-      min-height: 100vh;
     }
     .dark {
       background: #121212;
       color: #eee;
     }
     .sidebar {
-      width: 100%;
+      width: 100px;
       background: #fff;
-      border-bottom: 1px solid #ddd;
+      border-right: 1px solid #ddd;
       padding: 10px;
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
+      overflow-y: auto;
     }
     .dark .sidebar {
       background: #1e1e1e;
@@ -38,27 +34,15 @@
     .main {
       padding: 20px;
       flex: 1;
-      width: 100%;
-      box-sizing: border-box;
-      overflow-x: hidden;
     }
-    .question {
-      font-size: 1.2em;
-      margin-bottom: 10px;
-      word-wrap: break-word;
-    }
-    .image {
-      max-width: 100%;
-      margin-bottom: 20px;
-      display: none;
-    }
+    .question { font-size: 1.1em; margin-bottom: 10px; }
+    .image { max-width: 100%; margin-bottom: 20px; display: none; }
     .options button {
       display: block;
       margin: 10px 0;
       padding: 10px;
       width: 100%;
       font-size: 1em;
-      box-sizing: border-box;
     }
     .correct { background: #c8e6c9; }
     .wrong { background: #ffcdd2; }
@@ -75,36 +59,6 @@
       position: fixed;
       top: 10px;
       right: 10px;
-      font-size: 1.5em;
-      z-index: 1000;
-    }
-    /* Responsive Styles */
-    @media (min-width: 600px) {
-      .sidebar {
-        width: 100px;
-        border-right: 1px solid #ddd;
-        display: block;
-      }
-      .main {
-        margin-left: 120px;
-      }
-    }
-    @media (max-width: 600px) {
-      .main {
-        margin-left: 0;
-      }
-      .sidebar {
-        width: 100%;
-        border-bottom: 1px solid #ddd;
-        padding: 10px 0;
-      }
-      .sidebar h4 {
-        margin: 0;
-      }
-      #toggle-dark {
-        top: 5px;
-        right: 5px;
-      }
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
