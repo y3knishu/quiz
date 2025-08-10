@@ -62,6 +62,7 @@ function loadQuestion(index) {
     qOptions.appendChild(btn);
   });
 
+  // If the question has already been answered, display the results
   if (selectedAnswers[index] !== undefined) {
     const correctIndex = q.answer;
     const selected = selectedAnswers[index].selectedIndex;
@@ -84,8 +85,8 @@ function selectAnswer(selectedIndex, btn) {
   const buttons = qOptions.querySelectorAll("button");
   buttons.forEach((b, i) => {
     b.disabled = true;
-    if (i === q.answer) b.classList.add("correct");
-    if (i === selectedIndex && !isCorrect) b.classList.add("wrong");
+    if (i === q.answer) b.classList.add("correct"); // Correct answer
+    if (i === selectedIndex && !isCorrect) b.classList.add("wrong"); // Wrong answer
   });
 
   saveProgress();
@@ -95,9 +96,11 @@ function selectAnswer(selectedIndex, btn) {
 function prevQuestion() {
   if (current > 0) loadQuestion(current - 1);
 }
+
 function nextQuestion() {
   if (current < questions.length - 1) loadQuestion(current + 1);
 }
+
 function resetQuiz() {
   selectedAnswers = [];
   saveProgress();
@@ -105,6 +108,7 @@ function resetQuiz() {
   resultDiv.innerHTML = "";
   startTime = Date.now();
 }
+
 function submitQuiz() {
   let correct = 0, wrong = 0, attempted = 0;
   selectedAnswers.forEach(a => {
@@ -197,7 +201,6 @@ async function loadQuiz(subjectName) {
   }
 }
 
-// 🔐 Subject access control with admin override
 onAuthStateChanged(auth, async (user) => {
   if (subject === "Anatomy") {
     loadQuiz(subject);
