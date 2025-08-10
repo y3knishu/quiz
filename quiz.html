@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -8,23 +8,19 @@
     body {
       font-family: Arial, sans-serif;
       display: flex;
-      flex-direction: column;
       margin: 0;
       transition: background 0.3s, color 0.3s;
-      min-height: 100vh;
     }
     .dark {
       background: #121212;
       color: #eee;
     }
     .sidebar {
-      width: 100%;
+      width: 100px;
       background: #fff;
-      border-bottom: 1px solid #ddd;
+      border-right: 1px solid #ddd;
       padding: 10px;
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
+      overflow-y: auto;
     }
     .dark .sidebar {
       background: #1e1e1e;
@@ -38,11 +34,8 @@
     .main {
       padding: 20px;
       flex: 1;
-      width: 100%;
-      box-sizing: border-box;
-      overflow-x: hidden;
     }
-    .question { font-size: 1.2em; margin-bottom: 10px; word-wrap: break-word; }
+    .question { font-size: 1.1em; margin-bottom: 10px; }
     .image { max-width: 100%; margin-bottom: 20px; display: none; }
     .options button {
       display: block;
@@ -50,7 +43,6 @@
       padding: 10px;
       width: 100%;
       font-size: 1em;
-      box-sizing: border-box;
     }
     .correct { background: #c8e6c9; }
     .wrong { background: #ffcdd2; }
@@ -67,48 +59,15 @@
       position: fixed;
       top: 10px;
       right: 10px;
-      font-size: 1.5em;
-      z-index: 1000;
-    }
-    /* Responsive Styles */
-    @media (min-width: 600px) {
-      .sidebar {
-        width: 100px;
-        border-right: 1px solid #ddd;
-        display: block;
-      }
-      .main {
-        margin-left: 120px;
-      }
-    }
-    @media (max-width: 600px) {
-      .main {
-        margin-left: 0;
-      }
-      .sidebar {
-        width: 100%;
-        border-bottom: 1px solid #ddd;
-        padding: 10px 0;
-      }
-      .sidebar h4 {
-        margin: 0;
-      }
-      #toggle-dark {
-        top: 5px;
-        right: 5px;
-      }
     }
   </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="dark">
-  <!-- Sidebar -->
   <div class="sidebar">
     <h4>Palette</h4>
     <div id="palette"></div>
   </div>
-
-  <!-- Main Content -->
   <div class="main">
     <div id="question-number"></div>
     <div id="question-text" class="question"></div>
@@ -121,67 +80,21 @@
     <button onclick="resetQuiz()">🔄 Retry</button>
     <button onclick="location.href='index.html'">🏠 Home</button>
     <div id="result-summary" class="summary"></div>
-
-    <!-- Export to PDF Button -->
-    <button id="export-pdf" onclick="exportToPDF()">📄 Export Quiz Results</button>
   </div>
-
-  <!-- Toggle Dark Mode -->
   <button id="toggle-dark" onclick="toggleDarkMode()">☀️</button>
 
   <script>
-    // Sample array to store user answers and correct answers
-    let userAnswers = [];
-
-    // Function to track user answers
-    function recordAnswer(question, userAnswer, correctAnswer) {
-      userAnswers.push({
-        question: question,
-        userAnswer: userAnswer,
-        correctAnswer: correctAnswer
-      });
+    // Restore saved dark mode
+    if (localStorage.getItem("dark") === "false") {
+      document.body.classList.remove("dark");
+      document.getElementById("toggle-dark").textContent = "🌙";
     }
-
-    // Function to generate the PDF
-    function exportToPDF() {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-
-      doc.setFontSize(18);
-      doc.text("Quiz Results", 14, 10);
-
-      let yPosition = 20;
-      userAnswers.forEach((item, index) => {
-        doc.setFontSize(12);
-        doc.text(`Question ${index + 1}: ${item.question}`, 14, yPosition);
-        yPosition += 10;
-
-        doc.text(`Your Answer: ${item.userAnswer}`, 14, yPosition);
-        yPosition += 10;
-
-        doc.text(`Correct Answer: ${item.correctAnswer}`, 14, yPosition);
-        yPosition += 20; // Add some space between questions
-      });
-
-      // Save the PDF
-      doc.save("quiz-results.pdf");
-    }
-
-    // Function to toggle dark mode
     function toggleDarkMode() {
       const isDark = document.body.classList.toggle("dark");
       localStorage.setItem("dark", isDark);
       document.getElementById("toggle-dark").textContent = isDark ? "☀️" : "🌙";
     }
-
-    // Sample questions and answers (this should be dynamically filled with your quiz data)
-    // Example question tracking:
-    recordAnswer("What is 2+2?", "4", "4");
-    recordAnswer("What is the capital of France?", "Paris", "Paris");
-
-    // You would dynamically add to the `userAnswers` array as users answer questions
   </script>
-
   <script type="module" src="app.js"></script>
 </body>
 </html>
