@@ -24,6 +24,10 @@
       overflow-y: auto;
       display: flex;
       flex-direction: column;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
     }
     .dark .sidebar {
       background: #1e1e1e;
@@ -39,6 +43,7 @@
       flex: 1;
       display: flex;
       flex-direction: column;
+      margin-bottom: 80px; /* to ensure content does not overlap with the palette */
     }
     .question { 
       font-size: 1.1em; 
@@ -120,10 +125,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="dark">
-  <div class="sidebar">
-    <h4>Palette</h4>
-    <div id="palette"></div>
-  </div>
   <div class="main">
     <div id="question-number"></div>
     <div id="question-text" class="question"></div>
@@ -136,6 +137,10 @@
     <button onclick="resetQuiz()">🔄 Retry</button>
     <button onclick="location.href='index.html'">🏠 Home</button>
     <div id="result-summary" class="summary"></div>
+  </div>
+  <div class="sidebar">
+    <h4>Palette</h4>
+    <div id="palette"></div>
   </div>
   <button id="toggle-dark" onclick="toggleDarkMode()">☀️</button>
 
