@@ -4,17 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quiz</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    /* General styles for the page */
     body {
-      font-family: Arial, sans-serif;
-      display: flex;
+      font-family: 'Poppins', sans-serif; /* Playful font */
+      background: linear-gradient(45deg, #FFE1F0, #FFEBEE); /* Light pastel background */
+      color: #333; /* Darker text for contrast */
       margin: 0;
-      transition: background 0.3s, color 0.3s;
+      padding: 20px;
+      display: flex;
     }
-    .dark {
-      background: #121212;
-      color: #eee;
-    }
+
+    /* Sidebar for palette */
     .sidebar {
       width: 100px;
       background: #fff;
@@ -22,51 +25,143 @@
       padding: 10px;
       overflow-y: auto;
     }
-    .dark .sidebar {
-      background: #1e1e1e;
-      border-color: #444;
+
+    #palette {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
+
     #palette button {
-      margin: 5px;
       width: 40px;
       height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: transform 0.3s;
     }
+
+    #palette button:hover {
+      transform: scale(1.1);
+    }
+
+    /* Main content area */
     .main {
       padding: 20px;
       flex: 1;
     }
-    .question { font-size: 1.1em; margin-bottom: 10px; }
-    .image { max-width: 100%; margin-bottom: 20px; display: none; }
+
+    .question {
+      font-size: 1.3em;
+      margin-bottom: 20px;
+    }
+
     .options button {
       display: block;
       margin: 10px 0;
-      padding: 10px;
+      padding: 12px;
       width: 100%;
-      font-size: 1em;
+      font-size: 1.1em;
+      background-color: #ffffff; /* White background for options */
+      color: #333;
+      border: 1px solid #ddd; /* Light border */
+      border-radius: 50px;
+      transition: 0.3s;
+      cursor: pointer;
     }
-    .correct { background: #66bb6a; }
-    .wrong { background: #ef5350; }
+
+    .options button:hover {
+      background-color: #FF80AB; /* Soft pink on hover */
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .correct {
+      background: #66bb6a; /* Light green for correct answers */
+      border-color: #4caf50; /* Darker green border */
+    }
+
+    .wrong {
+      background: #ef5350; /* Red for wrong answers */
+      border-color: #e53935; /* Darker red border */
+    }
+
     .summary {
       margin-top: 20px;
-      padding: 10px;
+      padding: 15px;
       background: #f4f4f4;
       border-radius: 8px;
+      font-size: 1.1em;
     }
-    .dark .summary {
-      background: #2b2b2b;
+
+    button {
+      padding: 12px 20px;
+      background-color: #FF80AB; /* Soft pink for buttons */
+      color: white;
+      border: none;
+      border-radius: 50px;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: 0.3s;
     }
-    #toggle-dark {
-      position: fixed;
-      top: 10px;
-      right: 10px;
+
+    button:hover {
+      background-color: #FF60A3; /* Lighter pink on hover */
+      transform: scale(1.05);
+    }
+
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+      .main {
+        padding: 15px;
+      }
+
+      .question {
+        font-size: 1.1em;
+      }
+
+      .options button {
+        font-size: 1em;
+      }
+
+      button {
+        font-size: 1.2em;
+        width: 100%;
+      }
+
+      #palette {
+        flex-direction: row;
+        gap: 8px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .question {
+        font-size: 1em;
+      }
+
+      .options button {
+        font-size: 0.9em;
+        padding: 10px;
+      }
+
+      button {
+        font-size: 1.1em;
+        width: 100%;
+      }
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="dark">
+<body>
   <div class="sidebar">
     <h4>Palette</h4>
-    <div id="palette"></div>
+    <div id="palette">
+      <button style="background-color: #FF5733;"></button>
+      <button style="background-color: #33FF57;"></button>
+      <button style="background-color: #3357FF;"></button>
+      <button style="background-color: #F1C40F;"></button>
+      <button style="background-color: #9B59B6;"></button>
+      <button style="background-color: #1ABC9C;"></button>
+    </div>
   </div>
   <div class="main">
     <div id="question-number"></div>
@@ -81,21 +176,65 @@
     <button onclick="location.href='index.html'">🏠 Home</button>
     <div id="result-summary" class="summary"></div>
   </div>
-  <button id="toggle-dark" onclick="toggleDarkMode()">☀️</button>
 
   <script>
-    // Restore saved dark mode
-    if (localStorage.getItem("dark") === "false") {
-      document.body.classList.remove("dark");
-      document.getElementById("toggle-dark").textContent = "🌙";
-    }
-    function toggleDarkMode() {
-      const isDark = document.body.classList.toggle("dark");
-      localStorage.setItem("dark", isDark);
-      document.getElementById("toggle-dark").textContent = isDark ? "☀️" : "🌙";
-    }
-  </script>
+    // Assuming `questions` is loaded from a dynamic source or defined somewhere else in your code
+    let currentQuestionIndex = 0;
+    let questions = []; // Make sure to populate this with your actual quiz data
 
-  <script type="module" src="app.js"></script>
+    function loadQuestion() {
+      const questionData = questions[currentQuestionIndex];
+      document.getElementById("question-text").innerText = questionData.question;
+      const optionsContainer = document.getElementById("options");
+      optionsContainer.innerHTML = '';
+
+      questionData.options.forEach((option, index) => {
+        const button = document.createElement("button");
+        button.innerText = option;
+        button.onclick = () => checkAnswer(index);
+        optionsContainer.appendChild(button);
+      });
+    }
+
+    function checkAnswer(selectedIndex) {
+      const questionData = questions[currentQuestionIndex];
+      const buttons = document.querySelectorAll(".options button");
+
+      buttons.forEach((button, index) => {
+        if (index === selectedIndex) {
+          if (index === questionData.answer) {
+            button.classList.add("correct");
+          } else {
+            button.classList.add("wrong");
+          }
+        }
+      });
+    }
+
+    function prevQuestion() {
+      if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+        loadQuestion();
+      }
+    }
+
+    function nextQuestion() {
+      if (currentQuestionIndex < questions.length - 1) {
+        currentQuestionIndex++;
+        loadQuestion();
+      }
+    }
+
+    function submitQuiz() {
+      // Logic to calculate score and show results
+    }
+
+    function resetQuiz() {
+      currentQuestionIndex = 0;
+      loadQuestion();
+    }
+
+    loadQuestion(); // Load the first question
+  </script>
 </body>
 </html>
