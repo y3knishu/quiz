@@ -1,7 +1,7 @@
-/* General styles for the page */
+/* Rainbow gradient for the bright background */
 body {
   font-family: Arial, sans-serif;
-  background: linear-gradient(45deg, #ff7e5f, #feb47b); /* Rainbow gradient for the bright background */
+  background: linear-gradient(45deg, #ff7e5f, #feb47b, #33FF57, #3357FF, #F1C40F, #9B59B6); 
   color: white;
   padding: 20px;
   margin: 0;
@@ -41,6 +41,7 @@ h1 {
   margin: auto;
 }
 
+/* Subject card styles */
 .card {
   padding: 15px;
   border-radius: 8px;
