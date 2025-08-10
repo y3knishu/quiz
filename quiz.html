@@ -156,5 +156,76 @@
     <button onclick="location.href='index.html'">🏠 Home</button>
     <div id="result-summary" class="summary"></div>
   </div>
+
+  <script>
+    // You can dynamically load your questions in the "questions" array below:
+    let questions = []; // Empty initially, you will fill it with your questions
+
+    let currentQuestionIndex = 0;
+
+    function displayQuestion() {
+      if (questions.length === 0) return; // Prevent errors if no questions are set
+      const question = questions[currentQuestionIndex];
+      document.getElementById("question-text").textContent = question.question;
+      document.getElementById("options").innerHTML = question.options
+        .map(
+          (option) =>
+            `<button onclick="checkAnswer('${option}')">${option}</button>`
+        )
+        .join("");
+    }
+
+    function checkAnswer(selectedOption) {
+      const correctAnswer = questions[currentQuestionIndex].correct;
+      const buttons = document.querySelectorAll(".options button");
+      buttons.forEach((button) => {
+        if (button.textContent === correctAnswer) {
+          button.classList.add("correct");
+        } else if (button.textContent === selectedOption) {
+          button.classList.add("wrong");
+        }
+      });
+    }
+
+    function nextQuestion() {
+      if (currentQuestionIndex < questions.length - 1) {
+        currentQuestionIndex++;
+        displayQuestion();
+      }
+    }
+
+    function prevQuestion() {
+      if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+        displayQuestion();
+      }
+    }
+
+    function submitQuiz() {
+      alert("Quiz submitted!");
+    }
+
+    function resetQuiz() {
+      currentQuestionIndex = 0;
+      displayQuestion();
+    }
+
+    // Add your questions here in the questions array
+    questions = [
+      {
+        question: "Your question here?",
+        options: ["Option 1", "Option 2", "Option 3", "Option 4"],
+        correct: "Option 1" // The correct answer
+      },
+      {
+        question: "Another question?",
+        options: ["Option A", "Option B", "Option C", "Option D"],
+        correct: "Option B"
+      }
+    ];
+
+    // Initialize first question
+    displayQuestion();
+  </script>
 </body>
 </html>
