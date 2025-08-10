@@ -4,17 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quiz</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    /* General styles for the page */
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Poppins', sans-serif; /* Cute and playful font */
+      background: linear-gradient(45deg, #FFB6C1, #FFEBEE); /* Light pastel colors */
+      color: #333; /* Darker text for contrast */
       display: flex;
       margin: 0;
-      transition: background 0.3s, color 0.3s;
+      padding: 20px;
     }
-    .dark {
-      background: #121212;
-      color: #eee;
-    }
+
     .sidebar {
       width: 100px;
       background: #fff;
@@ -22,48 +24,91 @@
       padding: 10px;
       overflow-y: auto;
     }
-    .dark .sidebar {
-      background: #1e1e1e;
-      border-color: #444;
-    }
+
     #palette button {
       margin: 5px;
       width: 40px;
       height: 40px;
     }
+
     .main {
       padding: 20px;
       flex: 1;
     }
-    .question { font-size: 1.1em; margin-bottom: 10px; }
-    .image { max-width: 100%; margin-bottom: 20px; display: none; }
+
+    .question {
+      font-size: 1.3em;
+      margin-bottom: 20px;
+    }
+
+    .image {
+      max-width: 100%;
+      margin-bottom: 20px;
+      display: none;
+    }
+
     .options button {
       display: block;
       margin: 10px 0;
-      padding: 10px;
+      padding: 12px;
       width: 100%;
-      font-size: 1em;
+      font-size: 1.1em;
+      background-color: #FF80AB; /* Soft pink background */
+      color: white;
+      border: none;
+      border-radius: 50px; /* Rounded buttons */
+      transition: 0.3s;
+      cursor: pointer;
     }
-    .correct { background: #66bb6a; }
-    .wrong { background: #ef5350; }
+
+    .options button:hover {
+      background-color: #FF60A3; /* Lighter pink on hover */
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .correct {
+      background: #66bb6a; /* Light green for correct answers */
+    }
+
+    .wrong {
+      background: #ef5350; /* Red for wrong answers */
+    }
+
     .summary {
       margin-top: 20px;
-      padding: 10px;
+      padding: 15px;
       background: #f4f4f4;
       border-radius: 8px;
+      font-size: 1.1em;
     }
-    .dark .summary {
-      background: #2b2b2b;
+
+    /* Playful button styles for the navigation buttons */
+    button {
+      padding: 12px 20px;
+      background-color: #FF80AB; /* Soft pink */
+      color: white;
+      border: none;
+      border-radius: 50px;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: 0.3s;
     }
+
+    button:hover {
+      background-color: #FF60A3; /* Lighter pink on hover */
+      transform: scale(1.05);
+    }
+
+    /* Navigation bar buttons */
     #toggle-dark {
       position: fixed;
       top: 10px;
       right: 10px;
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="dark">
+<body>
   <div class="sidebar">
     <h4>Palette</h4>
     <div id="palette"></div>
@@ -81,7 +126,6 @@
     <button onclick="location.href='index.html'">🏠 Home</button>
     <div id="result-summary" class="summary"></div>
   </div>
-  <button id="toggle-dark" onclick="toggleDarkMode()">☀️</button>
 
   <script>
     // Restore saved dark mode
@@ -89,6 +133,7 @@
       document.body.classList.remove("dark");
       document.getElementById("toggle-dark").textContent = "🌙";
     }
+
     function toggleDarkMode() {
       const isDark = document.body.classList.toggle("dark");
       localStorage.setItem("dark", isDark);
