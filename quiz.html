@@ -16,11 +16,12 @@
       color: #eee;
     }
     .sidebar {
-      width: 100px;
+      width: 80px;
       background: #fff;
       border-right: 1px solid #ddd;
       padding: 10px;
       overflow-y: auto;
+      display: none;
     }
     .dark .sidebar {
       background: #1e1e1e;
@@ -34,9 +35,18 @@
     .main {
       padding: 20px;
       flex: 1;
+      display: flex;
+      flex-direction: column;
     }
-    .question { font-size: 1.1em; margin-bottom: 10px; }
-    .image { max-width: 100%; margin-bottom: 20px; display: none; }
+    .question { 
+      font-size: 1.1em; 
+      margin-bottom: 10px; 
+    }
+    .image { 
+      max-width: 100%; 
+      margin-bottom: 20px; 
+      display: none; 
+    }
     .options button {
       display: block;
       margin: 10px 0;
@@ -59,6 +69,49 @@
       position: fixed;
       top: 10px;
       right: 10px;
+    }
+
+    /* Mobile-Friendly */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 60px;
+        display: block;
+      }
+      .main {
+        padding: 10px;
+      }
+      .question {
+        font-size: 1em;
+      }
+      .options button {
+        font-size: 0.9em;
+      }
+      #toggle-dark {
+        top: 5px;
+        right: 5px;
+      }
+      button {
+        font-size: 0.9em;
+        padding: 8px;
+      }
+    }
+    @media (max-width: 480px) {
+      .sidebar {
+        width: 50px;
+      }
+      .main {
+        padding: 5px;
+      }
+      .question {
+        font-size: 0.9em;
+      }
+      .options button {
+        font-size: 0.8em;
+      }
+      button {
+        font-size: 0.8em;
+        padding: 6px;
+      }
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
