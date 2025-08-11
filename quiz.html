@@ -1,261 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quiz</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      transition: background 0.3s, color 0.3s;
-      display: flex;
-      flex-direction: row;
-      min-height: 100vh;
-    }
-    .dark {
-      background: #121212;
-      color: #eee;
-    }
-
-    /* Sidebar */
-    .sidebar {
-      width: 120px;
-      background: #fff;
-      border-right: 1px solid #ddd;
-      padding: 10px;
-      overflow-y: auto;
-    }
-    .dark .sidebar {
-      background: #1e1e1e;
-      border-color: #444;
-    }
-    #palette {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-    }
-    #palette button {
-      flex: 1 0 40px;
-      height: 40px;
-      font-size: 0.9em;
-      border-radius: 5px;
-    }
-
-    /* Main quiz area */
-    .main {
-      padding: 15px;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-    .question {
-      font-size: 1.1em;
-      margin-bottom: 10px;
-    }
-    .image {
-      max-width: 100%;
-      margin-bottom: 15px;
-      display: none;
-      border-radius: 8px;
-    }
-    .options button {
-      display: block;
-      margin: 8px 0;
-      padding: 12px;
-      width: 100%;
-      font-size: 1em;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-    }
-    .correct { background: #c8e6c9; }
-    .wrong { background: #ffcdd2; }
-
-    /* Navigation buttons container */
-    .nav-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 15px;
-    }
-    .nav-buttons button {
-      flex: 1 1 calc(50% - 8px);
-      padding: 12px;
-      font-size: 1em;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-    }
-
-    /* Summary section */
-    .summary {
-      margin-top: 20px;
-      padding: 10px;
-      background: #f4f4f4;
-      border-radius: 8px;
-    }
-    .dark .summary {
-      background: #2b2b2b;
-    }
-
-    /* Fixed buttons (Dark mode + PDF Export) */
-    #toggle-dark, #export-pdf {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      z-index: 999;
-      padding: 8px 10px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      margin-left: 5px;
-    }
-    #export-pdf {
-      right: 60px;
-      background: #ff9800;
-      color: white;
-    }
-
-    /* Mobile adjustments */
-    @media (max-width: 768px) {
-      body {
-        flex-direction: column;
-      }
-      .sidebar {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 0;
-        overflow: hidden;
-        transition: height 0.3s ease;
-        border-right: none;
-        border-top: 1px solid #ddd;
-        background: #fff;
-        z-index: 1000;
-      }
-      .dark .sidebar {
-        background: #1e1e1e;
-      }
-      .sidebar.open {
-        height: 200px; /* Palette height when opened */
-      }
-      .toggle-palette-btn {
-        position: fixed;
-        bottom: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #007bff;
-        color: white;
-        border: none;
-        padding: 10px 15px;
-        border-radius: 8px 8px 0 0;
-        cursor: pointer;
-        z-index: 1001;
-      }
-      .main {
-        padding: 10px;
-      }
-      .nav-buttons button {
-        flex: 1 1 100%;
-      }
-      #export-pdf {
-        top: auto;
-        bottom: 60px;
-        right: 10px;
-      }
-    }
-  </style>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEET PG Quiz</title>
+  <link rel="stylesheet" href="style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
-<body class="dark">
+<body>
 
-  <!-- Collapsible Palette Button for Mobile -->
-  <button class="toggle-palette-btn" onclick="togglePalette()">📋 Questions</button>
-
-  <!-- Sidebar (Question Palette) -->
-  <div class="sidebar" id="sidebar">
-    <h4>Palette</h4>
+<div id="quiz-container">
+  <!-- Sidebar Question Palette -->
+  <div id="sidebar">
+    <h3>Question Palette</h3>
     <div id="palette"></div>
   </div>
 
-  <!-- Main Quiz Area -->
-  <div class="main">
-    <div id="question-number"></div>
-    <div id="question-text" class="question"></div>
-    <img id="question-image" class="image" />
-    <div id="options" class="options"></div>
-    <p id="timer">Time: 0 sec</p>
-
-    <!-- Navigation Buttons -->
-    <div class="nav-buttons">
-      <button onclick="prevQuestion()">⬅️ Prev</button>
-      <button onclick="nextQuestion()">Next ➡️</button>
-      <button onclick="submitQuiz()">✅ Submit Quiz</button>
-      <button onclick="resetQuiz()">🔄 Retry</button>
-      <button onclick="location.href='index.html'">🏠 Home</button>
+  <!-- Main Quiz Content -->
+  <div id="quiz-content">
+    <div id="question-container">
+      <div id="question-text"></div>
+      <img id="question-image" style="max-width: 100%; display: none;" />
     </div>
+    <div id="options-container"></div>
 
-    <div id="result-summary" class="summary"></div>
+    <div id="quiz-buttons">
+      <button id="prev-btn">Previous</button>
+      <button id="next-btn">Next</button>
+      <button id="submit-btn">Submit</button>
+      <button id="retry-btn" style="display:none;">Retry</button>
+      <button id="home-btn">Home</button>
+    </div>
   </div>
+</div>
 
-  <!-- Dark Mode Toggle -->
-  <button id="toggle-dark" onclick="toggleDarkMode()">☀️</button>
-  <!-- Export PDF Button -->
-  <button id="export-pdf" onclick="exportQuestionsToPDF()">📄 PDF</button>
+<!-- Floating PDF download button -->
+<button id="download-pdf-btn" title="Download Questions as PDF">📄</button>
 
-  <script>
-    // Restore saved dark mode
-    if (localStorage.getItem("dark") === "false") {
-      document.body.classList.remove("dark");
-      document.getElementById("toggle-dark").textContent = "🌙";
-    }
-    function toggleDarkMode() {
-      const isDark = document.body.classList.toggle("dark");
-      localStorage.setItem("dark", isDark);
-      document.getElementById("toggle-dark").textContent = isDark ? "☀️" : "🌙";
-    }
-
-    // Toggle Palette for Mobile
-    function togglePalette() {
-      document.getElementById("sidebar").classList.toggle("open");
-    }
-
-    // PDF Export Function
-    async function exportQuestionsToPDF() {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      let yPos = 10;
-
-      if (window.quizData && quizData.length > 0) {
-        quizData.forEach((q, index) => {
-          doc.setFontSize(12);
-          doc.text(`${index + 1}. ${q.question}`, 10, yPos);
-          yPos += 6;
-          q.options.forEach(opt => {
-            doc.text(`- ${opt}`, 12, yPos);
-            yPos += 5;
-          });
-          yPos += 4;
-
-          // If image exists
-          if (q.image) {
-            // Image loading skipped for simplicity (can be added if needed)
-          }
-
-          if (yPos > 270) { // New page if overflow
-            doc.addPage();
-            yPos = 10;
-          }
-        });
-        doc.save("quiz_questions.pdf");
-      } else {
-        alert("No quiz data available to export!");
-      }
-    }
-  </script>
-  <script type="module" src="app.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
+
+<style>
+#quiz-container {
+  display: flex;
+  flex-direction: row;
+}
+#sidebar {
+  width: 20%;
+  background: #f4f4f4;
+  padding: 10px;
+}
+#quiz-content {
+  flex: 1;
+  padding: 15px;
+}
+#download-pdf-btn {
+  position: fixed;
+  bottom: 15px;
+  right: 15px;
+  background: #2196f3;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  z-index: 1000;
+}
+#download-pdf-btn:hover {
+  background: #1976d2;
+}
+@media (max-width: 768px) {
+  #quiz-container {
+    flex-direction: column;
+  }
+  #sidebar {
+    width: 100%;
+    order: 2;
+  }
+  #quiz-content {
+    order: 1;
+  }
+}
+</style>
