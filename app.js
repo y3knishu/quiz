@@ -45,7 +45,7 @@ onAuthStateChanged(auth, (user) => {
     loadQuiz(subject, user.uid); // Load quiz for this subject when logged in
   } else {
     console.log("User is not signed in.");
-    // Optionally handle user not logged in (redirect to login page)
+    // Optionally redirect to the login page
   }
 });
 
@@ -177,27 +177,36 @@ function updateTimer() {
   timer.textContent = `Time: ${mins}m ${secs}s`;
 }
 
-// Save progress to Firestore
+// Save user progress in Firestore
 async function saveProgress(userId) {
   const key = `progress_${subject}`;
   const summary = {
-    attempted: selectedAnswers.filter(a => a !== undefined).length,
+    attempted: selectedAnswers.filter(a => a !== undefined).length,  // Count only defined answers
     correct: selectedAnswers.filter(a => a && a.correct).length,
     wrong: selectedAnswers.filter(a => a && !a.correct).length,
     total: questions.length,
-    answers: selectedAnswers,
-    timestamp: new Date().toISOString()
+    answers: selectedAnswers.filter(a => a !== undefined), // Filter out undefined answers
+    timestamp: new Date().toISOString()  // Save timestamp
   };
 
-  const userProgressRef = doc(db, "user_progress", userId);
-  await setDoc(userProgressRef, {
-    [key]: summary
-  });
+  // Make sure summary.answers is an array and not undefined or null
+  if (summary.answers === undefined || summary.answers === null) {
+    console.error('Invalid progress data, answers are undefined or null');
+    return;
+  }
 
-  console.log('Progress saved to Firebase for user:', userId);
+  const userProgressRef = doc(db, "user_progress", userId);
+  try {
+    await setDoc(userProgressRef, {
+      [key]: summary
+    });
+    console.log('Progress saved to Firebase for user:', userId);
+  } catch (error) {
+    console.error('Error saving progress:', error);
+  }
 }
 
-// Load progress from Firestore
+// Load user progress from Firestore
 async function loadProgress(userId) {
   const key = `progress_${subject}`;
   const userProgressRef = doc(db, "user_progress", userId);
@@ -206,6 +215,7 @@ async function loadProgress(userId) {
   if (userProgressSnap.exists()) {
     const userProgress = userProgressSnap.data();
     const savedProgress = userProgress[key];
+
     if (savedProgress) {
       selectedAnswers = savedProgress.answers || [];
       console.log('Progress loaded from Firebase:', savedProgress);
