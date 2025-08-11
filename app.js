@@ -21,6 +21,8 @@ function renderQuestion() {
     const optionsEl = document.getElementById("options");
     const imageEl = document.getElementById("question-image");
 
+    if (!q) return;
+
     questionEl.textContent = q.question;
     optionsEl.innerHTML = "";
 
@@ -103,12 +105,10 @@ async function downloadPDF() {
     for (let i = 0; i < questions.length; i++) {
         const q = questions[i];
 
-        // Question text
         pdf.setFontSize(12);
         pdf.text(`${i + 1}. ${q.question}`, 10, yOffset);
         yOffset += 8;
 
-        // Image
         if (q.image) {
             try {
                 const img = await loadImageAsBase64(q.image);
@@ -119,19 +119,16 @@ async function downloadPDF() {
             }
         }
 
-        // Options
         q.options.forEach((opt, idx) => {
             let mark = "";
             if (q.answer === idx) mark += " ✅";
             if (selectedAnswers[i] === idx && q.answer !== idx) mark += " ❌";
-
             pdf.text(`(${String.fromCharCode(65 + idx)}) ${opt} ${mark}`, 15, yOffset);
             yOffset += 7;
         });
 
         yOffset += 5;
 
-        // Add new page if needed
         if (yOffset > 270) {
             pdf.addPage();
             yOffset = 10;
@@ -163,11 +160,15 @@ function togglePalette() {
     document.getElementById("palette-container").classList.toggle("open");
 }
 
-// ===================== EVENT LISTENERS =====================
-document.getElementById("next-btn").onclick = nextQuestion;
-document.getElementById("prev-btn").onclick = prevQuestion;
-document.getElementById("download-pdf-btn").onclick = downloadPDF;
-document.getElementById("toggle-palette-btn").onclick = togglePalette;
+// ===================== EVENT LISTENERS (SAFE INIT) =====================
+document.addEventListener("DOMContentLoaded", () => {
+    const nextBtn = document.getElementById("next-btn");
+    const prevBtn = document.getElementById("prev-btn");
+    const pdfBtn = document.getElementById("download-pdf-btn");
+    const togglePaletteBtn = document.getElementById("toggle-palette-btn");
 
-// Start quiz after questions are loaded from Firebase
-// startQuiz(); <-- call this after fetching data
+    if (nextBtn) nextBtn.onclick = nextQuestion;
+    if (prevBtn) prevBtn.onclick = prevQuestion;
+    if (pdfBtn) pdfBtn.onclick = downloadPDF;
+    if (togglePaletteBtn) togglePaletteBtn.onclick = togglePalette;
+});
