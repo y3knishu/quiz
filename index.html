@@ -77,31 +77,44 @@
     }
 
     function renderSubjects() {
-      const container = document.getElementById("subject-container");
-      container.innerHTML = "";
-      subjects.forEach(subject => {
-        const card = document.createElement("a");
-        card.className = "card";
-        const isFree = subject === "Anatomy";
-        const locked = !isFree && !isPaid;
-        card.classList.toggle("locked", locked);
-        card.style.backgroundColor = getRandomColor(); // Apply random color
+  const container = document.getElementById("subject-container");
+  container.innerHTML = "";
+  subjects.forEach(subject => {
+    const card = document.createElement("a");
+    card.className = "card";
+    const isFree = subject === "Anatomy";
+    const locked = !isFree && (!currentUser || !isPaid);
 
-        card.innerHTML = `
-          <div class="card-title">${subject}</div>
-          <div class="card-sub">${locked ? "🔒 Locked" : "✅ Open"}</div>
-        `;
-        if (!locked) {
-          card.href = `quiz.html?subject=${encodeURIComponent(subject)}`;
-        } else {
-          card.onclick = (e) => {
-            e.preventDefault();
-            alert("🔒 This subject is locked. Please login and pay ₹99 to unlock all subjects.");
-          };
-        }
-        container.appendChild(card);
-      });
+    card.classList.toggle("locked", locked);
+    card.style.backgroundColor = getRandomColor();
+
+    card.innerHTML = `
+      <div class="card-title">${subject}</div>
+      <div class="card-sub">${locked ? "🔒 Locked" : "✅ Open"}</div>
+    `;
+
+    if (isFree) {
+      // Anatomy always open
+      card.href = `quiz.html?subject=${encodeURIComponent(subject)}`;
+    } else {
+      if (!currentUser) {
+        card.onclick = (e) => {
+          e.preventDefault();
+          alert("🔐 Please log in to access this subject.");
+          window.location.href = "admin-login.html";
+        };
+      } else if (!isPaid) {
+        card.onclick = (e) => {
+          e.preventDefault();
+          alert("🔒 This subject is locked. Please pay ₹99 to unlock all subjects.");
+        };
+      } else {
+        card.href = `quiz.html?subject=${encodeURIComponent(subject)}`;
+      }
     }
+    container.appendChild(card);
+  });
+}
 
     onAuthStateChanged(auth, async (user) => {
       if (user) {
