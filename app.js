@@ -1,6 +1,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js";
 
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
   authDomain: "mcqs-96117.firebaseapp.com",
@@ -11,9 +13,12 @@ const firebaseConfig = {
   measurementId: "G-6FZ770H045"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth();
 
+// Variables
 const urlParams = new URLSearchParams(window.location.search);
 const subject = urlParams.get('subject') || 'Anatomy';
 
@@ -23,6 +28,7 @@ let selectedAnswers = [];
 let startTime = Date.now();
 let timerInterval;
 
+// DOM Elements
 const qText = document.getElementById("question-text");
 const qImage = document.getElementById("question-image");
 const qOptions = document.getElementById("options");
@@ -30,6 +36,18 @@ const qNumber = document.getElementById("question-number");
 const palette = document.getElementById("palette");
 const resultDiv = document.getElementById("result-summary");
 const timer = document.getElementById("timer");
+
+// Listen for auth state changes
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    console.log("User is signed in with UID:", user.uid);
+    loadProgress(user.uid);  // Load progress when user is logged in
+    loadQuiz(subject, user.uid); // Load quiz for this subject when logged in
+  } else {
+    console.log("User is not signed in.");
+    // Optionally handle user not logged in (redirect to login page)
+  }
+});
 
 function renderPalette() {
   palette.innerHTML = "";
@@ -86,7 +104,7 @@ function selectAnswer(selectedIndex, btn) {
     if (i === selectedIndex && !isCorrect) b.classList.add("wrong");
   });
 
-  saveProgress();
+  saveProgress(auth.currentUser.uid); // Save progress after answering
   renderPalette();
 }
 
@@ -98,7 +116,7 @@ function nextQuestion() {
 }
 function resetQuiz() {
   selectedAnswers = [];
-  saveProgress();
+  saveProgress(auth.currentUser.uid); // Save progress
   loadQuestion(0);
   resultDiv.innerHTML = "";
   startTime = Date.now();
@@ -159,45 +177,62 @@ function updateTimer() {
   timer.textContent = `Time: ${mins}m ${secs}s`;
 }
 
-function saveProgress() {
+// Save progress to Firestore
+async function saveProgress(userId) {
   const key = `progress_${subject}`;
   const summary = {
     attempted: selectedAnswers.filter(a => a !== undefined).length,
     correct: selectedAnswers.filter(a => a && a.correct).length,
     wrong: selectedAnswers.filter(a => a && !a.correct).length,
     total: questions.length,
-    answers: selectedAnswers
+    answers: selectedAnswers,
+    timestamp: new Date().toISOString()
   };
-  localStorage.setItem(key, JSON.stringify(summary));
+
+  const userProgressRef = doc(db, "user_progress", userId);
+  await setDoc(userProgressRef, {
+    [key]: summary
+  });
+
+  console.log('Progress saved to Firebase for user:', userId);
 }
 
-function loadProgress() {
+// Load progress from Firestore
+async function loadProgress(userId) {
   const key = `progress_${subject}`;
-  const saved = localStorage.getItem(key);
-  if (saved) {
-    const data = JSON.parse(saved);
-    selectedAnswers = data.answers || [];
+  const userProgressRef = doc(db, "user_progress", userId);
+  const userProgressSnap = await getDoc(userProgressRef);
+
+  if (userProgressSnap.exists()) {
+    const userProgress = userProgressSnap.data();
+    const savedProgress = userProgress[key];
+    if (savedProgress) {
+      selectedAnswers = savedProgress.answers || [];
+      console.log('Progress loaded from Firebase:', savedProgress);
+    } else {
+      console.log('No progress data found for this subject.');
+    }
+  } else {
+    console.log('No progress found for this user.');
   }
 }
 
-async function loadQuiz(subjectName) {
+// Load quiz questions from Firestore
+async function loadQuiz(subjectName, userId) {
   const docRef = doc(db, "questions", subjectName);
   const docSnap = await getDoc(docRef);
 
   if (docSnap.exists()) {
     questions = docSnap.data().questions;
-    selectedAnswers = new Array(questions.length);
-    loadProgress();
-    loadQuestion(0);
-    timerInterval = setInterval(updateTimer, 1000);
+    selectedAnswers = new Array(questions.length); // Initialize selected answers array
+    loadProgress(userId); // Load user's progress
+    loadQuestion(0); // Load first question
+    timerInterval = setInterval(updateTimer, 1000); // Start timer
   } else {
     alert("No questions found for this subject.");
   }
 }
 
-loadQuiz(subject);
-
-// Expose functions
 window.prevQuestion = prevQuestion;
 window.nextQuestion = nextQuestion;
 window.resetQuiz = resetQuiz;
