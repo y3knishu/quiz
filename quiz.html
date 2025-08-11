@@ -99,16 +99,22 @@
       background: #2b2b2b;
     }
 
-    /* Dark mode toggle */
-    #toggle-dark {
+    /* Fixed buttons (Dark mode + PDF Export) */
+    #toggle-dark, #export-pdf {
       position: fixed;
       top: 10px;
       right: 10px;
       z-index: 999;
       padding: 8px 10px;
-      border-radius: 50%;
+      border-radius: 8px;
       border: none;
       cursor: pointer;
+      margin-left: 5px;
+    }
+    #export-pdf {
+      right: 60px;
+      background: #ff9800;
+      color: white;
     }
 
     /* Mobile adjustments */
@@ -154,9 +160,15 @@
       .nav-buttons button {
         flex: 1 1 100%;
       }
+      #export-pdf {
+        top: auto;
+        bottom: 60px;
+        right: 10px;
+      }
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body class="dark">
 
@@ -191,6 +203,8 @@
 
   <!-- Dark Mode Toggle -->
   <button id="toggle-dark" onclick="toggleDarkMode()">☀️</button>
+  <!-- Export PDF Button -->
+  <button id="export-pdf" onclick="exportQuestionsToPDF()">📄 PDF</button>
 
   <script>
     // Restore saved dark mode
@@ -207,6 +221,39 @@
     // Toggle Palette for Mobile
     function togglePalette() {
       document.getElementById("sidebar").classList.toggle("open");
+    }
+
+    // PDF Export Function
+    async function exportQuestionsToPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      let yPos = 10;
+
+      if (window.quizData && quizData.length > 0) {
+        quizData.forEach((q, index) => {
+          doc.setFontSize(12);
+          doc.text(`${index + 1}. ${q.question}`, 10, yPos);
+          yPos += 6;
+          q.options.forEach(opt => {
+            doc.text(`- ${opt}`, 12, yPos);
+            yPos += 5;
+          });
+          yPos += 4;
+
+          // If image exists
+          if (q.image) {
+            // Image loading skipped for simplicity (can be added if needed)
+          }
+
+          if (yPos > 270) { // New page if overflow
+            doc.addPage();
+            yPos = 10;
+          }
+        });
+        doc.save("quiz_questions.pdf");
+      } else {
+        alert("No quiz data available to export!");
+      }
     }
   </script>
   <script type="module" src="app.js"></script>
