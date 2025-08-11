@@ -1,5 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
@@ -13,6 +14,18 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
+
+let currentUserId = null;
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    currentUserId = user.uid;
+  } else {
+    alert("🔐 Please log in to attempt the quiz.");
+    window.location.href = "admin-login.html"; // redirect to login page
+  }
+});
 
 const urlParams = new URLSearchParams(window.location.search);
 const subject = urlParams.get('subject') || 'Anatomy';
@@ -141,9 +154,7 @@ function submitQuiz() {
     options: {
       responsive: false,
       plugins: {
-        legend: {
-          position: "bottom"
-        }
+        legend: { position: "bottom" }
       }
     }
   });
@@ -159,8 +170,8 @@ function updateTimer() {
   timer.textContent = `Time: ${mins}m ${secs}s`;
 }
 
-function saveProgress() {
-  const key = `progress_${subject}`;
+async function saveProgress() {
+  if (!currentUserId) return;
   const summary = {
     attempted: selectedAnswers.filter(a => a !== undefined).length,
     correct: selectedAnswers.filter(a => a && a.correct).length,
@@ -168,15 +179,14 @@ function saveProgress() {
     total: questions.length,
     answers: selectedAnswers
   };
-  localStorage.setItem(key, JSON.stringify(summary));
+  await setDoc(doc(db, "users", currentUserId, "progress", subject), summary);
 }
 
-function loadProgress() {
-  const key = `progress_${subject}`;
-  const saved = localStorage.getItem(key);
-  if (saved) {
-    const data = JSON.parse(saved);
-    selectedAnswers = data.answers || [];
+async function loadProgress() {
+  if (!currentUserId) return;
+  const snap = await getDoc(doc(db, "users", currentUserId, "progress", subject));
+  if (snap.exists()) {
+    selectedAnswers = snap.data().answers || [];
   }
 }
 
@@ -187,7 +197,7 @@ async function loadQuiz(subjectName) {
   if (docSnap.exists()) {
     questions = docSnap.data().questions;
     selectedAnswers = new Array(questions.length);
-    loadProgress();
+    await loadProgress();
     loadQuestion(0);
     timerInterval = setInterval(updateTimer, 1000);
   } else {
@@ -197,7 +207,6 @@ async function loadQuiz(subjectName) {
 
 loadQuiz(subject);
 
-// Expose functions
 window.prevQuestion = prevQuestion;
 window.nextQuestion = nextQuestion;
 window.resetQuiz = resetQuiz;
