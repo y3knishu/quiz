@@ -45,7 +45,7 @@ onAuthStateChanged(auth, (user) => {
     loadQuiz(subject, user.uid); // Load quiz for this subject when logged in
   } else {
     console.log("User is not signed in.");
-    // Optionally redirect to the login page
+    loadQuiz(subject); // Load quiz even if the user is not signed in (default subject)
   }
 });
 
@@ -104,7 +104,7 @@ function selectAnswer(selectedIndex, btn) {
     if (i === selectedIndex && !isCorrect) b.classList.add("wrong");
   });
 
-  saveProgress(auth.currentUser.uid); // Save progress after answering
+  saveProgress(auth.currentUser ? auth.currentUser.uid : null); // Save progress if user is logged in
   renderPalette();
 }
 
@@ -116,7 +116,7 @@ function nextQuestion() {
 }
 function resetQuiz() {
   selectedAnswers = [];
-  saveProgress(auth.currentUser.uid); // Save progress
+  saveProgress(auth.currentUser ? auth.currentUser.uid : null); // Save progress if user is logged in
   loadQuestion(0);
   resultDiv.innerHTML = "";
   startTime = Date.now();
@@ -179,6 +179,8 @@ function updateTimer() {
 
 // Save user progress in Firestore
 async function saveProgress(userId) {
+  if (!userId) return; // Don't save progress if no user is logged in
+
   const key = `progress_${subject}`;
   const summary = {
     attempted: selectedAnswers.filter(a => a !== undefined).length,  // Count only defined answers
@@ -208,6 +210,8 @@ async function saveProgress(userId) {
 
 // Load user progress from Firestore
 async function loadProgress(userId) {
+  if (!userId) return; // Skip loading progress if user is not logged in
+
   const key = `progress_${subject}`;
   const userProgressRef = doc(db, "user_progress", userId);
   const userProgressSnap = await getDoc(userProgressRef);
@@ -228,14 +232,16 @@ async function loadProgress(userId) {
 }
 
 // Load quiz questions from Firestore
-async function loadQuiz(subjectName, userId) {
+async function loadQuiz(subjectName, userId = null) {
   const docRef = doc(db, "questions", subjectName);
   const docSnap = await getDoc(docRef);
 
   if (docSnap.exists()) {
     questions = docSnap.data().questions;
     selectedAnswers = new Array(questions.length); // Initialize selected answers array
-    loadProgress(userId); // Load user's progress
+    if (userId) {
+      loadProgress(userId); // Load user's progress if logged in
+    }
     loadQuestion(0); // Load first question
     timerInterval = setInterval(updateTimer, 1000); // Start timer
   } else {
