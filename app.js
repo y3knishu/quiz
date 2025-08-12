@@ -37,6 +37,12 @@ const palette = document.getElementById("palette");
 const resultDiv = document.getElementById("result-summary");
 const timer = document.getElementById("timer");
 
+// Disable right-click functionality
+document.addEventListener('contextmenu', function(event) {
+  event.preventDefault();
+  alert('Right-click is disabled on this page!');
+});
+
 // Listen for auth state changes
 onAuthStateChanged(auth, (user) => {
   if (user) {
