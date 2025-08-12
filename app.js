@@ -1,3 +1,9 @@
+// Disable left-click (button 0)
+document.addEventListener('mousedown', function(event) {
+    if (event.button === 0) {
+        event.preventDefault();
+    }
+});
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js";
