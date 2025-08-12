@@ -107,18 +107,22 @@ button:active {
 }
 
 .whatsapp-btn {
-  position: fixed;       /* Position it fixed on the screen */
-  left: 10px;            /* Move it to the left */
-  bottom: 20px;          /* Keep it at the bottom */
-  background-color: #25D366; /* Optional: Change button background color */
-  color: white;          /* Text color */
-  padding: 10px 20px;     /* Button padding */
-  border-radius: 50px;    /* Rounded corners */
-  font-size: 16px;        /* Font size */
-  text-align: center;
+  position: fixed;           /* Fixed position on screen */
+  left: 10px;                /* Align to the left */
+  bottom: 20px;              /* Keep it at the bottom */
+  background-color: #25D366; /* WhatsApp green */
+  color: white;              /* Text color */
+  width: 50px;               /* Small button width */
+  height: 50px;              /* Small button height */
+  border-radius: 50%;        /* Round the corners (50% makes it circular) */
+  font-size: 24px;           /* Icon font size */
+  text-align: center;        /* Center text */
+  display: flex;             /* Flexbox for centering icon */
+  justify-content: center;   /* Center horizontally */
+  align-items: center;       /* Center vertically */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Optional: Shadow effect */
-  z-index: 1000;         /* Ensure it's on top of other elements */
-  transition: 0.3s;      /* Smooth transition for hover effect */
+  z-index: 1000;             /* Ensure it appears on top */
+  transition: 0.3s;          /* Smooth transition for hover effect */
 }
 
 .whatsapp-btn:hover {
