@@ -179,7 +179,13 @@
       rzp.open();
     };
   </script>
-
+<!-- Disable Right-click functionality -->
+  <script>
+    document.addEventListener('contextmenu', function(event) {
+      event.preventDefault();
+      alert('Right-click is disabled on this page!');
+    });
+  </script>
   <!-- WhatsApp Help Button -->
   <a href="https://wa.me/919431328569" target="_blank" id="whatsappBtn" class="whatsapp-btn">
     💬 Chat with us on WhatsApp
