@@ -1,176 +1,170 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <title>Admin Dashboard - Users</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 0; background: #f5f5f5; }
-        h1 { text-align: center; margin-top: 20px; }
-        .stats { display: flex; gap: 20px; justify-content: center; margin: 20px; }
-        .stat-box { background: white; padding: 10px 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        input[type="text"] { padding: 8px; width: 300px; margin-bottom: 20px; border-radius: 5px; border: 1px solid #ccc; }
-        table { width: 100%; border-collapse: collapse; background: white; }
-        th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
-        th { background: #eee; cursor: pointer; }
-        tr:nth-child(even) { background: #f9f9f9; }
-        .paid { color: green; font-weight: bold; }
-        .unpaid { color: red; font-weight: bold; }
-
-        /* Login container styles */
-        .login-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            gap: 15px;
-        }
-        .login-btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            color: white;
-        }
-        .google-btn { background-color: #db4437; }
-        .apple-btn { background-color: black; }
-        .email-btn { background-color: #4285f4; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; }
+    header { background: #4CAF50; color: white; padding: 10px; text-align: center; }
+    .login-container { max-width: 400px; margin: 60px auto; text-align: center; }
+    button { margin: 10px; padding: 10px 15px; cursor: pointer; }
+    .dashboard { display: none; padding: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+    th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
+    th { background: #eee; cursor: pointer; }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; }
+    input[type="text"] { padding: 5px; width: 200px; }
+  </style>
 </head>
 <body>
+<header>
+  <h1>Admin Dashboard</h1>
+</header>
 
-    <!-- Login Screen -->
-    <div id="loginScreen" class="login-container">
-        <h2>Admin Login</h2>
-        <button class="login-btn google-btn" onclick="loginWithGoogle()">Sign in with Google</button>
-        <button class="login-btn apple-btn" onclick="loginWithApple()">Sign in with Apple</button>
-        <button class="login-btn email-btn" onclick="loginWithEmail()">Sign in with Email</button>
+<div class="login-container" id="loginScreen">
+  <h2>Login</h2>
+  <button id="googleLogin">Sign in with Google</button><br>
+  <button id="emailLogin">Sign in with Email</button><br>
+  <button id="appleLogin">Sign in with Apple</button>
+</div>
+
+<div class="dashboard" id="dashboard">
+  <div class="top-bar">
+    <div>
+      <strong>Total Users:</strong> <span id="totalUsers">0</span> |
+      <strong>Paid Users:</strong> <span id="paidUsers">0</span>
     </div>
-
-    <!-- Admin Dashboard -->
-    <div id="adminDashboard" style="display:none;">
-        <h1>Admin Dashboard - Users</h1>
-        <div class="stats">
-            <div class="stat-box">Total Users: <span id="totalUsers">0</span></div>
-            <div class="stat-box">Paid Users: <span id="paidUsers">0</span></div>
-        </div>
-        <input type="text" id="search" placeholder="Search by name or email...">
-        <table id="usersTable">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Phone</th>
-                    <th>Payment Status</th>
-                    <th>Signup Date</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+    <div>
+      <input type="text" id="search" placeholder="Search users...">
+      <button id="logoutBtn">Logout</button>
     </div>
+  </div>
+  <table id="usersTable">
+    <thead>
+      <tr>
+        <th>Name</th><th>Email</th><th>Phone</th><th>Payment</th><th>Date</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-firestore.js"></script>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
+    authDomain: "mcqs-96117.firebaseapp.com",
+    projectId: "mcqs-96117",
+    storageBucket: "mcqs-96117.firebasestorage.app",
+    messagingSenderId: "352256319143",
+    appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582",
+    measurementId: "G-6FZ770H045"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
 
-    <script>
-        // Firebase Config
-        const firebaseConfig = {
-            apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
-            authDomain: "mcqs-96117.firebaseapp.com",
-            projectId: "mcqs-96117",
-            storageBucket: "mcqs-96117.firebasestorage.app",
-            messagingSenderId: "352256319143",
-            appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582",
-            measurementId: "G-6FZ770H045"
+  // Elements
+  const loginScreen = document.getElementById("loginScreen");
+  const dashboard = document.getElementById("dashboard");
+  const totalUsersEl = document.getElementById("totalUsers");
+  const paidUsersEl = document.getElementById("paidUsers");
+  const searchInput = document.getElementById("search");
+  const usersTableBody = document.querySelector("#usersTable tbody");
+
+  // Login
+  document.getElementById("googleLogin").onclick = () => {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider);
+  };
+
+  document.getElementById("emailLogin").onclick = () => {
+    const email = prompt("Enter email:");
+    const pass = prompt("Enter password:");
+    auth.signInWithEmailAndPassword(email, pass).catch(err => {
+      if (err.code === 'auth/user-not-found') {
+        if (confirm("User not found. Create account?")) {
+          auth.createUserWithEmailAndPassword(email, pass);
+        }
+      } else {
+        alert(err.message);
+      }
+    });
+  };
+
+  document.getElementById("appleLogin").onclick = () => {
+    alert("Apple Sign-In is not set up yet.");
+  };
+
+  // Logout
+  document.getElementById("logoutBtn").onclick = () => auth.signOut();
+
+  // Auth State
+  auth.onAuthStateChanged(user => {
+    if (!user) {
+      loginScreen.style.display = "block";
+      dashboard.style.display = "none";
+      return;
+    }
+    if (user.email !== "y3knishu@gmail.com") {
+      alert("Access Denied");
+      auth.signOut();
+      return;
+    }
+    // Save missing name/phone
+    db.collection("users").doc(user.uid).get().then(doc => {
+      if (!doc.exists || !doc.data().name || !doc.data().phone) {
+        const name = prompt("Enter Name:", user.displayName || "");
+        const phone = prompt("Enter Phone:");
+        db.collection("users").doc(user.uid).set({
+          name, phone, email: user.email, isPaid: false, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+      }
+    });
+
+    loginScreen.style.display = "none";
+    dashboard.style.display = "block";
+    loadUsers();
+  });
+
+  // Load Users
+  function loadUsers() {
+    db.collection("users").orderBy("createdAt", "desc").onSnapshot(snapshot => {
+      usersTableBody.innerHTML = "";
+      let total = 0, paid = 0;
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        total++;
+        if (data.isPaid) paid++;
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${data.name || ""}</td>
+          <td>${data.email || ""}</td>
+          <td>${data.phone || ""}</td>
+          <td><input type="checkbox" ${data.isPaid ? "checked" : ""}></td>
+          <td>${data.createdAt?.toDate().toLocaleString() || ""}</td>
+        `;
+        const checkbox = tr.querySelector("input");
+        checkbox.onchange = () => {
+          db.collection("users").doc(doc.id).update({ isPaid: checkbox.checked });
         };
+        usersTableBody.appendChild(tr);
+      });
+      totalUsersEl.textContent = total;
+      paidUsersEl.textContent = paid;
+    });
+  }
 
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-
-        // Login functions
-        function loginWithGoogle() {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider);
-        }
-
-        function loginWithApple() {
-            const provider = new firebase.auth.OAuthProvider('apple.com');
-            auth.signInWithPopup(provider);
-        }
-
-        function loginWithEmail() {
-            const email = prompt("Enter email:");
-            const password = prompt("Enter password:");
-            if (email && password) {
-                auth.signInWithEmailAndPassword(email, password).catch(err => alert(err.message));
-            }
-        }
-
-        // Auth listener
-        auth.onAuthStateChanged(user => {
-            if (!user) {
-                document.getElementById("loginScreen").style.display = "flex";
-                document.getElementById("adminDashboard").style.display = "none";
-                return;
-            }
-            if (user.email === "y3knishu@gmail.com") {
-                document.getElementById("loginScreen").style.display = "none";
-                document.getElementById("adminDashboard").style.display = "block";
-                loadUsers();
-            } else {
-                alert("Access denied! Admin only.");
-                auth.signOut();
-            }
-        });
-
-        function loadUsers() {
-            db.collection("users").orderBy("createdAt", "desc").onSnapshot(snapshot => {
-                const tbody = document.querySelector("#usersTable tbody");
-                tbody.innerHTML = "";
-                let total = 0, paid = 0;
-
-                snapshot.forEach(doc => {
-                    const user = doc.data();
-                    total++;
-                    if (user.isPaid) paid++;
-
-                    const tr = document.createElement("tr");
-                    tr.innerHTML = `
-                        <td>${user.name || ""}</td>
-                        <td>${user.email || ""}</td>
-                        <td>${user.phone || ""}</td>
-                        <td>
-                            <input type="checkbox" ${user.isPaid ? "checked" : ""} onchange="togglePayment('${doc.id}', this.checked)">
-                            <span class="${user.isPaid ? 'paid' : 'unpaid'}">${user.isPaid ? "Paid" : "Unpaid"}</span>
-                        </td>
-                        <td>${user.createdAt ? new Date(user.createdAt.seconds * 1000).toLocaleString() : ""}</td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-
-                document.getElementById("totalUsers").innerText = total;
-                document.getElementById("paidUsers").innerText = paid;
-            });
-        }
-
-        function togglePayment(userId, status) {
-            db.collection("users").doc(userId).update({ isPaid: status });
-        }
-
-        // Search function
-        document.getElementById("search").addEventListener("input", function() {
-            const filter = this.value.toLowerCase();
-            const rows = document.querySelectorAll("#usersTable tbody tr");
-            rows.forEach(row => {
-                const name = row.cells[0].textContent.toLowerCase();
-                const email = row.cells[1].textContent.toLowerCase();
-                row.style.display = (name.includes(filter) || email.includes(filter)) ? "" : "none";
-            });
-        });
-    </script>
+  // Search
+  searchInput.addEventListener("input", () => {
+    const term = searchInput.value.toLowerCase();
+    for (let row of usersTableBody.rows) {
+      row.style.display = row.innerText.toLowerCase().includes(term) ? "" : "none";
+    }
+  });
+</script>
 </body>
 </html>
