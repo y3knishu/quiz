@@ -82,7 +82,9 @@
       let dataToSave = {};
       if (email) dataToSave.email = email;
       if (phone) dataToSave.phone = phone;
-      if (paidStatus) dataToSave.paidStatus = paidStatus;
+      if (paidStatus) {
+        dataToSave.isPaid = paidStatus === "Paid"; // Convert the string to a Boolean (true or false)
+      }
 
       await setDoc(doc(db, "users", userId), dataToSave, { merge: true });
       alert("User added/updated successfully");
@@ -105,11 +107,11 @@
           <td>${docSnap.id}</td>
           <td>${user.email || ""}</td>
           <td>${user.phone || ""}</td>
-          <td>${user.paidStatus || ""}</td>
+          <td>${user.isPaid ? "Paid" : "Unpaid"}</td>  <!-- Display "Paid" or "Unpaid" based on Boolean -->
           <td>
             <select onchange="updatePaymentStatus('${docSnap.id}', this.value)">
-              <option value="Paid" ${user.paidStatus === "Paid" ? "selected" : ""}>Paid</option>
-              <option value="Unpaid" ${user.paidStatus === "Unpaid" ? "selected" : ""}>Unpaid</option>
+              <option value="Paid" ${user.isPaid ? "selected" : ""}>Paid</option>
+              <option value="Unpaid" ${!user.isPaid ? "selected" : ""}>Unpaid</option>
             </select>
           </td>
         `;
@@ -119,7 +121,8 @@
 
     // --- Update Payment Status ---
     window.updatePaymentStatus = async function(userId, status) {
-      await setDoc(doc(db, "users", userId), { paidStatus: status }, { merge: true });
+      const isPaid = status === "Paid";  // Convert the string "Paid" to Boolean true
+      await setDoc(doc(db, "users", userId), { isPaid }, { merge: true });
     }
   </script>
 </head>
