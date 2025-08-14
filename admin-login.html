@@ -36,12 +36,7 @@
       width: 100%;
     }
     button {
-      background: #3399cc;
-      color: white;
       cursor: pointer;
-    }
-    button:hover {
-      background: #2788bb;
     }
     .link {
       color: #66c2ff;
@@ -65,7 +60,6 @@
       align-items: center;
       justify-content: center;
       padding: 10px 15px;
-      cursor: pointer;
       width: 220px;
     }
     .apple-btn:hover {
@@ -73,6 +67,27 @@
     }
     .apple-btn svg {
       margin-right: 8px;
+    }
+    /* Google Button Style */
+    .google-btn {
+      background-color: white;
+      color: #444;
+      font-weight: 500;
+      font-size: 15px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 15px;
+      width: 220px;
+    }
+    .google-btn:hover {
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    }
+    .google-btn img {
+      height: 18px;
+      margin-right: 10px;
     }
   </style>
 </head>
@@ -84,7 +99,7 @@
     <h2>Login</h2>
     <input type="email" id="loginEmail" placeholder="Email" />
     <input type="password" id="loginPassword" placeholder="Password" />
-    <button id="emailLogin">Login</button>
+    <button id="emailLogin" style="background:#3399cc;color:white;">Login</button>
     <span class="link" id="resetPassword">Forgot Password?</span>
   </div>
 
@@ -93,12 +108,16 @@
     <h2>Sign Up</h2>
     <input type="email" id="signupEmail" placeholder="Email" />
     <input type="password" id="signupPassword" placeholder="Password" />
-    <button id="emailSignup">Create Account</button>
+    <button id="emailSignup" style="background:#3399cc;color:white;">Create Account</button>
   </div>
 
   <!-- Social Logins -->
   <div class="divider">OR</div>
-  <button id="googleLogin">Sign in with Google</button>
+  <button id="googleLogin" class="google-btn">
+    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo">
+    Sign in with Google
+  </button>
+  <br>
   <button id="appleLogin" class="apple-btn">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 14 17" width="16" height="16">
       <path fill="white" d="M13.962 13.243c-.34.786-.502 1.14-.938 1.84-.61.972-1.472 2.183-2.543 2.192-.95.009-1.198-.637-2.49-.63-1.292.006-1.563.642-2.514.632-1.071-.009-1.88-1.107-2.49-2.079-1.707-2.716-1.889-5.899-.833-7.6.757-1.21 1.953-1.926 3.083-1.926 1.155 0 1.884.65 2.844.65.936 0 1.49-.653 2.84-.653 1.003 0 2.064.547 2.821 1.49-2.47 1.352-2.066 4.887.46 5.573zM9.293 0c.65.039 1.403.476 1.83 1.034.326.423.56 1.018.47 1.604-.725.056-1.58-.412-2.056-.97C9.228 1.269 8.933.653 9.293 0z"/>
