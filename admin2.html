@@ -1,170 +1,128 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Dashboard</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; }
-    header { background: #4CAF50; color: white; padding: 10px; text-align: center; }
-    .login-container { max-width: 400px; margin: 60px auto; text-align: center; }
-    button { margin: 10px; padding: 10px 15px; cursor: pointer; }
-    .dashboard { display: none; padding: 20px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
-    th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
-    th { background: #eee; cursor: pointer; }
-    .top-bar { display: flex; justify-content: space-between; align-items: center; }
-    input[type="text"] { padding: 5px; width: 200px; }
+    body { font-family: Arial, sans-serif; background: #111; color: white; padding: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #555; padding: 8px; text-align: left; }
+    th { background: #333; }
+    button { padding: 5px 10px; border: none; cursor: pointer; }
+    .paid { background: green; color: white; }
+    .unpaid { background: red; color: white; }
+    #loginSection { margin-bottom: 20px; }
   </style>
 </head>
 <body>
-<header>
   <h1>Admin Dashboard</h1>
-</header>
-
-<div class="login-container" id="loginScreen">
-  <h2>Login</h2>
-  <button id="googleLogin">Sign in with Google</button><br>
-  <button id="emailLogin">Sign in with Email</button><br>
-  <button id="appleLogin">Sign in with Apple</button>
-</div>
-
-<div class="dashboard" id="dashboard">
-  <div class="top-bar">
-    <div>
-      <strong>Total Users:</strong> <span id="totalUsers">0</span> |
-      <strong>Paid Users:</strong> <span id="paidUsers">0</span>
-    </div>
-    <div>
-      <input type="text" id="search" placeholder="Search users...">
-      <button id="logoutBtn">Logout</button>
-    </div>
+  <div id="loginSection">
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Password" />
+    <button id="emailLogin">Login with Email</button>
+    <button id="googleLogin">Login with Google</button>
+    <button id="appleLogin">Login with Apple</button>
   </div>
-  <table id="usersTable">
-    <thead>
-      <tr>
-        <th>Name</th><th>Email</th><th>Phone</th><th>Payment</th><th>Date</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</div>
+  
+  <div id="adminContent" style="display:none;">
+    <h2>Registered Users</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Payment Status</th>
+          <th>Change Status</th>
+        </tr>
+      </thead>
+      <tbody id="userTable"></tbody>
+    </table>
+  </div>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js"></script>
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
-    authDomain: "mcqs-96117.firebaseapp.com",
-    projectId: "mcqs-96117",
-    storageBucket: "mcqs-96117.firebasestorage.app",
-    messagingSenderId: "352256319143",
-    appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582",
-    measurementId: "G-6FZ770H045"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { 
+      getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, OAuthProvider,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { 
+      getFirestore, collection, getDocs, updateDoc, doc 
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  // Elements
-  const loginScreen = document.getElementById("loginScreen");
-  const dashboard = document.getElementById("dashboard");
-  const totalUsersEl = document.getElementById("totalUsers");
-  const paidUsersEl = document.getElementById("paidUsers");
-  const searchInput = document.getElementById("search");
-  const usersTableBody = document.querySelector("#usersTable tbody");
+    const firebaseConfig = {
+      apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
+      authDomain: "mcqs-96117.firebaseapp.com",
+      projectId: "mcqs-96117",
+      storageBucket: "mcqs-96117.firebasestorage.app",
+      messagingSenderId: "352256319143",
+      appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582",
+      measurementId: "G-6FZ770H045"
+    };
 
-  // Login
-  document.getElementById("googleLogin").onclick = () => {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider);
-  };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const googleProvider = new GoogleAuthProvider();
+    const appleProvider = new OAuthProvider('apple.com');
 
-  document.getElementById("emailLogin").onclick = () => {
-    const email = prompt("Enter email:");
-    const pass = prompt("Enter password:");
-    auth.signInWithEmailAndPassword(email, pass).catch(err => {
-      if (err.code === 'auth/user-not-found') {
-        if (confirm("User not found. Create account?")) {
-          auth.createUserWithEmailAndPassword(email, pass);
-        }
-      } else {
-        alert(err.message);
-      }
-    });
-  };
+    // Email login
+    document.getElementById("emailLogin").onclick = () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      signInWithEmailAndPassword(auth, email, password)
+        .catch(err => alert(err.message));
+    };
 
-  document.getElementById("appleLogin").onclick = () => {
-    alert("Apple Sign-In is not set up yet.");
-  };
+    // Google login
+    document.getElementById("googleLogin").onclick = () => {
+      signInWithPopup(auth, googleProvider)
+        .catch(err => alert(err.message));
+    };
 
-  // Logout
-  document.getElementById("logoutBtn").onclick = () => auth.signOut();
+    // Apple login
+    document.getElementById("appleLogin").onclick = () => {
+      signInWithPopup(auth, appleProvider)
+        .catch(err => alert(err.message));
+    };
 
-  // Auth State
-  auth.onAuthStateChanged(user => {
-    if (!user) {
-      loginScreen.style.display = "block";
-      dashboard.style.display = "none";
-      return;
-    }
-    if (user.email !== "y3knishu@gmail.com") {
-      alert("Access Denied");
-      auth.signOut();
-      return;
-    }
-    // Save missing name/phone
-    db.collection("users").doc(user.uid).get().then(doc => {
-      if (!doc.exists || !doc.data().name || !doc.data().phone) {
-        const name = prompt("Enter Name:", user.displayName || "");
-        const phone = prompt("Enter Phone:");
-        db.collection("users").doc(user.uid).set({
-          name, phone, email: user.email, isPaid: false, createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
+    // Auth state check
+    onAuthStateChanged(auth, async (user) => {
+      if (user && user.email === "y3knishu@gmail.com") {
+        document.getElementById("loginSection").style.display = "none";
+        document.getElementById("adminContent").style.display = "block";
+        loadUsers();
+      } else if (user) {
+        alert("Access denied! Not an admin.");
+        auth.signOut();
       }
     });
 
-    loginScreen.style.display = "none";
-    dashboard.style.display = "block";
-    loadUsers();
-  });
-
-  // Load Users
-  function loadUsers() {
-    db.collection("users").orderBy("createdAt", "desc").onSnapshot(snapshot => {
-      usersTableBody.innerHTML = "";
-      let total = 0, paid = 0;
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        total++;
-        if (data.isPaid) paid++;
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${data.name || ""}</td>
-          <td>${data.email || ""}</td>
-          <td>${data.phone || ""}</td>
-          <td><input type="checkbox" ${data.isPaid ? "checked" : ""}></td>
-          <td>${data.createdAt?.toDate().toLocaleString() || ""}</td>
+    async function loadUsers() {
+      const usersRef = collection(db, "users");
+      const snapshot = await getDocs(usersRef);
+      const tableBody = document.getElementById("userTable");
+      tableBody.innerHTML = "";
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${data.name || ''}</td>
+          <td>${data.email || ''}</td>
+          <td>${data.phone || ''}</td>
+          <td><span class="${data.isPaid ? 'paid' : 'unpaid'}">${data.isPaid ? 'Paid' : 'Unpaid'}</span></td>
+          <td><button onclick="togglePayment('${docSnap.id}', ${data.isPaid})">Toggle</button></td>
         `;
-        const checkbox = tr.querySelector("input");
-        checkbox.onchange = () => {
-          db.collection("users").doc(doc.id).update({ isPaid: checkbox.checked });
-        };
-        usersTableBody.appendChild(tr);
+        tableBody.appendChild(row);
       });
-      totalUsersEl.textContent = total;
-      paidUsersEl.textContent = paid;
-    });
-  }
-
-  // Search
-  searchInput.addEventListener("input", () => {
-    const term = searchInput.value.toLowerCase();
-    for (let row of usersTableBody.rows) {
-      row.style.display = row.innerText.toLowerCase().includes(term) ? "" : "none";
     }
-  });
-</script>
+
+    window.togglePayment = async (userId, currentStatus) => {
+      const userRef = doc(db, "users", userId);
+      await updateDoc(userRef, { isPaid: !currentStatus });
+      loadUsers();
+    };
+  </script>
 </body>
 </html>
