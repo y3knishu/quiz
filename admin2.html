@@ -1,166 +1,144 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
   <title>Admin Dashboard</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background: #f9f9f9; }
-    h1 { text-align: center; }
-    .login-section, .dashboard { max-width: 800px; margin: auto; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
-    th { background-color: #eee; }
-    button { padding: 6px 12px; margin: 5px; }
-    .hidden { display: none; }
-  </style>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
 </head>
 <body>
-  <h1>Admin Dashboard</h1>
-
-  <!-- LOGIN SECTION -->
-  <div class="login-section" id="login-section">
-    <input type="email" id="email" placeholder="Email"><br><br>
-    <input type="password" id="password" placeholder="Password"><br><br>
+  <h2>Admin Login</h2>
+  <div id="login-section">
+    <input type="email" id="loginEmail" placeholder="Email">
+    <input type="password" id="loginPassword" placeholder="Password">
     <button onclick="emailLogin()">Login with Email</button>
+    <br><br>
     <button onclick="googleLogin()">Login with Google</button>
     <button onclick="appleLogin()">Login with Apple</button>
   </div>
 
-  <!-- DASHBOARD -->
-  <div class="dashboard hidden" id="dashboard">
-    <h2>Registered Users</h2>
-    <table>
+  <div id="admin-section" style="display:none;">
+    <h2>Admin Dashboard</h2>
+
+    <h3>Add New User</h3>
+    <input type="text" id="newUserId" placeholder="User ID">
+    <input type="email" id="newUserEmail" placeholder="Email">
+    <input type="text" id="newUserPhone" placeholder="Phone">
+    <select id="newUserPaid">
+      <option value="">Select Payment Status</option>
+      <option value="Paid">Paid</option>
+      <option value="Unpaid">Unpaid</option>
+    </select>
+    <button onclick="addUser()">Add User</button>
+
+    <h3>All Users</h3>
+    <table border="1" id="usersTable">
       <thead>
         <tr>
           <th>User ID</th>
-          <th>Name</th>
           <th>Email</th>
           <th>Phone</th>
           <th>Payment Status</th>
-          <th>Actions</th>
+          <th>Change Status</th>
         </tr>
       </thead>
-      <tbody id="users-table"></tbody>
+      <tbody></tbody>
     </table>
-
-    <h3>Add New User</h3>
-    <input type="text" id="newName" placeholder="Name">
-    <input type="email" id="newEmail" placeholder="Email">
-    <input type="text" id="newPhone" placeholder="Phone">
-    <select id="newPayment">
-      <option value="unpaid">Unpaid</option>
-      <option value="paid">Paid</option>
-    </select>
-    <button onclick="addUser()">Add User</button>
   </div>
 
-  <!-- FIREBASE SCRIPTS -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
+    authDomain: "mcqs-96117.firebaseapp.com",
+    projectId: "mcqs-96117",
+    storageBucket: "mcqs-96117.firebasestorage.app",
+    messagingSenderId: "352256319143",
+    appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582",
+    measurementId: "G-6FZ770H045"
+  };
 
-  <script>
-    // Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
-      authDomain: "mcqs-96117.firebaseapp.com",
-      projectId: "mcqs-96117",
-      storageBucket: "mcqs-96117.firebasestorage.app",
-      messagingSenderId: "352256319143",
-      appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582",
-      measurementId: "G-6FZ770H045"
-    };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+  function emailLogin() {
+    const email = document.getElementById("loginEmail").value;
+    const pass = document.getElementById("loginPassword").value;
+    auth.signInWithEmailAndPassword(email, pass).catch(alert);
+  }
 
-    // Email login
-    function emailLogin() {
-      const email = document.getElementById('email').value;
-      const pass = document.getElementById('password').value;
-      auth.signInWithEmailAndPassword(email, pass)
-        .then(checkAdmin)
-        .catch(e => alert(e.message));
+  function googleLogin() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithRedirect(provider);
+  }
+
+  function appleLogin() {
+    const provider = new firebase.auth.OAuthProvider('apple.com');
+    auth.signInWithRedirect(provider);
+  }
+
+  auth.onAuthStateChanged(user => {
+    if (user && user.email === "y3knishu@gmail.com") {
+      document.getElementById("login-section").style.display = "none";
+      document.getElementById("admin-section").style.display = "block";
+      loadUsers();
+    } else if (user) {
+      alert("Access denied. Not admin.");
+      auth.signOut();
+    }
+  });
+
+  function addUser() {
+    const userId = document.getElementById("newUserId").value.trim();
+    const email = document.getElementById("newUserEmail").value.trim();
+    const phone = document.getElementById("newUserPhone").value.trim();
+    const paidStatus = document.getElementById("newUserPaid").value;
+
+    if (!userId) {
+      alert("User ID is required");
+      return;
     }
 
-    // Google login (redirect)
-    function googleLogin() {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithRedirect(provider);
-    }
+    let dataToSave = {};
+    if (email) dataToSave.email = email;
+    if (phone) dataToSave.phone = phone;
+    if (paidStatus) dataToSave.paidStatus = paidStatus;
 
-    // Apple login (redirect)
-    function appleLogin() {
-      const provider = new firebase.auth.OAuthProvider('apple.com');
-      auth.signInWithRedirect(provider);
-    }
-
-    // Auth state
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        checkAdmin(user);
-      }
-    });
-
-    // Admin check
-    function checkAdmin(user) {
-      if (user.email === "y3knishu@gmail.com") {
-        document.getElementById('login-section').classList.add('hidden');
-        document.getElementById('dashboard').classList.remove('hidden');
+    db.collection("users").doc(userId).set(dataToSave, { merge: true })
+      .then(() => {
+        alert("User added/updated successfully");
         loadUsers();
-      } else {
-        alert("Access denied");
-        auth.signOut();
-      }
-    }
+      })
+      .catch(alert);
+  }
 
-    // Load users
-    function loadUsers() {
-      db.collection('users').get().then(snapshot => {
-        const table = document.getElementById('users-table');
-        table.innerHTML = "";
-        snapshot.forEach(doc => {
-          const u = doc.data();
-          table.innerHTML += `
-            <tr>
-              <td>${doc.id}</td>
-              <td>${u.name || ''}</td>
-              <td>${u.email || ''}</td>
-              <td>${u.phone || ''}</td>
-              <td>
-                <select onchange="updatePayment('${doc.id}', this.value)">
-                  <option value="unpaid" ${u.paymentStatus === 'unpaid' ? 'selected' : ''}>Unpaid</option>
-                  <option value="paid" ${u.paymentStatus === 'paid' ? 'selected' : ''}>Paid</option>
-                </select>
-              </td>
-              <td><button onclick="deleteUser('${doc.id}')">Delete</button></td>
-            </tr>
-          `;
-        });
+  function loadUsers() {
+    const tbody = document.querySelector("#usersTable tbody");
+    tbody.innerHTML = "";
+    db.collection("users").get().then(snapshot => {
+      snapshot.forEach(doc => {
+        const user = doc.data();
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${doc.id}</td>
+          <td>${user.email || ""}</td>
+          <td>${user.phone || ""}</td>
+          <td>${user.paidStatus || ""}</td>
+          <td>
+            <select onchange="updatePaymentStatus('${doc.id}', this.value)">
+              <option value="Paid" ${user.paidStatus === "Paid" ? "selected" : ""}>Paid</option>
+              <option value="Unpaid" ${user.paidStatus === "Unpaid" ? "selected" : ""}>Unpaid</option>
+            </select>
+          </td>
+        `;
+        tbody.appendChild(tr);
       });
-    }
+    });
+  }
 
-    // Update payment
-    function updatePayment(uid, status) {
-      db.collection('users').doc(uid).update({ paymentStatus: status });
-    }
-
-    // Add user
-    function addUser() {
-      const name = document.getElementById('newName').value;
-      const email = document.getElementById('newEmail').value;
-      const phone = document.getElementById('newPhone').value;
-      const payment = document.getElementById('newPayment').value;
-      db.collection('users').add({
-        name, email, phone, paymentStatus: payment
-      }).then(loadUsers);
-    }
-
-    // Delete user
-    function deleteUser(uid) {
-      db.collection('users').doc(uid).delete().then(loadUsers);
-    }
-  </script>
+  function updatePaymentStatus(userId, status) {
+    db.collection("users").doc(userId).set({ paidStatus: status }, { merge: true });
+  }
+</script>
 </body>
 </html>
