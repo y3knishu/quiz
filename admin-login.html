@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login | NEET PG / INICET PYQs </title>
+  <title>Login | NEET PG / INICET PYQs</title>
   <style>
     body {
       background: #111;
@@ -14,19 +14,26 @@
       align-items: center;
       justify-content: center;
       height: 100vh;
+      padding: 10px;
     }
     h1 {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .form-box {
+      background: #222;
+      padding: 20px;
+      border-radius: 10px;
+      width: 280px;
       margin-bottom: 20px;
     }
     input, button {
       padding: 10px;
       font-size: 1rem;
-      margin: 5px;
+      margin: 5px 0;
       border: none;
       border-radius: 5px;
-    }
-    input {
-      width: 220px;
+      width: 100%;
     }
     button {
       background: #3399cc;
@@ -36,28 +43,49 @@
     button:hover {
       background: #2788bb;
     }
-    .divider {
-      margin: 10px;
-    }
     .link {
       color: #66c2ff;
       cursor: pointer;
       text-decoration: underline;
       font-size: 0.9em;
     }
+    .divider {
+      margin: 15px 0;
+      text-align: center;
+    }
+    #appleLogin {
+      background: black;
+      color: white;
+    }
+    #appleLogin:hover {
+      background: #333;
+    }
   </style>
 </head>
 <body>
-  <h1>WELCOME TO NEET PG / INICET PYQs </h1>
-  <div>
-    <input type="email" id="email" placeholder="Email" /><br>
-    <input type="password" id="password" placeholder="Password" /><br>
-    <button id="emailLogin">Login with Email</button>
-    <button id="emailSignup">Create New Account</button><br>
+  <h1>WELCOME TO NEET PG / INICET PYQs</h1>
+
+  <!-- Login Form -->
+  <div class="form-box">
+    <h2>Login</h2>
+    <input type="email" id="loginEmail" placeholder="Email" />
+    <input type="password" id="loginPassword" placeholder="Password" />
+    <button id="emailLogin">Login</button>
     <span class="link" id="resetPassword">Forgot Password?</span>
   </div>
+
+  <!-- Signup Form -->
+  <div class="form-box">
+    <h2>Sign Up</h2>
+    <input type="email" id="signupEmail" placeholder="Email" />
+    <input type="password" id="signupPassword" placeholder="Password" />
+    <button id="emailSignup">Create Account</button>
+  </div>
+
+  <!-- Social Logins -->
   <div class="divider">OR</div>
   <button id="googleLogin">Sign in with Google</button>
+  <button id="appleLogin">Sign in with Apple</button>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -66,6 +94,7 @@
       signInWithEmailAndPassword,
       signInWithPopup,
       GoogleAuthProvider,
+      OAuthProvider,
       onAuthStateChanged,
       createUserWithEmailAndPassword,
       sendPasswordResetEmail
@@ -83,10 +112,11 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
 
+    // Google Sign-In
+    const googleProvider = new GoogleAuthProvider();
     document.getElementById("googleLogin").onclick = () => {
-      signInWithPopup(auth, provider)
+      signInWithPopup(auth, googleProvider)
         .then(result => {
           alert("✅ Logged in as: " + result.user.email);
           window.location.href = "index.html";
@@ -96,11 +126,25 @@
         });
     };
 
+    // Apple Sign-In
+    const appleProvider = new OAuthProvider('apple.com');
+    document.getElementById("appleLogin").onclick = () => {
+      signInWithPopup(auth, appleProvider)
+        .then(result => {
+          alert("✅ Logged in as: " + result.user.email);
+          window.location.href = "index.html";
+        })
+        .catch(error => {
+          alert("Login failed: " + error.message);
+        });
+    };
+
+    // Email Login
     document.getElementById("emailLogin").onclick = () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+      const email = document.getElementById("loginEmail").value;
+      const password = document.getElementById("loginPassword").value;
       signInWithEmailAndPassword(auth, email, password)
-        .then(user => {
+        .then(() => {
           alert("✅ Logged in as: " + email);
           window.location.href = "index.html";
         })
@@ -109,11 +153,12 @@
         });
     };
 
+    // Email Signup
     document.getElementById("emailSignup").onclick = () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+      const email = document.getElementById("signupEmail").value;
+      const password = document.getElementById("signupPassword").value;
       createUserWithEmailAndPassword(auth, email, password)
-        .then(user => {
+        .then(() => {
           alert("✅ Account created for: " + email);
           window.location.href = "index.html";
         })
@@ -122,8 +167,9 @@
         });
     };
 
+    // Password Reset
     document.getElementById("resetPassword").onclick = () => {
-      const email = document.getElementById("email").value;
+      const email = document.getElementById("loginEmail").value;
       if (!email) return alert("Please enter your email to reset password.");
       sendPasswordResetEmail(auth, email)
         .then(() => {
@@ -134,6 +180,7 @@
         });
     };
 
+    // Auto redirect if logged in
     onAuthStateChanged(auth, user => {
       if (user) {
         window.location.href = "index.html";
