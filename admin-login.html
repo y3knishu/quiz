@@ -3,61 +3,57 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login | NEET PG / INICET PYQs </title>
+  <title>Login | NEET PG / INICET PYQs</title>
   <style>
     body {
       background: #111;
-      color: white;
+      color: #fff;
       font-family: Arial, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
+      min-height: 100vh;
+      padding: 24px;
     }
-    h1 {
-      margin-bottom: 20px;
-    }
+    h1 { margin: 0 0 16px; text-align: center; }
     input, button {
       padding: 10px;
       font-size: 1rem;
-      margin: 5px;
+      margin: 6px 0;
       border: none;
-      border-radius: 5px;
+      border-radius: 8px;
     }
-    input {
-      width: 220px;
-    }
-    button {
-      background: #3399cc;
-      color: white;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #2788bb;
-    }
-    .divider {
-      margin: 10px;
-    }
-    .link {
-      color: #66c2ff;
-      cursor: pointer;
-      text-decoration: underline;
-      font-size: 0.9em;
-    }
+    input { width: 280px; background:#1b1b1b; color:#fff; outline:1px solid #333; }
+    input::placeholder { color:#aaa; }
+    button { background:#3399cc; color:#fff; cursor:pointer; width: 280px; }
+    button:hover { background:#2788bb; }
+    .link { color:#66c2ff; cursor:pointer; text-decoration:underline; font-size:0.9em; }
+    .divider { margin: 10px 0; opacity: .6; }
+    .stack { display:flex; flex-direction:column; width: 100%; max-width: 320px; }
+    .help { font-size:.85em; color:#aaa; margin-top:6px; }
   </style>
 </head>
 <body>
-  <h1>WELCOME TO NEET PG / INICET PYQs </h1>
-  <div>
-    <input type="email" id="email" placeholder="Email" /><br>
-    <input type="password" id="password" placeholder="Password" /><br>
+  <h1>WELCOME TO NEET PG / INICET PYQs</h1>
+
+  <div class="stack">
+    <!-- Signup-only fields (ignored for login) -->
+    <input type="text" id="name" placeholder="Full Name (for Signup)" />
+    <input type="text" id="phone" placeholder="Phone Number (for Signup)" />
+
+    <!-- Common fields -->
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Password" />
+
     <button id="emailLogin">Login with Email</button>
-    <button id="emailSignup">Create New Account</button><br>
+    <button id="emailSignup">Create New Account</button>
     <span class="link" id="resetPassword">Forgot Password?</span>
+
+    <div class="divider">OR</div>
+    <button id="googleLogin">Sign in with Google</button>
+    <div class="help">Tip: Google sign-in will ask for name/phone if missing.</div>
   </div>
-  <div class="divider">OR</div>
-  <button id="googleLogin">Sign in with Google</button>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -66,11 +62,20 @@
       signInWithEmailAndPassword,
       signInWithPopup,
       GoogleAuthProvider,
-      onAuthStateChanged,
       createUserWithEmailAndPassword,
-      sendPasswordResetEmail
+      sendPasswordResetEmail,
+      onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      setDoc,
+      updateDoc,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+    // --- Your Firebase config ---
     const firebaseConfig = {
       apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
       authDomain: "mcqs-96117.firebaseapp.com",
@@ -81,63 +86,132 @@
       measurementId: "G-6FZ770H045"
     };
 
+    // --- Init ---
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
 
-    document.getElementById("googleLogin").onclick = () => {
-      signInWithPopup(auth, provider)
-        .then(result => {
-          alert("✅ Logged in as: " + result.user.email);
-          window.location.href = "index.html";
-        })
-        .catch(error => {
-          alert("Login failed: " + error.message);
+    // --- Helpers ---
+    async function ensureUserDoc(user, initial = {}) {
+      const ref = doc(db, "users", user.uid);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) {
+        await setDoc(ref, {
+          name: initial.name ?? user.displayName ?? "",
+          email: initial.email ?? user.email ?? "",
+          phone: initial.phone ?? "",
+          isPaid: false,
+          createdAt: serverTimestamp()
         });
-    };
-
-    document.getElementById("emailLogin").onclick = () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      signInWithEmailAndPassword(auth, email, password)
-        .then(user => {
-          alert("✅ Logged in as: " + email);
-          window.location.href = "index.html";
-        })
-        .catch(error => {
-          alert("Login failed: " + error.message);
-        });
-    };
-
-    document.getElementById("emailSignup").onclick = () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      createUserWithEmailAndPassword(auth, email, password)
-        .then(user => {
-          alert("✅ Account created for: " + email);
-          window.location.href = "index.html";
-        })
-        .catch(error => {
-          alert("Signup failed: " + error.message);
-        });
-    };
-
-    document.getElementById("resetPassword").onclick = () => {
-      const email = document.getElementById("email").value;
-      if (!email) return alert("Please enter your email to reset password.");
-      sendPasswordResetEmail(auth, email)
-        .then(() => {
-          alert("📩 Password reset email sent.");
-        })
-        .catch(error => {
-          alert("Reset failed: " + error.message);
-        });
-    };
-
-    onAuthStateChanged(auth, user => {
-      if (user) {
-        window.location.href = "index.html";
+        return (await getDoc(ref)).data();
       }
+      return snap.data();
+    }
+
+    async function promptAndFillMissing(user) {
+      // Ensure doc exists first
+      let data = await ensureUserDoc(user);
+      let needsUpdate = false;
+      const updates = {};
+
+      if (!data.name || data.name.trim() === "") {
+        const name = prompt("Please enter your full name:", user.displayName || "");
+        if (name !== null) {
+          updates.name = name.trim();
+          needsUpdate = true;
+        }
+      }
+
+      if (!data.phone || data.phone.trim() === "") {
+        const phone = prompt("Please enter your phone number:", "");
+        if (phone !== null) {
+          updates.phone = phone.trim();
+          needsUpdate = true;
+        }
+      }
+
+      if (needsUpdate) {
+        const ref = doc(db, "users", user.uid);
+        await updateDoc(ref, updates);
+      }
+    }
+
+    function getVal(id) { return document.getElementById(id).value.trim(); }
+
+    // --- Google Login (with missing info prompts) ---
+    document.getElementById("googleLogin").onclick = async () => {
+      try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+
+        // Create profile if missing, then prompt for name/phone if empty
+        await promptAndFillMissing(user);
+
+        alert("✅ Logged in as: " + user.email);
+        window.location.href = "index.html";
+      } catch (err) {
+        alert("Login failed: " + err.message);
+      }
+    };
+
+    // --- Email Login (create profile if missing; no prompts) ---
+    document.getElementById("emailLogin").onclick = async () => {
+      const email = getVal("email");
+      const password = getVal("password");
+      if (!email || !password) return alert("Please enter email and password.");
+      try {
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        await ensureUserDoc(cred.user, { email });
+        alert("✅ Logged in as: " + email);
+        window.location.href = "index.html";
+      } catch (err) {
+        alert("Login failed: " + err.message);
+      }
+    };
+
+    // --- Email Signup (stores name & phone) ---
+    document.getElementById("emailSignup").onclick = async () => {
+      const name = getVal("name");
+      const phone = getVal("phone");
+      const email = getVal("email");
+      const password = getVal("password");
+
+      if (!name || !phone || !email || !password) {
+        return alert("Please fill all fields for signup (name, phone, email, password).");
+      }
+
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        await setDoc(doc(db, "users", cred.user.uid), {
+          name,
+          email,
+          phone,
+          isPaid: false,
+          createdAt: serverTimestamp()
+        });
+        alert("✅ Account created for: " + email);
+        window.location.href = "index.html";
+      } catch (err) {
+        alert("Signup failed: " + err.message);
+      }
+    };
+
+    // --- Reset Password ---
+    document.getElementById("resetPassword").onclick = async () => {
+      const email = getVal("email");
+      if (!email) return alert("Please enter your email to reset password.");
+      try {
+        await sendPasswordResetEmail(auth, email);
+        alert("📩 Password reset email sent.");
+      } catch (err) {
+        alert("Reset failed: " + err.message);
+      }
+    };
+
+    // --- Auto redirect if already logged in (kept same behaviour) ---
+    onAuthStateChanged(auth, user => {
+      if (user) window.location.href = "index.html";
     });
   </script>
 </body>
