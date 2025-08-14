@@ -53,12 +53,26 @@
       margin: 15px 0;
       text-align: center;
     }
-    #appleLogin {
-      background: black;
+    /* Apple Button Style */
+    .apple-btn {
+      background-color: black;
       color: white;
+      font-weight: 500;
+      font-size: 15px;
+      border-radius: 8px;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 15px;
+      cursor: pointer;
+      width: 220px;
     }
-    #appleLogin:hover {
-      background: #333;
+    .apple-btn:hover {
+      background-color: #333;
+    }
+    .apple-btn svg {
+      margin-right: 8px;
     }
   </style>
 </head>
@@ -85,7 +99,12 @@
   <!-- Social Logins -->
   <div class="divider">OR</div>
   <button id="googleLogin">Sign in with Google</button>
-  <button id="appleLogin">Sign in with Apple</button>
+  <button id="appleLogin" class="apple-btn">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 14 17" width="16" height="16">
+      <path fill="white" d="M13.962 13.243c-.34.786-.502 1.14-.938 1.84-.61.972-1.472 2.183-2.543 2.192-.95.009-1.198-.637-2.49-.63-1.292.006-1.563.642-2.514.632-1.071-.009-1.88-1.107-2.49-2.079-1.707-2.716-1.889-5.899-.833-7.6.757-1.21 1.953-1.926 3.083-1.926 1.155 0 1.884.65 2.844.65.936 0 1.49-.653 2.84-.653 1.003 0 2.064.547 2.821 1.49-2.47 1.352-2.066 4.887.46 5.573zM9.293 0c.65.039 1.403.476 1.83 1.034.326.423.56 1.018.47 1.604-.725.056-1.58-.412-2.056-.97C9.228 1.269 8.933.653 9.293 0z"/>
+    </svg>
+    Sign in with Apple
+  </button>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
