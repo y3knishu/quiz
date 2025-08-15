@@ -38,7 +38,7 @@
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, doc, getDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     const firebaseConfig = {
@@ -60,23 +60,35 @@
 
     // Function to increment visit count
     async function incrementVisitCount() {
-      await updateDoc(visitRef, {
-        visitCount: firebase.firestore.FieldValue.increment(1)
-      }).then(() => {
+      try {
+        const docSnap = await getDoc(visitRef);
+        if (!docSnap.exists()) {
+          // If document doesn't exist, create it with visitCount = 0
+          await setDoc(visitRef, { visitCount: 0 });
+        }
+
+        // Increment visit count
+        await updateDoc(visitRef, {
+          visitCount: firebase.firestore.FieldValue.increment(1)
+        });
         console.log("Visit count incremented!");
-      }).catch((error) => {
+      } catch (error) {
         console.error("Error incrementing visit count: ", error);
-      });
+      }
     }
 
-    // Function to get visit count and display it
+    // Function to display the visit count
     async function displayVisitCount() {
-      const docSnap = await getDoc(visitRef);
-      if (docSnap.exists()) {
-        const visitCount = docSnap.data().visitCount;
-        document.getElementById("visitCountDisplay").innerText = `Page visits today: ${visitCount}`;
-      } else {
-        console.log("No document found for page visits!");
+      try {
+        const docSnap = await getDoc(visitRef);
+        if (docSnap.exists()) {
+          const visitCount = docSnap.data().visitCount;
+          document.getElementById("visitCountDisplay").innerText = `Page visits today: ${visitCount}`;
+        } else {
+          console.log("No document found for page visits!");
+        }
+      } catch (error) {
+        console.error("Error displaying visit count: ", error);
       }
     }
 
