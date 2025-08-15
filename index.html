@@ -27,6 +27,9 @@
 
   <div id="subject-container" class="subjects"></div>
 
+  <!-- Visit count display -->
+  <div id="visitCountDisplay">Page visits today: 0</div>
+
   <!-- WhatsApp Help Button -->
   <a href="https://wa.me/919431328569" target="_blank" id="whatsappBtn" class="whatsapp-btn">
     💬 Chat with us on WhatsApp
@@ -35,7 +38,7 @@
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     const firebaseConfig = {
@@ -51,6 +54,37 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
+
+    // Reference for the visit count document
+    const visitRef = doc(db, "pageVisits", "homePage");
+
+    // Function to increment visit count
+    async function incrementVisitCount() {
+      await updateDoc(visitRef, {
+        visitCount: firebase.firestore.FieldValue.increment(1)
+      }).then(() => {
+        console.log("Visit count incremented!");
+      }).catch((error) => {
+        console.error("Error incrementing visit count: ", error);
+      });
+    }
+
+    // Function to get visit count and display it
+    async function displayVisitCount() {
+      const docSnap = await getDoc(visitRef);
+      if (docSnap.exists()) {
+        const visitCount = docSnap.data().visitCount;
+        document.getElementById("visitCountDisplay").innerText = `Page visits today: ${visitCount}`;
+      } else {
+        console.log("No document found for page visits!");
+      }
+    }
+
+    // Call increment and display functions when the page loads
+    window.onload = async function() {
+      await incrementVisitCount();
+      await displayVisitCount();
+    };
 
     const subjects = [
       "Anatomy", "Physiology", "Biochemistry", "Pathology", "Pharmacology", "Microbiology", 
@@ -179,16 +213,14 @@
       rzp.open();
     };
   </script>
-<!-- Disable Right-click functionality -->
+
+  <!-- Disable Right-click functionality -->
   <script>
     document.addEventListener('contextmenu', function(event) {
       event.preventDefault();
       alert('Right-click is disabled on this page!');
     });
   </script>
-  <!-- WhatsApp Help Button -->
-  <a href="https://wa.me/919431328569" target="_blank" id="whatsappBtn" class="whatsapp-btn">
-    💬 Chat with us on WhatsApp
-  </a>
+
 </body>
 </html>
