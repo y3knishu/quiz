@@ -304,28 +304,4 @@
         dataToSave.isPaid = paidStatus === "Paid"; // Convert the string to a Boolean (true or false)
       }
 
-      await setDoc(doc(db, "users", userId), dataToSave, { merge: true });
-      alert("User added/updated successfully");
-      document.getElementById("newUserId").value = "";
-      document.getElementById("newUserEmail").value = "";
-      document.getElementById("newUserPhone").value = "";
-      document.getElementById("newUserPaid").value = "";
-      loadUsers();
-    };
-
-    async function loadUsers() {
-      const tbody = document.querySelector("#usersTable tbody");
-      tbody.innerHTML = "";
-      const querySnapshot = await getDocs(collection(db, "users"));
-      querySnapshot.forEach(docSnap => {
-        const user = docSnap.data();
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${docSnap.id}</td>
-          <td>${user.email || ""}</td>
-          <td>${user.phone || ""}</td>
-          <td>${user.isPaid ? "Paid" : "Unpaid"}</td>  
-          <td>
-            <select onchange="updatePaymentStatus('${docSnap.id}', this.value)">
-              <option value="Paid" ${user.isPaid ? "selected" : ""}>Paid</option>
-              <option value="Unpaid" ${!user.isPaid ? "selected" : ""}>
+      await setDoc(doc(db, "users", userId), dataToSave, { merge
