@@ -48,8 +48,7 @@
       <option>Pathology</option><option>Pharmacology</option><option>Microbiology</option><option>Forensic Medicine</option>
       <option>Community Medicine</option><option>ENT</option><option>Ophthalmology</option>
       <option>General Medicine</option><option>General Surgery</option><option>Obstetrics & Gynaecology</option>
-      <option>Pediatrics</option><option>Orthopaedics</option><option>Dermatology</option>
-      <option>Psychiatry</option><option>Respiratory Medicine</option><option>Anesthesiology</option>
+      <option>Pediatrics</option><option>Orthopaedics</option><option>Dermatology</option><option>Psychiatry</option><option>Respiratory Medicine</option><option>Anesthesiology</option>
     </select>
     <textarea id="question" placeholder="Enter question"></textarea>
     <input id="opt1" placeholder="Option 1" />
@@ -65,6 +64,33 @@
     <button onclick="importQuestions()">Import JSON</button>
     <p id="questionCount"></p>
     <div id="preview"></div>
+
+    <h2>Admin Dashboard</h2>
+
+    <h3>Add New User</h3>
+    <input type="text" id="newUserId" placeholder="User ID">
+    <input type="email" id="newUserEmail" placeholder="Email">
+    <input type="text" id="newUserPhone" placeholder="Phone">
+    <select id="newUserPaid">
+      <option value="">Select Payment Status</option>
+      <option value="Paid">Paid</option>
+      <option value="Unpaid">Unpaid</option>
+    </select>
+    <button onclick="addUser()">Add User</button>
+
+    <h3>All Users</h3>
+    <table border="1" id="usersTable">
+      <thead>
+        <tr>
+          <th>User ID</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Payment Status</th>
+          <th>Change Status</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </div>
 
   <script type="module">
@@ -73,14 +99,19 @@
       getFirestore,
       doc,
       getDoc,
-      setDoc
+      setDoc,
+      collection,
+      getDocs
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
     import {
       getAuth,
       signInWithEmailAndPassword,
       signInWithPopup,
       signOut,
-      GoogleAuthProvider
+      GoogleAuthProvider,
+      OAuthProvider,
+      signInWithRedirect,
+      onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     const firebaseConfig = {
@@ -254,6 +285,47 @@
       };
       reader.readAsText(file);
     };
-  </script>
-</body>
-</html>
+
+    window.addUser = async function () {
+      const userId = document.getElementById("newUserId").value.trim();
+      const email = document.getElementById("newUserEmail").value.trim();
+      const phone = document.getElementById("newUserPhone").value.trim();
+      const paidStatus = document.getElementById("newUserPaid").value;
+
+      if (!userId) {
+        alert("User ID is required");
+        return;
+      }
+
+      let dataToSave = {};
+      if (email) dataToSave.email = email;
+      if (phone) dataToSave.phone = phone;
+      if (paidStatus) {
+        dataToSave.isPaid = paidStatus === "Paid"; // Convert the string to a Boolean (true or false)
+      }
+
+      await setDoc(doc(db, "users", userId), dataToSave, { merge: true });
+      alert("User added/updated successfully");
+      document.getElementById("newUserId").value = "";
+      document.getElementById("newUserEmail").value = "";
+      document.getElementById("newUserPhone").value = "";
+      document.getElementById("newUserPaid").value = "";
+      loadUsers();
+    };
+
+    async function loadUsers() {
+      const tbody = document.querySelector("#usersTable tbody");
+      tbody.innerHTML = "";
+      const querySnapshot = await getDocs(collection(db, "users"));
+      querySnapshot.forEach(docSnap => {
+        const user = docSnap.data();
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${docSnap.id}</td>
+          <td>${user.email || ""}</td>
+          <td>${user.phone || ""}</td>
+          <td>${user.isPaid ? "Paid" : "Unpaid"}</td>  
+          <td>
+            <select onchange="updatePaymentStatus('${docSnap.id}', this.value)">
+              <option value="Paid" ${user.isPaid ? "selected" : ""}>Paid</option>
+              <option value="Unpaid" ${!user.isPaid ? "selected" : ""}>
