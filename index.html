@@ -199,16 +199,13 @@
   <a href="https://wa.me/919431328569" target="_blank" id="whatsappBtn" class="whatsapp-btn">
     💬 Chat with us on WhatsApp
   </a>
-  <div style="text-align:center; margin-top:20px; font-weight:bold;">
-  Today’s Visits: <span id="visitCount">0</span>
-</div>
+  <div id="visitCounter" style="text-align:center; font-size:14px; color:#888; margin-top:20px;"></div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } 
-    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  // Firebase config
+  // 🔹 Your Firebase config
   const firebaseConfig = {
       apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
       authDomain: "mcqs-96117.firebaseapp.com",
@@ -222,25 +219,39 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  async function updateVisitCounter() {
-    const today = new Date().toISOString().split("T")[0];
-    const ref = doc(db, "visits", today);
-
+  async function updateVisitCount() {
     try {
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
-        await updateDoc(ref, { count: increment(1) });
-        document.getElementById("visitCount").textContent = snap.data().count + 1;
-      } else {
-        await setDoc(ref, { count: 1 });
-        document.getElementById("visitCount").textContent = 1;
+      const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+      const lastVisit = localStorage.getItem("lastVisitDate");
+
+      // ✅ Only increment if not already counted today
+      if (lastVisit !== today) {
+        const docRef = doc(db, "visits", today);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          await updateDoc(docRef, { count: increment(1) });
+        } else {
+          await setDoc(docRef, { count: 1 });
+        }
+
+        localStorage.setItem("lastVisitDate", today);
       }
-    } catch (e) {
-      console.error("Error updating visits:", e);
+
+      // 🔹 Auto-update the number in the div (live from Firestore)
+      const docRef = doc(db, "visits", today);
+      onSnapshot(docRef, (snapshot) => {
+        if (snapshot.exists()) {
+          document.getElementById("visitCounter").textContent = snapshot.data().count;
+        }
+      });
+
+    } catch (error) {
+      console.error("Error updating visits:", error);
     }
   }
 
-  updateVisitCounter();
+  updateVisitCount();
 </script>
 </body>
 </html>
