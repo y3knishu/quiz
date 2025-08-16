@@ -1,60 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Visit Analytics</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Visits Dashboard</title>
   <style>
     body {
       font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #ff0057, #ffae00, #00c6ff, #8e2de2);
+      background-size: 400% 400%;
+      animation: gradientBG 12s ease infinite;
+      min-height: 100vh;
+      margin: 0;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       padding: 20px;
-      background: #f9f9f9;
     }
-    .card {
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    h1 {
+      text-align: center;
+      font-size: 2rem;
+      margin-bottom: 20px;
+      text-shadow: 2px 2px 8px rgba(0,0,0,0.4);
+    }
+    .login-box, .dashboard {
+      background: rgba(255,255,255,0.1);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+      width: 90%;
+      max-width: 400px;
+      margin-top: 20px;
+      backdrop-filter: blur(8px);
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+    input {
       background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      padding: 20px;
-      margin: 20px 0;
-    }
-    h2 {
-      margin-bottom: 10px;
       color: #333;
     }
-    p {
-      font-size: 18px;
-      margin: 5px 0;
+    button {
+      background: #ff0057;
+      color: white;
+      cursor: pointer;
+      transition: 0.3s;
     }
-    .denied {
+    button:hover {
+      background: #e6004e;
+    }
+    #logoutBtn {
+      margin-top: 10px;
+      background: #444;
+    }
+    .results {
+      margin-top: 15px;
       text-align: center;
-      margin-top: 50px;
-      font-size: 20px;
-      color: red;
+      font-size: 1.2rem;
     }
   </style>
 </head>
 <body>
-  <div id="content" style="display:none;">
-    <div class="card">
-      <h2>Visit Statistics</h2>
-      <p><strong>Today’s Visits:</strong> <span id="todayVisits">0</span></p>
-      <p><strong>Total Visits:</strong> <span id="totalVisits">0</span></p>
-    </div>
+  <h1>📊 Visits Dashboard</h1>
+
+  <!-- Login Section -->
+  <div id="loginBox" class="login-box">
+    <h2>Admin Login</h2>
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Password" />
+    <button id="loginBtn">Login</button>
+    <button id="googleLoginBtn">Sign in with Google</button>
   </div>
 
-  <div id="denied" class="denied" style="display:none;">
-    <h3>Access Denied 🚫</h3>
-    <p>You are not authorized to view this page.</p>
+  <!-- Dashboard Section -->
+  <div id="dashboard" class="dashboard" style="display:none;">
+    <h2>Welcome, Admin</h2>
+    <input type="date" id="datePicker" />
+    <button id="searchBtn">Search Visits</button>
+    <button id="logoutBtn">Logout</button>
+    <div class="results" id="results">Pick a date to see visits.</div>
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, doc, getDoc, collection, getDocs } 
-      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider } 
-      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-    // Firebase config
+    // 🔹 Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
       authDomain: "mcqs-96117.firebaseapp.com",
@@ -67,46 +110,62 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const auth = getAuth();
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
 
-    async function loadVisitStats() {
-      const today = new Date().toISOString().split("T")[0];
-      const todayRef = doc(db, "visits", today);
+    const loginBox = document.getElementById("loginBox");
+    const dashboard = document.getElementById("dashboard");
+    const resultsDiv = document.getElementById("results");
 
+    // 🔹 Login with Email/Password
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
       try {
-        // Today’s visits
-        const todaySnap = await getDoc(todayRef);
-        if (todaySnap.exists()) {
-          document.getElementById("todayVisits").textContent = todaySnap.data().count;
-        } else {
-          document.getElementById("todayVisits").textContent = 0;
-        }
-
-        // Total visits (sum of all docs)
-        const allDocs = await getDocs(collection(db, "visits"));
-        let total = 0;
-        allDocs.forEach(d => { total += d.data().count; });
-        document.getElementById("totalVisits").textContent = total;
-      } catch (e) {
-        console.error("Error loading visits:", e);
-      }
-    }
-
-    // Restrict access
-    onAuthStateChanged(auth, (user) => {
-      if (user && user.email === "y3knishu@gmail.com") {
-        document.getElementById("content").style.display = "block";
-        loadVisitStats();
-      } else {
-        document.getElementById("denied").style.display = "block";
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (error) {
+        alert("Login Failed: " + error.message);
       }
     });
 
-    // Optional: If not logged in, auto-popup Google login
+    // 🔹 Login with Google
+    document.getElementById("googleLoginBtn").addEventListener("click", async () => {
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (error) {
+        alert("Google Login Failed: " + error.message);
+      }
+    });
+
+    // 🔹 Auth State Change
     onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        const provider = new GoogleAuthProvider();
-        signInWithPopup(auth, provider).catch(err => console.error(err));
+      if (user && user.email === "y3knishu@gmail.com") {
+        loginBox.style.display = "none";
+        dashboard.style.display = "block";
+      } else {
+        loginBox.style.display = "block";
+        dashboard.style.display = "none";
+      }
+    });
+
+    // 🔹 Logout
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      await signOut(auth);
+    });
+
+    // 🔹 Search Visits
+    document.getElementById("searchBtn").addEventListener("click", async () => {
+      const date = document.getElementById("datePicker").value;
+      if (!date) {
+        resultsDiv.textContent = "Please select a date.";
+        return;
+      }
+      const docRef = doc(db, "visits", date);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        resultsDiv.textContent = `Visits on ${date}: ${docSnap.data().count}`;
+      } else {
+        resultsDiv.textContent = `No visits recorded on ${date}`;
       }
     });
   </script>
