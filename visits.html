@@ -1,108 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Visits Dashboard</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visitor Analytics</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
+      text-align: center;
       background: linear-gradient(135deg, #ff0057, #ffae00, #00c6ff, #8e2de2);
-      background-size: 400% 400%;
-      animation: gradientBG 12s ease infinite;
       min-height: 100vh;
       margin: 0;
+      padding: 20px;
       color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px;
     }
-    @keyframes gradientBG {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
+    h2 {
+      margin-bottom: 10px;
     }
-    h1 {
-      text-align: center;
-      font-size: 2rem;
-      margin-bottom: 20px;
-      text-shadow: 2px 2px 8px rgba(0,0,0,0.4);
-    }
-    .login-box, .dashboard {
+    .container {
       background: rgba(255,255,255,0.1);
+      border-radius: 15px;
       padding: 20px;
-      border-radius: 12px;
+      max-width: 900px;
+      margin: auto;
       box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-      width: 90%;
-      max-width: 400px;
-      margin-top: 20px;
-      backdrop-filter: blur(8px);
     }
     input, button {
-      width: 100%;
       padding: 10px;
-      margin: 8px 0;
+      margin: 10px;
       border: none;
-      border-radius: 6px;
-      font-size: 1rem;
-    }
-    input {
-      background: #fff;
-      color: #333;
+      border-radius: 8px;
+      font-size: 14px;
     }
     button {
-      background: #ff0057;
+      background: #00c6ff;
       color: white;
       cursor: pointer;
-      transition: 0.3s;
     }
     button:hover {
-      background: #e6004e;
+      background: #008ecc;
     }
-    #logoutBtn {
-      margin-top: 10px;
-      background: #444;
+    canvas {
+      margin-top: 20px;
     }
-    .results {
-      margin-top: 15px;
-      text-align: center;
-      font-size: 1.2rem;
+    .stats {
+      font-size: 18px;
+      margin: 15px 0;
     }
   </style>
 </head>
 <body>
-  <h1>📊 Visits Dashboard</h1>
+  <div class="container" id="reportContent">
+    <h2>📊 Visitor Analytics Dashboard</h2>
+    <div class="stats">
+      <p><b>Total Visitors:</b> <span id="totalVisitors">0</span></p>
+      <p><b>Selected Date Visitors:</b> <span id="selectedVisitors">0</span></p>
+    </div>
 
-  <!-- Login Section -->
-  <div id="loginBox" class="login-box">
-    <h2>Admin Login</h2>
-    <input type="email" id="email" placeholder="Email" />
-    <input type="password" id="password" placeholder="Password" />
-    <button id="loginBtn">Login</button>
-    <button id="googleLoginBtn">Sign in with Google</button>
+    <label for="searchDate">Search by Date:</label>
+    <input type="date" id="searchDate" />
+    <button onclick="searchDate()">Search</button>
+
+    <canvas id="visitsChart" width="400" height="200"></canvas>
   </div>
 
-  <!-- Dashboard Section -->
-  <div id="dashboard" class="dashboard" style="display:none;">
-    <h2>Welcome, Admin</h2>
-    <input type="date" id="datePicker" />
-    <button id="searchBtn">Search Visits</button>
-    <button id="logoutBtn">Logout</button>
-    <div class="results" id="results">Pick a date to see visits.</div>
-  </div>
+  <button onclick="downloadPDF()">📄 Download PDF Report</button>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // 🔹 Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
       authDomain: "mcqs-96117.firebaseapp.com",
       projectId: "mcqs-96117",
-      storageBucket: "mcqs-96117.firebasestorage.app",
+      storageBucket: "mcqs-96117.appspot.com",
       messagingSenderId: "352256319143",
       appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582",
       measurementId: "G-6FZ770H045"
@@ -110,64 +85,95 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
 
-    const loginBox = document.getElementById("loginBox");
-    const dashboard = document.getElementById("dashboard");
-    const resultsDiv = document.getElementById("results");
+    let chart;
+    let visitsData = {};
 
-    // 🔹 Login with Email/Password
-    document.getElementById("loginBtn").addEventListener("click", async () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-      } catch (error) {
-        alert("Login Failed: " + error.message);
-      }
-    });
+    async function fetchVisits() {
+      const snapshot = await getDocs(collection(db, "visits"));
+      let total = 0;
+      visitsData = {};
 
-    // 🔹 Login with Google
-    document.getElementById("googleLoginBtn").addEventListener("click", async () => {
-      try {
-        await signInWithPopup(auth, provider);
-      } catch (error) {
-        alert("Google Login Failed: " + error.message);
-      }
-    });
+      snapshot.forEach(doc => {
+        visitsData[doc.id] = doc.data().count;
+        total += doc.data().count;
+      });
 
-    // 🔹 Auth State Change
-    onAuthStateChanged(auth, (user) => {
-      if (user && user.email === "y3knishu@gmail.com") {
-        loginBox.style.display = "none";
-        dashboard.style.display = "block";
-      } else {
-        loginBox.style.display = "block";
-        dashboard.style.display = "none";
-      }
-    });
+      document.getElementById("totalVisitors").textContent = total;
 
-    // 🔹 Logout
-    document.getElementById("logoutBtn").addEventListener("click", async () => {
-      await signOut(auth);
-    });
+      renderChart();
+    }
 
-    // 🔹 Search Visits
-    document.getElementById("searchBtn").addEventListener("click", async () => {
-      const date = document.getElementById("datePicker").value;
-      if (!date) {
-        resultsDiv.textContent = "Please select a date.";
-        return;
-      }
+    function renderChart() {
+      const ctx = document.getElementById("visitsChart").getContext("2d");
+      const labels = Object.keys(visitsData).sort();
+      const values = labels.map(d => visitsData[d]);
+
+      if (chart) chart.destroy();
+
+      chart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: labels,
+          datasets: [{
+            label: "Daily Visitors",
+            data: values,
+            borderColor: "#fff",
+            backgroundColor: "rgba(255,255,255,0.3)",
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { labels: { color: "white" } }
+          },
+          scales: {
+            x: { ticks: { color: "white" } },
+            y: { ticks: { color: "white" } }
+          }
+        }
+      });
+    }
+
+    async function searchDate() {
+      const date = document.getElementById("searchDate").value;
+      if (!date) return;
+
       const docRef = doc(db, "visits", date);
       const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        resultsDiv.textContent = `Visits on ${date}: ${docSnap.data().count}`;
-      } else {
-        resultsDiv.textContent = `No visits recorded on ${date}`;
-      }
-    });
+
+      document.getElementById("selectedVisitors").textContent = 
+        docSnap.exists() ? docSnap.data().count : 0;
+    }
+
+    // ✅ PDF Export
+    async function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF("p", "mm", "a4");
+
+      doc.setFontSize(18);
+      doc.text("Visitor Analytics Report", 14, 20);
+
+      doc.setFontSize(12);
+      doc.text(`Total Visitors: ${document.getElementById("totalVisitors").textContent}`, 14, 35);
+      doc.text(`Selected Date Visitors: ${document.getElementById("selectedVisitors").textContent}`, 14, 45);
+
+      // Capture chart as image
+      const canvas = document.getElementById("visitsChart");
+      const chartImage = await html2canvas(canvas, { backgroundColor: null });
+      const chartData = chartImage.toDataURL("image/png");
+
+      doc.addImage(chartData, "PNG", 14, 55, 180, 100);
+
+      doc.save("Visitor_Report.pdf");
+    }
+
+    window.searchDate = searchDate;
+    window.downloadPDF = downloadPDF;
+
+    fetchVisits();
   </script>
 </body>
 </html>
