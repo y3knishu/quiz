@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visit Analytics</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f9f9f9;
+    }
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 20px;
+      margin: 20px 0;
+    }
+    h2 {
+      margin-bottom: 10px;
+      color: #333;
+    }
+    p {
+      font-size: 18px;
+      margin: 5px 0;
+    }
+    .denied {
+      text-align: center;
+      margin-top: 50px;
+      font-size: 20px;
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <div id="content" style="display:none;">
+    <div class="card">
+      <h2>Visit Statistics</h2>
+      <p><strong>Today’s Visits:</strong> <span id="todayVisits">0</span></p>
+      <p><strong>Total Visits:</strong> <span id="totalVisits">0</span></p>
+    </div>
+  </div>
+
+  <div id="denied" class="denied" style="display:none;">
+    <h3>Access Denied 🚫</h3>
+    <p>You are not authorized to view this page.</p>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, doc, getDoc, collection, getDocs } 
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider } 
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth();
+
+    async function loadVisitStats() {
+      const today = new Date().toISOString().split("T")[0];
+      const todayRef = doc(db, "visits", today);
+
+      try {
+        // Today’s visits
+        const todaySnap = await getDoc(todayRef);
+        if (todaySnap.exists()) {
+          document.getElementById("todayVisits").textContent = todaySnap.data().count;
+        } else {
+          document.getElementById("todayVisits").textContent = 0;
+        }
+
+        // Total visits (sum of all docs)
+        const allDocs = await getDocs(collection(db, "visits"));
+        let total = 0;
+        allDocs.forEach(d => { total += d.data().count; });
+        document.getElementById("totalVisits").textContent = total;
+      } catch (e) {
+        console.error("Error loading visits:", e);
+      }
+    }
+
+    // Restrict access
+    onAuthStateChanged(auth, (user) => {
+      if (user && user.email === "y3knishu@gmail.com") {
+        document.getElementById("content").style.display = "block";
+        loadVisitStats();
+      } else {
+        document.getElementById("denied").style.display = "block";
+      }
+    });
+
+    // Optional: If not logged in, auto-popup Google login
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        const provider = new GoogleAuthProvider();
+        signInWithPopup(auth, provider).catch(err => console.error(err));
+      }
+    });
+  </script>
+</body>
+</html>
