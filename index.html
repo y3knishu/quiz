@@ -199,7 +199,39 @@
   <a href="https://wa.me/919431328569" target="_blank" id="whatsappBtn" class="whatsapp-btn">
     💬 Chat with us on WhatsApp
   </a>
-  <div id="visitCounter" style="text-align:center; font-size:14px; color:#888; margin-top:20px;"></div>
+  <div id="visitCounter" class="visit-number"></div>
+
+<style>
+  /* 🔹 Fade-in animation */
+  .visit-number {
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 20px;
+    opacity: 0;
+    transform: scale(0.9);
+    animation: fadeInScale 1.2s ease forwards, rainbowGlow 4s linear infinite;
+    background: linear-gradient(90deg, #ff0057, #ffae00, #00c6ff, #8e2de2, #ff0057);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  @keyframes fadeInScale {
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* 🔹 Rainbow glowing animation */
+  @keyframes rainbowGlow {
+    0% { filter: drop-shadow(0 0 2px #ff0057); }
+    25% { filter: drop-shadow(0 0 2px #ffae00); }
+    50% { filter: drop-shadow(0 0 2px #00c6ff); }
+    75% { filter: drop-shadow(0 0 2px #8e2de2); }
+    100% { filter: drop-shadow(0 0 2px #ff0057); }
+  }
+</style>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -238,7 +270,7 @@
         localStorage.setItem("lastVisitDate", today);
       }
 
-      // 🔹 Auto-update the number in the div (live from Firestore)
+      // 🔹 Auto-update number in real-time
       const docRef = doc(db, "visits", today);
       onSnapshot(docRef, (snapshot) => {
         if (snapshot.exists()) {
