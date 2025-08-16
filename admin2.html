@@ -19,7 +19,8 @@
       collection, 
       doc, 
       setDoc, 
-      getDocs 
+      getDocs, 
+      getDoc 
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     // --- Firebase Config ---
@@ -61,6 +62,8 @@
         document.getElementById("login-section").style.display = "none";
         document.getElementById("admin-section").style.display = "block";
         loadUsers();
+        loadVisitStats();
+        setInterval(loadVisitStats, 10000); // 🔄 auto-refresh visits every 10s
       } else if (user) {
         alert("Access denied. Not admin.");
         signOut(auth);
@@ -83,7 +86,7 @@
       if (email) dataToSave.email = email;
       if (phone) dataToSave.phone = phone;
       if (paidStatus) {
-        dataToSave.isPaid = paidStatus === "Paid"; // Convert the string to a Boolean (true or false)
+        dataToSave.isPaid = paidStatus === "Paid";
       }
 
       await setDoc(doc(db, "users", userId), dataToSave, { merge: true });
@@ -107,7 +110,7 @@
           <td>${docSnap.id}</td>
           <td>${user.email || ""}</td>
           <td>${user.phone || ""}</td>
-          <td>${user.isPaid ? "Paid" : "Unpaid"}</td>  <!-- Display "Paid" or "Unpaid" based on Boolean -->
+          <td>${user.isPaid ? "Paid" : "Unpaid"}</td>
           <td>
             <select onchange="updatePaymentStatus('${docSnap.id}', this.value)">
               <option value="Paid" ${user.isPaid ? "selected" : ""}>Paid</option>
@@ -121,8 +124,33 @@
 
     // --- Update Payment Status ---
     window.updatePaymentStatus = async function(userId, status) {
-      const isPaid = status === "Paid";  // Convert the string "Paid" to Boolean true
+      const isPaid = status === "Paid";
       await setDoc(doc(db, "users", userId), { isPaid }, { merge: true });
+    }
+
+    // --- Load Visit Stats ---
+    async function loadVisitStats() {
+      const today = new Date().toISOString().split("T")[0];
+      const todayRef = doc(db, "visits", today);
+
+      try {
+        const todaySnap = await getDoc(todayRef);
+        if (todaySnap.exists()) {
+          document.getElementById("todayVisits").textContent = todaySnap.data().count;
+        } else {
+          document.getElementById("todayVisits").textContent = "0";
+        }
+
+        const allDocs = await getDocs(collection(db, "visits"));
+        let total = 0;
+        allDocs.forEach(d => total += d.data().count);
+        document.getElementById("totalVisits").textContent = total;
+
+        document.getElementById("lastUpdated").textContent = 
+          "Last updated: " + new Date().toLocaleTimeString();
+      } catch (e) {
+        console.error("Error loading visits:", e);
+      }
     }
   </script>
 </head>
@@ -139,6 +167,13 @@
 
   <div id="admin-section" style="display:none;">
     <h2>Admin Dashboard</h2>
+
+    <!-- 🔹 Visits Stats -->
+    <h3>Visits Statistics</h3>
+    <p>📅 Today’s Visits: <span id="todayVisits">0</span></p>
+    <p>🌍 Total Visits: <span id="totalVisits">0</span></p>
+    <small id="lastUpdated">Last updated: --:--:--</small>
+    <hr>
 
     <h3>Add New User</h3>
     <input type="text" id="newUserId" placeholder="User ID">
