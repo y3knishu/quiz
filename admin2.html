@@ -19,8 +19,8 @@
       collection, 
       doc, 
       setDoc, 
-      getDocs, 
-      getDoc 
+      getDoc, 
+      getDocs 
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     // --- Firebase Config ---
@@ -63,7 +63,7 @@
         document.getElementById("admin-section").style.display = "block";
         loadUsers();
         loadVisitStats();
-        setInterval(loadVisitStats, 10000); // 🔄 auto-refresh visits every 10s
+        setInterval(loadVisitStats, 10000); // auto-refresh every 10s
       } else if (user) {
         alert("Access denied. Not admin.");
         signOut(auth);
@@ -86,7 +86,7 @@
       if (email) dataToSave.email = email;
       if (phone) dataToSave.phone = phone;
       if (paidStatus) {
-        dataToSave.isPaid = paidStatus === "Paid";
+        dataToSave.isPaid = paidStatus === "Paid"; 
       }
 
       await setDoc(doc(db, "users", userId), dataToSave, { merge: true });
@@ -124,7 +124,7 @@
 
     // --- Update Payment Status ---
     window.updatePaymentStatus = async function(userId, status) {
-      const isPaid = status === "Paid";
+      const isPaid = status === "Paid";  
       await setDoc(doc(db, "users", userId), { isPaid }, { merge: true });
     }
 
@@ -134,6 +134,7 @@
       const todayRef = doc(db, "visits", today);
 
       try {
+        // Today’s visits
         const todaySnap = await getDoc(todayRef);
         if (todaySnap.exists()) {
           document.getElementById("todayVisits").textContent = todaySnap.data().count;
@@ -141,13 +142,16 @@
           document.getElementById("todayVisits").textContent = "0";
         }
 
+        // Total visits
         const allDocs = await getDocs(collection(db, "visits"));
         let total = 0;
         allDocs.forEach(d => total += d.data().count);
         document.getElementById("totalVisits").textContent = total;
 
-        document.getElementById("lastUpdated").textContent = 
-          "Last updated: " + new Date().toLocaleTimeString();
+        // Last updated
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+        document.getElementById("lastUpdated").textContent = `✅ Last updated at ${timeStr}`;
       } catch (e) {
         console.error("Error loading visits:", e);
       }
@@ -168,11 +172,11 @@
   <div id="admin-section" style="display:none;">
     <h2>Admin Dashboard</h2>
 
-    <!-- 🔹 Visits Stats -->
+    <!-- 🔹 Visits Statistics -->
     <h3>Visits Statistics</h3>
     <p>📅 Today’s Visits: <span id="todayVisits">0</span></p>
     <p>🌍 Total Visits: <span id="totalVisits">0</span></p>
-    <small id="lastUpdated">Last updated: --:--:--</small>
+    <small id="lastUpdated">⏳ Loading...</small>
     <hr>
 
     <h3>Add New User</h3>
