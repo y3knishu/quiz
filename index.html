@@ -199,5 +199,48 @@
   <a href="https://wa.me/919431328569" target="_blank" id="whatsappBtn" class="whatsapp-btn">
     💬 Chat with us on WhatsApp
   </a>
+  <div style="text-align:center; margin-top:20px; font-weight:bold;">
+  Today’s Visits: <span id="visitCount">0</span>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } 
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  // Firebase config
+  const firebaseConfig = {
+      apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
+      authDomain: "mcqs-96117.firebaseapp.com",
+      projectId: "mcqs-96117",
+      storageBucket: "mcqs-96117.firebasestorage.app",
+      messagingSenderId: "352256319143",
+      appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582",
+      measurementId: "G-6FZ770H045"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  async function updateVisitCounter() {
+    const today = new Date().toISOString().split("T")[0];
+    const ref = doc(db, "visits", today);
+
+    try {
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        await updateDoc(ref, { count: increment(1) });
+        document.getElementById("visitCount").textContent = snap.data().count + 1;
+      } else {
+        await setDoc(ref, { count: 1 });
+        document.getElementById("visitCount").textContent = 1;
+      }
+    } catch (e) {
+      console.error("Error updating visits:", e);
+    }
+  }
+
+  updateVisitCounter();
+</script>
 </body>
 </html>
