@@ -7,9 +7,7 @@
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body {
-      font-family: 'Inter', sans-serif;
-    }
+    body { font-family: 'Inter', sans-serif; }
     .rainbow-bg {
       background: linear-gradient(270deg, #ff6b6b, #f7b733, #ffd93d, #6ee7b7, #60a5fa, #a78bfa, #f472b6, #ff6b6b);
       background-size: 1600% 1600%;
@@ -36,6 +34,7 @@
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import { getFirestore, collection, doc, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+    // 🔹 Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
       authDomain: "mcqs-96117.firebaseapp.com",
@@ -50,34 +49,39 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    // 🔹 Email login
     window.emailLogin = function() {
       const email = document.getElementById("loginEmail").value;
       const pass = document.getElementById("loginPassword").value;
       signInWithEmailAndPassword(auth, email, pass).catch(err => alert(err.message));
     }
 
+    // 🔹 Google login
     window.googleLogin = function() {
       const provider = new GoogleAuthProvider();
       signInWithRedirect(auth, provider);
     }
 
+    // 🔹 Logout
     window.logout = function() {
       signOut(auth);
       document.getElementById("login-section").style.display = "block";
       document.getElementById("admin-section").style.display = "none";
     }
 
+    // 🔹 Auth Restriction (only admin email allowed)
     onAuthStateChanged(auth, user => {
       if (user && user.email === "y3knishu@gmail.com") {
         document.getElementById("login-section").style.display = "none";
         document.getElementById("admin-section").style.display = "block";
         loadUsers();
       } else if (user) {
-        alert("Access denied. Not admin.");
+        alert("Access denied ❌. Not admin.");
         signOut(auth);
       }
     });
 
+    // 🔹 Add User
     window.addUser = async function() {
       const userId = document.getElementById("newUserId").value.trim();
       const email = document.getElementById("newUserEmail").value.trim();
@@ -92,7 +96,7 @@
       if (paidStatus) { dataToSave.isPaid = paidStatus === "Paid"; }
 
       await setDoc(doc(db, "users", userId), dataToSave, { merge: true });
-      alert("User added/updated successfully");
+      alert("✅ User added/updated successfully");
       document.getElementById("newUserId").value = "";
       document.getElementById("newUserEmail").value = "";
       document.getElementById("newUserPhone").value = "";
@@ -100,6 +104,7 @@
       loadUsers();
     }
 
+    // 🔹 Load Users
     async function loadUsers() {
       const tbody = document.querySelector("#usersTable tbody");
       tbody.innerHTML = "";
@@ -113,7 +118,7 @@
           <td class='p-2 border'>${user.phone || ""}</td>
           <td class='p-2 border'>${user.isPaid ? "Paid" : "Unpaid"}</td>
           <td class='p-2 border'>
-            <select onchange="updatePaymentStatus('${docSnap.id}', this.value)" class='p-1 rounded'>
+            <select onchange="updatePaymentStatus('${docSnap.id}', this.value)" class='p-1 rounded text-black'>
               <option value="Paid" ${user.isPaid ? "selected" : ""}>Paid</option>
               <option value="Unpaid" ${!user.isPaid ? "selected" : ""}>Unpaid</option>
             </select>
@@ -122,6 +127,7 @@
       });
     }
 
+    // 🔹 Update payment status
     window.updatePaymentStatus = async function(userId, status) {
       const isPaid = status === "Paid";  
       await setDoc(doc(db, "users", userId), { isPaid }, { merge: true });
@@ -130,14 +136,16 @@
 </head>
 <body class="rainbow-bg min-h-screen flex items-center justify-center p-4">
   <div class="glass w-full max-w-4xl">
+    <!-- 🔹 Login Section -->
     <div id="login-section" class="space-y-4">
       <h2 class="text-2xl font-bold text-white text-center">Admin Login</h2>
-      <input type="email" id="loginEmail" placeholder="Email" class="w-full p-2 rounded" />
-      <input type="password" id="loginPassword" placeholder="Password" class="w-full p-2 rounded" />
+      <input type="email" id="loginEmail" placeholder="Email" class="w-full p-2 rounded text-black" />
+      <input type="password" id="loginPassword" placeholder="Password" class="w-full p-2 rounded text-black" />
       <button onclick="emailLogin()" class="w-full bg-blue-500 text-white py-2 rounded">Login with Email</button>
       <button onclick="googleLogin()" class="w-full bg-red-500 text-white py-2 rounded">Login with Google</button>
     </div>
 
+    <!-- 🔹 Admin Dashboard -->
     <div id="admin-section" style="display:none;" class="space-y-6">
       <div class="flex justify-between items-center">
         <h2 class="text-2xl font-bold text-white">Admin Dashboard</h2>
@@ -147,10 +155,10 @@
       <div class="space-y-2">
         <h3 class="text-lg font-semibold text-white">Add New User</h3>
         <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
-          <input type="text" id="newUserId" placeholder="User ID" class="p-2 rounded" />
-          <input type="email" id="newUserEmail" placeholder="Email" class="p-2 rounded" />
-          <input type="text" id="newUserPhone" placeholder="Phone" class="p-2 rounded" />
-          <select id="newUserPaid" class="p-2 rounded">
+          <input type="text" id="newUserId" placeholder="User ID" class="p-2 rounded text-black" />
+          <input type="email" id="newUserEmail" placeholder="Email" class="p-2 rounded text-black" />
+          <input type="text" id="newUserPhone" placeholder="Phone" class="p-2 rounded text-black" />
+          <select id="newUserPaid" class="p-2 rounded text-black">
             <option value="">Payment Status</option>
             <option value="Paid">Paid</option>
             <option value="Unpaid">Unpaid</option>
