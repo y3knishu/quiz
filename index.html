@@ -7,14 +7,13 @@
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-6FZ770H045"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-6FZ770H045');
-</script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-6FZ770H045"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-6FZ770H045');
+  </script>
 </head>
 <body>
   <header>
@@ -44,9 +43,14 @@
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { 
+      getFirestore, doc, getDoc, setDoc, updateDoc, increment, onSnapshot 
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { 
+      getAuth, onAuthStateChanged, signOut 
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
+    // ✅ Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
       authDomain: "mcqs-96117.firebaseapp.com",
@@ -61,6 +65,7 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
+    // ✅ Subjects
     const subjects = [
       "Anatomy", "Physiology", "Biochemistry", "Pathology", "Pharmacology", "Microbiology", 
       "Forensic Medicine", "Community Medicine", "ENT", "Ophthalmology", "General Medicine", 
@@ -77,14 +82,16 @@
     const logoutBtn = document.getElementById("logoutBtn");
     const payBtn = document.getElementById("payBtn");
 
-    // Function to generate a random color for cards
+    // ✅ Random card colors
     function getRandomColor() {
       const colors = [
-        "#FF5733", "#33FF57", "#3357FF", "#F1C40F", "#9B59B6", "#1ABC9C", "#E74C3C", "#8E44AD", "#3498DB"
+        "#FF5733", "#33FF57", "#3357FF", "#F1C40F", "#9B59B6", 
+        "#1ABC9C", "#E74C3C", "#8E44AD", "#3498DB"
       ];
       return colors[Math.floor(Math.random() * colors.length)];
     }
 
+    // ✅ Render Subjects
     function renderSubjects() {
       const container = document.getElementById("subject-container");
       container.innerHTML = "";
@@ -94,7 +101,7 @@
         const isFree = subject === "Anatomy";
         const locked = !isFree && !isPaid;
         card.classList.toggle("locked", locked);
-        card.style.backgroundColor = getRandomColor(); // Apply random color
+        card.style.backgroundColor = getRandomColor();
 
         card.innerHTML = `
           <div class="card-title">${subject}</div>
@@ -112,6 +119,7 @@
       });
     }
 
+    // ✅ Auth State
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         currentUser = user;
@@ -151,10 +159,8 @@
       }
     });
 
-    loginBtn.onclick = () => {
-      window.location.href = "admin-login.html";
-    };
-
+    // ✅ Login & Logout
+    loginBtn.onclick = () => { window.location.href = "admin-login.html"; };
     logoutBtn.onclick = () => {
       signOut(auth).then(() => {
         alert("Logged out");
@@ -162,6 +168,7 @@
       });
     };
 
+    // ✅ Payment
     payBtn.onclick = function () {
       if (!currentUser) {
         alert("🔐 Please login first to make payment.");
@@ -175,34 +182,65 @@
         description: "Unlock all subjects",
         handler: async function (response) {
           alert("✅ Payment successful! ID: " + response.razorpay_payment_id);
-          await setDoc(doc(db, "users", userId), { isPaid: true }, { merge: true });
-          isPaid = true;
-          payBtn.style.display = "none";
-          renderSubjects();
+          try {
+            await setDoc(doc(db, "users", userId), { isPaid: true }, { merge: true });
+            isPaid = true;
+            payBtn.style.display = "none";
+            renderSubjects();
+          } catch (err) {
+            console.error("❌ Firestore update failed:", err);
+            alert("Payment done, but failed to unlock. Contact support.");
+          }
         },
-        theme: {
-          color: "#3399cc"
-        }
+        theme: { color: "#3399cc" }
       };
       const rzp = new Razorpay(options);
       rzp.open();
     };
+
+    // ✅ Visit Counter
+    async function updateVisitCount() {
+      try {
+        const today = new Date().toISOString().split("T")[0];
+        const lastVisit = localStorage.getItem("lastVisitDate");
+
+        if (lastVisit !== today) {
+          const docRef = doc(db, "visits", today);
+          const docSnap = await getDoc(docRef);
+
+          if (docSnap.exists()) {
+            await updateDoc(docRef, { count: increment(1) });
+          } else {
+            await setDoc(docRef, { count: 1 });
+          }
+          localStorage.setItem("lastVisitDate", today);
+        }
+
+        const docRef = doc(db, "visits", today);
+        onSnapshot(docRef, (snapshot) => {
+          if (snapshot.exists()) {
+            document.getElementById("visitCounter").textContent = snapshot.data().count;
+          }
+        });
+      } catch (error) {
+        console.error("Error updating visits:", error);
+      }
+    }
+    updateVisitCount();
   </script>
-<!-- Disable Right-click functionality -->
+
+  <!-- Disable Right-click -->
   <script>
     document.addEventListener('contextmenu', function(event) {
       event.preventDefault();
       alert('Right-click is disabled on this page!');
     });
   </script>
-  <!-- WhatsApp Help Button -->
-  <a href="https://wa.me/919431328569" target="_blank" id="whatsappBtn" class="whatsapp-btn">
-    💬 Chat with us on WhatsApp
-  </a>
+
   <div id="visitCounter" class="visit-number"></div>
 
 <style>
-  /* 🔹 Fade-in animation */
+  /* 🔹 Visit Counter Styling */
   .visit-number {
     text-align: left;
     font-size: 18px;
@@ -217,13 +255,9 @@
   }
 
   @keyframes fadeInScale {
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
+    to { opacity: 1; transform: scale(1); }
   }
 
-  /* 🔹 Rainbow glowing animation */
   @keyframes rainbowGlow {
     0% { filter: drop-shadow(0 0 2px #ff0057); }
     25% { filter: drop-shadow(0 0 2px #ffae00); }
@@ -233,57 +267,5 @@
   }
 </style>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-  // 🔹 Your Firebase config
-  const firebaseConfig = {
-      apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
-      authDomain: "mcqs-96117.firebaseapp.com",
-      projectId: "mcqs-96117",
-      storageBucket: "mcqs-96117.firebasestorage.app",
-      messagingSenderId: "352256319143",
-      appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582",
-      measurementId: "G-6FZ770H045"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  async function updateVisitCount() {
-    try {
-      const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
-      const lastVisit = localStorage.getItem("lastVisitDate");
-
-      // ✅ Only increment if not already counted today
-      if (lastVisit !== today) {
-        const docRef = doc(db, "visits", today);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          await updateDoc(docRef, { count: increment(1) });
-        } else {
-          await setDoc(docRef, { count: 1 });
-        }
-
-        localStorage.setItem("lastVisitDate", today);
-      }
-
-      // 🔹 Auto-update number in real-time
-      const docRef = doc(db, "visits", today);
-      onSnapshot(docRef, (snapshot) => {
-        if (snapshot.exists()) {
-          document.getElementById("visitCounter").textContent = snapshot.data().count;
-        }
-      });
-
-    } catch (error) {
-      console.error("Error updating visits:", error);
-    }
-  }
-
-  updateVisitCount();
-</script>
 </body>
 </html>
