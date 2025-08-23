@@ -168,35 +168,55 @@
       });
     };
 
-    // ✅ Payment
-    payBtn.onclick = function () {
-      if (!currentUser) {
-        alert("🔐 Please login first to make payment.");
-        return;
-      }
-      const options = {
-        key: "rzp_live_7nZptAUoDrsfRb",
-        amount: 9900,
-        currency: "INR",
-        name: "NEET PG / INICET PREVIOUSLY ASKED QUESTIONS",
-        description: "Unlock all subjects",
-        handler: async function (response) {
-          alert("✅ Payment successful! ID: " + response.razorpay_payment_id);
-          try {
-            await setDoc(doc(db, "users", userId), { isPaid: true }, { merge: true });
-            isPaid = true;
-            payBtn.style.display = "none";
-            renderSubjects();
-          } catch (err) {
-            console.error("❌ Firestore update failed:", err);
-            alert("Payment done, but failed to unlock. Contact support.");
-          }
-        },
-        theme: { color: "#3399cc" }
-      };
-      const rzp = new Razorpay(options);
-      rzp.open();
+    // ✅ Payment (updated)
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
+const functions = getFunctions(app);
+
+payBtn.onclick = async function () {
+  if (!currentUser) {
+    alert("🔐 Please login first to make payment.");
+    return;
+  }
+
+  try {
+    // 1️⃣ Call backend to create order
+    const createOrder = httpsCallable(functions, "createOrder");
+    const result = await createOrder({ amount: 99 }); // 99 INR
+    const { orderId, amount, currency } = result.data;
+
+    // 2️⃣ Open Razorpay checkout
+    const options = {
+      key: "rzp_live_7nZptAUoDrsfRb", // ✅ Only public key here
+      amount: amount,
+      currency: currency,
+      name: "NEET PG / INICET PREVIOUSLY ASKED QUESTIONS",
+      description: "Unlock all subjects",
+      order_id: orderId, // ✅ attach backend order id
+      handler: async function (response) {
+        alert("✅ Payment successful! ID: " + response.razorpay_payment_id);
+
+        try {
+          // 3️⃣ Mark user as paid in Firestore
+          await setDoc(doc(db, "users", userId), { isPaid: true }, { merge: true });
+          isPaid = true;
+          payBtn.style.display = "none";
+          renderSubjects();
+        } catch (err) {
+          console.error("❌ Firestore update failed:", err);
+          alert("Payment done, but failed to unlock. Contact support.");
+        }
+      },
+      theme: { color: "#3399cc" }
     };
+
+    const rzp = new Razorpay(options);
+    rzp.open();
+
+  } catch (error) {
+    console.error("❌ Error creating order:", error);
+    alert("Failed to initiate payment. Please try again.");
+  }
+};
 
     // ✅ Visit Counter
     async function updateVisitCount() {
