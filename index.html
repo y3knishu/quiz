@@ -41,17 +41,13 @@
   </a>
 
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { 
-      getFirestore, doc, getDoc, setDoc, updateDoc, increment, onSnapshot 
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-    import { 
-      getAuth, onAuthStateChanged, signOut 
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js"; <!-- ✅ moved inside -->
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 
-    // ✅ Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
       authDomain: "mcqs-96117.firebaseapp.com",
@@ -65,13 +61,12 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
-    const functions = getFunctions(app); // ✅ initialized here
+    const functions = getFunctions(app);
 
-    // ✅ Subjects
     const subjects = [
-      "Anatomy", "Physiology", "Biochemistry", "Pathology", "Pharmacology", "Microbiology", 
-      "Forensic Medicine", "Community Medicine", "ENT", "Ophthalmology", "General Medicine", 
-      "General Surgery", "Obstetrics & Gynaecology", "Pediatrics", "Orthopaedics", "Dermatology", 
+      "Anatomy", "Physiology", "Biochemistry", "Pathology", "Pharmacology", "Microbiology",
+      "Forensic Medicine", "Community Medicine", "ENT", "Ophthalmology", "General Medicine",
+      "General Surgery", "Obstetrics & Gynaecology", "Pediatrics", "Orthopaedics", "Dermatology",
       "Psychiatry", "Respiratory Medicine", "Anesthesiology"
     ];
 
@@ -84,16 +79,11 @@
     const logoutBtn = document.getElementById("logoutBtn");
     const payBtn = document.getElementById("payBtn");
 
-    // ✅ Random card colors
     function getRandomColor() {
-      const colors = [
-        "#FF5733", "#33FF57", "#3357FF", "#F1C40F", "#9B59B6", 
-        "#1ABC9C", "#E74C3C", "#8E44AD", "#3498DB"
-      ];
+      const colors = ["#FF5733","#33FF57","#3357FF","#F1C40F","#9B59B6","#1ABC9C","#E74C3C","#8E44AD","#3498DB"];
       return colors[Math.floor(Math.random() * colors.length)];
     }
 
-    // ✅ Render Subjects
     function renderSubjects() {
       const container = document.getElementById("subject-container");
       container.innerHTML = "";
@@ -121,7 +111,6 @@
       });
     }
 
-    // ✅ Auth State
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         currentUser = user;
@@ -135,7 +124,6 @@
           const snap = await getDoc(docRef);
 
           if (user.email === "y3knishu@gmail.com") {
-            console.log("✅ Admin override access granted");
             isPaid = true;
             payBtn.style.display = "none";
           } else if (snap.exists() && snap.data().isPaid) {
@@ -161,7 +149,6 @@
       }
     });
 
-    // ✅ Login & Logout
     loginBtn.onclick = () => { window.location.href = "admin-login.html"; };
     logoutBtn.onclick = () => {
       signOut(auth).then(() => {
@@ -170,7 +157,6 @@
       });
     };
 
-    // ✅ Payment
     payBtn.onclick = async function () {
       if (!currentUser) {
         alert("🔐 Please login first to make payment.");
@@ -213,7 +199,6 @@
       }
     };
 
-    // ✅ Visit Counter
     async function updateVisitCount() {
       try {
         const today = new Date().toISOString().split("T")[0];
@@ -254,33 +239,31 @@
 
   <div id="visitCounter" class="visit-number"></div>
 
-<style>
-  /* 🔹 Visit Counter Styling */
-  .visit-number {
-    text-align: left;
-    font-size: 18px;
-    font-weight: normal;
-    margin-top: 20px;
-    opacity: 0;
-    transform: scale(0.9);
-    animation: fadeInScale 1.2s ease forwards, rainbowGlow 4s linear infinite;
-    background: linear-gradient(90deg, #ff0057, #ffae00, #00c6ff, #8e2de2, #ff0057);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
+  <style>
+    .visit-number {
+      text-align: left;
+      font-size: 18px;
+      font-weight: normal;
+      margin-top: 20px;
+      opacity: 0;
+      transform: scale(0.9);
+      animation: fadeInScale 1.2s ease forwards, rainbowGlow 4s linear infinite;
+      background: linear-gradient(90deg, #ff0057, #ffae00, #00c6ff, #8e2de2, #ff0057);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
 
-  @keyframes fadeInScale {
-    to { opacity: 1; transform: scale(1); }
-  }
+    @keyframes fadeInScale {
+      to { opacity: 1; transform: scale(1); }
+    }
 
-  @keyframes rainbowGlow {
-    0% { filter: drop-shadow(0 0 2px #ff0057); }
-    25% { filter: drop-shadow(0 0 2px #ffae00); }
-    50% { filter: drop-shadow(0 0 2px #00c6ff); }
-    75% { filter: drop-shadow(0 0 2px #8e2de2); }
-    100% { filter: drop-shadow(0 0 2px #ff0057); }
-  }
-</style>
-
+    @keyframes rainbowGlow {
+      0% { filter: drop-shadow(0 0 2px #ff0057); }
+      25% { filter: drop-shadow(0 0 2px #ffae00); }
+      50% { filter: drop-shadow(0 0 2px #00c6ff); }
+      75% { filter: drop-shadow(0 0 2px #8e2de2); }
+      100% { filter: drop-shadow(0 0 2px #ff0057); }
+    }
+  </style>
 </body>
 </html>
