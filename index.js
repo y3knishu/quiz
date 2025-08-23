@@ -8,13 +8,16 @@ const razorpay = new Razorpay({
   key_secret: "FARMucvrw8A5kAMPTXWwWpoL",
 });
 
-// 🔹 Create order (auto capture enabled)
+// 🔹 Create order (amount fixed in backend)
 exports.createOrder = functions.https.onCall(async (data, context) => {
   try {
+    // 💰 Fixed price (₹5) → 500 paise
+    const FIXED_AMOUNT = 500; // Always ₹5, no matter what frontend sends
+
     const options = {
-      amount: data.amount * 100, // convert to paise
+      amount: FIXED_AMOUNT, // paise
       currency: "INR",
-      receipt: "receipt#1",
+      receipt: "receipt#" + Date.now(),
       payment_capture: 1, // ✅ Auto-capture enabled
     };
 
