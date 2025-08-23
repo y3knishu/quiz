@@ -181,7 +181,7 @@ payBtn.onclick = async function () {
   try {
     // 1️⃣ Call backend to create order
     const createOrder = httpsCallable(functions, "createOrder");
-    const result = await createOrder({ amount: 99 }); // 99 INR
+    const result = await createOrder({ amount: 10 }); // 99 INR
     const { orderId, amount, currency } = result.data;
 
     // 2️⃣ Open Razorpay checkout
