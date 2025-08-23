@@ -168,7 +168,7 @@
       });
     };
 
-    // ✅ Payment (updated)
+    // ✅ Payment (final secured)
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 const functions = getFunctions(app);
 
@@ -179,9 +179,9 @@ payBtn.onclick = async function () {
   }
 
   try {
-    // 1️⃣ Call backend to create order
+    // 1️⃣ Call backend (amount is fixed there, nothing passed from frontend)
     const createOrder = httpsCallable(functions, "createOrder");
-    const result = await createOrder({ amount: 10 }); // 99 INR
+    const result = await createOrder();
     const { orderId, amount, currency } = result.data;
 
     // 2️⃣ Open Razorpay checkout
@@ -189,9 +189,9 @@ payBtn.onclick = async function () {
       key: "rzp_live_7nZptAUoDrsfRb", // ✅ Only public key here
       amount: amount,
       currency: currency,
-      name: "NEET PG / INICET PREVIOUSLY ASKED QUESTIONS",
+      name: "NEET PG / INICET PYQs",
       description: "Unlock all subjects",
-      order_id: orderId, // ✅ attach backend order id
+      order_id: orderId,
       handler: async function (response) {
         alert("✅ Payment successful! ID: " + response.razorpay_payment_id);
 
@@ -217,7 +217,6 @@ payBtn.onclick = async function () {
     alert("Failed to initiate payment. Please try again.");
   }
 };
-
     // ✅ Visit Counter
     async function updateVisitCount() {
       try {
