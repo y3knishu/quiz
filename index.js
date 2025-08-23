@@ -2,51 +2,46 @@ const functions = require("firebase-functions");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
 
-const instance = new Razorpay({
+// ✅ Use your Key ID & Secret Key (keep Secret only here, never in frontend)
+const razorpay = new Razorpay({
   key_id: "rzp_live_7nZptAUoDrsfRb",
-  key_secret: "FARMucvrw8A5kAMPTXWwWpoL", // keep secret only in backend
+  key_secret: "FARMucvrw8A5kAMPTXWwWpoL",
 });
 
-// 🔹 Create order (amount fixed here)
+// 🔹 Create order (auto capture enabled)
 exports.createOrder = functions.https.onCall(async (data, context) => {
   try {
     const options = {
-      amount: 500, // 👈 fixed amount in paise (₹5 = 500 paise)
+      amount: data.amount * 100, // convert to paise
       currency: "INR",
-      receipt: "receipt_order_" + Date.now(),
-      payment_capture: 1, // auto capture
+      receipt: "receipt#1",
+      payment_capture: 1, // ✅ Auto-capture enabled
     };
 
-    const order = await instance.orders.create(options);
-    return {
-      orderId: order.id,
-      currency: order.currency,
-      amount: order.amount,
-    };
+    const order = await razorpay.orders.create(options);
+    return { orderId: order.id, amount: order.amount, currency: order.currency };
   } catch (err) {
     console.error("Error creating Razorpay order:", err);
-    throw new functions.https.HttpsError("internal", "Unable to create order");
+    throw new functions.https.HttpsError("unknown", err.message);
   }
 });
 
-// 🔹 Verify payment
+// 🔹 Verify payment (recommended)
 exports.verifyPayment = functions.https.onCall(async (data, context) => {
   try {
     const { orderId, paymentId, signature } = data;
 
-    const body = orderId + "|" + paymentId;
-    const expectedSignature = crypto
-      .createHmac("sha256", "FARMucvrw8A5kAMPTXWwWpoL")
-      .update(body.toString())
-      .digest("hex");
+    const hmac = crypto.createHmac("sha256", razorpay.key_secret);
+    hmac.update(orderId + "|" + paymentId);
+    const generatedSignature = hmac.digest("hex");
 
-    if (expectedSignature === signature) {
-      return { success: true };
+    if (generatedSignature === signature) {
+      return { success: true, message: "Payment verified ✅" };
     } else {
-      return { success: false };
+      throw new Error("Invalid signature ❌");
     }
   } catch (err) {
-    console.error("Error verifying payment:", err);
-    throw new functions.https.HttpsError("internal", "Unable to verify payment");
+    console.error("Error verifying Razorpay payment:", err);
+    throw new functions.https.HttpsError("unknown", err.message);
   }
 });
