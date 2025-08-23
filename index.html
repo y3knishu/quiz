@@ -16,257 +16,256 @@
   </script>
 </head>
 <body>
-  <header>
-    <h1>NEET PG / INICET PYQs</h1>
-    <div class="top-buttons">
-      <div class="top-right">
-        <span id="user-info">Loading...</span>
-        <button id="loginBtn" style="display:none">🔐 Login / Sign Up</button>
-        <button id="logoutBtn" style="display:none">🚪 Logout</button>
-      </div>
-      <button id="payBtn" style="margin-top: 10px;">💳 Pay ₹5 to Unlock All Subjects</button>
+<header>
+  <h1>NEET PG / INICET PYQs</h1>
+  <div class="top-buttons">
+    <div class="top-right">
+      <span id="user-info">Loading...</span>
+      <button id="loginBtn" style="display:none">🔐 Login / Sign Up</button>
+      <button id="logoutBtn" style="display:none">🚪 Logout</button>
     </div>
-  </header>
-
-  <div class="info-message">
-    🔓 <strong>Anatomy</strong> is free. Pay ₹5 once to unlock access to all other subjects.<br>
-    Please login first to make the payment.
+    <button id="payBtn" style="margin-top: 10px;">💳 Pay ₹5 to Unlock All Subjects</button>
   </div>
+</header>
 
-  <div id="subject-container" class="subjects"></div>
+<div class="info-message">
+  🔓 <strong>Anatomy</strong> is free. Pay ₹5 once to unlock access to all other subjects.<br>
+  Please login first to make the payment.
+</div>
 
-  <!-- WhatsApp Help Button -->
-  <a href="https://wa.me/919431328569" target="_blank" id="whatsappBtn" class="whatsapp-btn">
-    💬 Chat with us on WhatsApp
-  </a>
+<div id="subject-container" class="subjects"></div>
 
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<!-- WhatsApp Help Button -->
+<a href="https://wa.me/919431328569" target="_blank" id="whatsappBtn" class="whatsapp-btn">
+  💬 Chat with us on WhatsApp
+</a>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
-    // Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
-      authDomain: "mcqs-96117.firebaseapp.com",
-      projectId: "mcqs-96117",
-      storageBucket: "mcqs-96117.firebasestorage.app",
-      messagingSenderId: "352256319143",
-      appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582",
-      measurementId: "G-6FZ770H045"
-    };
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
-    const functions = getFunctions(app);
+// Firebase Config
+const firebaseConfig = {
+  apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
+  authDomain: "mcqs-96117.firebaseapp.com",
+  projectId: "mcqs-96117",
+  storageBucket: "mcqs-96117.firebasestorage.app",
+  messagingSenderId: "352256319143",
+  appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582",
+  measurementId: "G-6FZ770H045"
+};
 
-    const subjects = [
-      "Anatomy", "Physiology", "Biochemistry", "Pathology", "Pharmacology", "Microbiology",
-      "Forensic Medicine", "Community Medicine", "ENT", "Ophthalmology", "General Medicine",
-      "General Surgery", "Obstetrics & Gynaecology", "Pediatrics", "Orthopaedics", "Dermatology",
-      "Psychiatry", "Respiratory Medicine", "Anesthesiology"
-    ];
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+const functions = getFunctions(app);
 
-    let isPaid = false;
-    let userId = null;
-    let currentUser = null;
+// Subjects
+const subjects = [
+  "Anatomy", "Physiology", "Biochemistry", "Pathology", "Pharmacology", "Microbiology",
+  "Forensic Medicine", "Community Medicine", "ENT", "Ophthalmology", "General Medicine",
+  "General Surgery", "Obstetrics & Gynaecology", "Pediatrics", "Orthopaedics", "Dermatology",
+  "Psychiatry", "Respiratory Medicine", "Anesthesiology"
+];
 
-    const userInfo = document.getElementById("user-info");
-    const loginBtn = document.getElementById("loginBtn");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const payBtn = document.getElementById("payBtn");
+let isPaid = false;
+let userId = null;
+let currentUser = null;
 
-    function getRandomColor() {
-      const colors = ["#FF5733","#33FF57","#3357FF","#F1C40F","#9B59B6","#1ABC9C","#E74C3C","#8E44AD","#3498DB"];
-      return colors[Math.floor(Math.random() * colors.length)];
+const userInfo = document.getElementById("user-info");
+const loginBtn = document.getElementById("loginBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const payBtn = document.getElementById("payBtn");
+
+function getRandomColor() {
+  const colors = ["#FF5733","#33FF57","#3357FF","#F1C40F","#9B59B6","#1ABC9C","#E74C3C","#8E44AD","#3498DB"];
+  return colors[Math.floor(Math.random() * colors.length)];
+}
+
+function renderSubjects() {
+  const container = document.getElementById("subject-container");
+  container.innerHTML = "";
+  subjects.forEach(subject => {
+    const card = document.createElement("a");
+    card.className = "card";
+    const isFree = subject === "Anatomy";
+    const locked = !isFree && !isPaid;
+    card.classList.toggle("locked", locked);
+    card.style.backgroundColor = getRandomColor();
+
+    card.innerHTML = `
+      <div class="card-title">${subject}</div>
+      <div class="card-sub">${locked ? "🔒 Locked" : "✅ Open"}</div>
+    `;
+    if (!locked) {
+      card.href = `quiz.html?subject=${encodeURIComponent(subject)}`;
+    } else {
+      card.onclick = (e) => {
+        e.preventDefault();
+        alert("🔒 This subject is locked. Please login and pay ₹5 to unlock all subjects.");
+      };
     }
+    container.appendChild(card);
+  });
+}
 
-    function renderSubjects() {
-      const container = document.getElementById("subject-container");
-      container.innerHTML = "";
-      subjects.forEach(subject => {
-        const card = document.createElement("a");
-        card.className = "card";
-        const isFree = subject === "Anatomy";
-        const locked = !isFree && !isPaid;
-        card.classList.toggle("locked", locked);
-        card.style.backgroundColor = getRandomColor();
+// Auth State
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    currentUser = user;
+    userId = user.uid;
+    loginBtn.style.display = "none";
+    logoutBtn.style.display = "inline-block";
+    userInfo.textContent = `👋 ${user.email}`;
 
-        card.innerHTML = `
-          <div class="card-title">${subject}</div>
-          <div class="card-sub">${locked ? "🔒 Locked" : "✅ Open"}</div>
-        `;
-        if (!locked) {
-          card.href = `quiz.html?subject=${encodeURIComponent(subject)}`;
-        } else {
-          card.onclick = (e) => {
-            e.preventDefault();
-            alert("🔒 This subject is locked. Please login and pay ₹5 to unlock all subjects.");
-          };
-        }
-        container.appendChild(card);
-      });
-    }
+    try {
+      const docRef = doc(db, "users", user.uid);
+      const snap = await getDoc(docRef);
 
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        currentUser = user;
-        userId = user.uid;
-        loginBtn.style.display = "none";
-        logoutBtn.style.display = "inline-block";
-        userInfo.textContent = `👋 ${user.email}`;
-
-        try {
-          const docRef = doc(db, "users", user.uid);
-          const snap = await getDoc(docRef);
-
-          if (user.email === "y3knishu@gmail.com") {
-            isPaid = true;
-            payBtn.style.display = "none";
-          } else if (snap.exists() && snap.data().isPaid) {
-            isPaid = true;
-            payBtn.style.display = "none";
-          } else {
-            isPaid = false;
-            payBtn.style.display = "inline-block";
-          }
-        } catch (e) {
-          console.warn("Error checking payment status:", e);
-        }
-
-        renderSubjects();
+      if (user.email === "y3knishu@gmail.com") {
+        isPaid = true;
+        payBtn.style.display = "none";
+      } else if (snap.exists() && snap.data().isPaid) {
+        isPaid = true;
+        payBtn.style.display = "none";
       } else {
-        currentUser = null;
-        userInfo.textContent = "🔐 Not logged in";
-        loginBtn.style.display = "inline-block";
-        logoutBtn.style.display = "none";
         isPaid = false;
         payBtn.style.display = "inline-block";
-        renderSubjects();
       }
-    });
+    } catch (e) {
+      console.warn("Error checking payment status:", e);
+    }
 
-    loginBtn.onclick = () => { window.location.href = "admin-login.html"; };
-    logoutBtn.onclick = () => {
-      signOut(auth).then(() => {
-        alert("Logged out");
-        window.location.reload();
-      });
-    };
+    renderSubjects();
+  } else {
+    currentUser = null;
+    userInfo.textContent = "🔐 Not logged in";
+    loginBtn.style.display = "inline-block";
+    logoutBtn.style.display = "none";
+    isPaid = false;
+    payBtn.style.display = "inline-block";
+    renderSubjects();
+  }
+});
 
-    // Razorpay payment using Firebase callable
-    payBtn.onclick = async function () {
-      if (!currentUser) {
-        alert("🔐 Please login first to make payment.");
-        return;
-      }
+// Login/Logout
+loginBtn.onclick = () => { window.location.href = "admin-login.html"; };
+logoutBtn.onclick = () => {
+  signOut(auth).then(() => {
+    alert("Logged out");
+    window.location.reload();
+  });
+};
 
-      try {
-        const createOrder = httpsCallable(functions, "createOrder"); // ✅ callable avoids CORS
-        const result = await createOrder();
-        const { orderId, amount, currency } = result.data;
+// Payment
+payBtn.onclick = async function () {
+  if (!currentUser) {
+    alert("🔐 Please login first to make payment.");
+    return;
+  }
 
-        const options = {
-          key: "rzp_live_7nZptAUoDrsfRb",
-          amount: amount,
-          currency: currency,
-          name: "NEET PG / INICET PYQs",
-          description: "Unlock all subjects",
-          order_id: orderId,
-          handler: async function (response) {
-            alert("✅ Payment successful! ID: " + response.razorpay_payment_id);
-            try {
-              await setDoc(doc(db, "users", userId), { isPaid: true }, { merge: true });
-              isPaid = true;
-              payBtn.style.display = "none";
-              renderSubjects();
-            } catch (err) {
-              console.error("❌ Firestore update failed:", err);
-              alert("Payment done, but failed to unlock. Contact support.");
-            }
-          },
-          theme: { color: "#3399cc" }
-        };
+  try {
+    // ✅ Use Callable Function → avoids CORS
+    const createOrder = httpsCallable(functions, "createOrder");
+    const result = await createOrder();
+    const { orderId, amount, currency } = result.data;
 
-        const rzp = new Razorpay(options);
-        rzp.open();
-
-      } catch (error) {
-        console.error("❌ Error creating order:", error);
-        alert("Failed to initiate payment. Please try again.");
-      }
-    };
-
-    async function updateVisitCount() {
-      try {
-        const today = new Date().toISOString().split("T")[0];
-        const lastVisit = localStorage.getItem("lastVisitDate");
-
-        if (lastVisit !== today) {
-          const docRef = doc(db, "visits", today);
-          const docSnap = await getDoc(docRef);
-
-          if (docSnap.exists()) {
-            await updateDoc(docRef, { count: increment(1) });
-          } else {
-            await setDoc(docRef, { count: 1 });
-          }
-          localStorage.setItem("lastVisitDate", today);
+    const options = {
+      key: "rzp_live_7nZptAUoDrsfRb",
+      amount: amount,
+      currency: currency,
+      name: "NEET PG / INICET PYQs",
+      description: "Unlock all subjects",
+      order_id: orderId,
+      handler: async function (response) {
+        alert("✅ Payment successful! ID: " + response.razorpay_payment_id);
+        try {
+          await setDoc(doc(db, "users", userId), { isPaid: true }, { merge: true });
+          isPaid = true;
+          payBtn.style.display = "none";
+          renderSubjects();
+        } catch (err) {
+          console.error("❌ Firestore update failed:", err);
+          alert("Payment done, but failed to unlock. Contact support.");
         }
+      },
+      theme: { color: "#3399cc" }
+    };
 
-        const docRef = doc(db, "visits", today);
-        onSnapshot(docRef, (snapshot) => {
-          if (snapshot.exists()) {
-            document.getElementById("visitCounter").textContent = snapshot.data().count;
-          }
-        });
-      } catch (error) {
-        console.error("Error updating visits:", error);
+    const rzp = new Razorpay(options);
+    rzp.open();
+
+  } catch (error) {
+    console.error("❌ Error creating order:", error);
+    alert("Failed to initiate payment. Please try again.");
+  }
+};
+
+// Visit Counter
+async function updateVisitCount() {
+  try {
+    const today = new Date().toISOString().split("T")[0];
+    const lastVisit = localStorage.getItem("lastVisitDate");
+
+    if (lastVisit !== today) {
+      const docRef = doc(db, "visits", today);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        await updateDoc(docRef, { count: increment(1) });
+      } else {
+        await setDoc(docRef, { count: 1 });
       }
+      localStorage.setItem("lastVisitDate", today);
     }
-    updateVisitCount();
-  </script>
 
-  <!-- Disable Right-click -->
-  <script>
-    document.addEventListener('contextmenu', function(event) {
-      event.preventDefault();
-      alert('Right-click is disabled on this page!');
+    const docRef = doc(db, "visits", today);
+    onSnapshot(docRef, (snapshot) => {
+      if (snapshot.exists()) {
+        document.getElementById("visitCounter").textContent = snapshot.data().count;
+      }
     });
-  </script>
+  } catch (error) {
+    console.error("Error updating visits:", error);
+  }
+}
+updateVisitCount();
 
-  <div id="visitCounter" class="visit-number"></div>
+// Disable Right-click
+document.addEventListener('contextmenu', function(event) {
+  event.preventDefault();
+  alert('Right-click is disabled on this page!');
+});
+</script>
 
-  <style>
-    .visit-number {
-      text-align: left;
-      font-size: 18px;
-      font-weight: normal;
-      margin-top: 20px;
-      opacity: 0;
-      transform: scale(0.9);
-      animation: fadeInScale 1.2s ease forwards, rainbowGlow 4s linear infinite;
-      background: linear-gradient(90deg, #ff0057, #ffae00, #00c6ff, #8e2de2, #ff0057);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
+<div id="visitCounter" class="visit-number"></div>
 
-    @keyframes fadeInScale {
-      to { opacity: 1; transform: scale(1); }
-    }
+<style>
+.visit-number {
+  text-align: left;
+  font-size: 18px;
+  font-weight: normal;
+  margin-top: 20px;
+  opacity: 0;
+  transform: scale(0.9);
+  animation: fadeInScale 1.2s ease forwards, rainbowGlow 4s linear infinite;
+  background: linear-gradient(90deg, #ff0057, #ffae00, #00c6ff, #8e2de2, #ff0057);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
 
-    @keyframes rainbowGlow {
-      0% { filter: drop-shadow(0 0 2px #ff0057); }
-      25% { filter: drop-shadow(0 0 2px #ffae00); }
-      50% { filter: drop-shadow(0 0 2px #00c6ff); }
-      75% { filter: drop-shadow(0 0 2px #8e2de2); }
-      100% { filter: drop-shadow(0 0 2px #ff0057); }
-    }
-  </style>
-
+@keyframes fadeInScale { to { opacity: 1; transform: scale(1); } }
+@keyframes rainbowGlow {
+  0% { filter: drop-shadow(0 0 2px #ff0057); }
+  25% { filter: drop-shadow(0 0 2px #ffae00); }
+  50% { filter: drop-shadow(0 0 2px #00c6ff); }
+  75% { filter: drop-shadow(0 0 2px #8e2de2); }
+  100% { filter: drop-shadow(0 0 2px #ff0057); }
+}
+</style>
 </body>
 </html>
