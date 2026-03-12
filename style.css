@@ -1,276 +1,217 @@
-/* General styles for the page */
-body {
-  font-family: 'Poppins', sans-serif;
-  background: linear-gradient(45deg, #FFE1F0, #FFFBEC, #E1F5FE);
-  color: #333;
-  padding: 20px;
-  margin: 0;
+/* General styles */
+
+body{
+font-family:'Poppins',sans-serif;
+background:linear-gradient(45deg,#FFE1F0,#FFFBEC,#E1F5FE);
+color:#333;
+padding:20px;
+margin:0;
 }
 
-/* Header styles */
-header {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  margin-bottom: 20px;
+/* Header */
+
+header{
+display:flex;
+justify-content:center;
+align-items:center;
+flex-direction:column;
+margin-bottom:20px;
 }
 
-h1 {
-  font-size: 3em;
-  color: #FF80AB;
-  font-family: 'Comic Sans MS', sans-serif;
-  margin: 20px 0;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+h1{
+font-size:3em;
+color:#FF80AB;
+font-family:'Comic Sans MS',sans-serif;
+margin:20px 0;
+text-shadow:2px 2px 4px rgba(0,0,0,0.1);
 }
 
-.top-buttons {
-  text-align: center;
+/* Buttons */
+
+button{
+padding:10px 18px;
+background:#FF80AB;
+border:none;
+border-radius:50px;
+color:white;
+font-size:1em;
+cursor:pointer;
+transition:0.2s;
 }
 
-.top-right {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
+button:hover{
+background:#FF60A3;
 }
 
-button {
-  padding: 12px 20px;
-  background: #FF80AB;
-  border: none;
-  border-radius: 50px;
-  color: white;
-  font-size: 1.1em;
-  cursor: pointer;
-  transition: 0.3s;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+/* Quiz layout */
+
+body{
+display:flex;
 }
 
-button:hover {
-  background: #FF60A3;
-  transform: scale(1.05);
+/* Sidebar */
+
+.sidebar{
+width:100px;
+background:#fff;
+border-right:1px solid #ddd;
+padding:10px;
+overflow-y:auto;
 }
 
-button:active {
-  transform: scale(1);
+/* Palette buttons */
+
+#palette button{
+margin:5px;
+width:40px;
+height:40px;
+border-radius:6px;
+border:none;
+background:#e0e0e0;
+cursor:pointer;
 }
 
-.info-message {
-  text-align: center;
-  font-size: 1.2em;
-  margin-bottom: 20px;
-  color: #555;
+/* Main quiz area */
+
+.main{
+padding:20px;
+flex:1;
+max-width:900px;
+margin:0 auto;
+align-self:flex-start;
 }
 
-.subjects {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 20px;
-  max-width: 1000px;
-  margin: auto;
-}
+/* Question text */
 
-.card {
-  padding: 15px;
-  border-radius: 12px;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  transition: transform 0.3s;
-  text-decoration: none;
-  color: white;
-  text-align: center;
-  background: #FFEBEE;
-}
-
-.card:hover {
-  transform: translateY(-8px);
-}
-
-.card.locked {
-  opacity: 0.6;
-  pointer-events: none;
-}
-
-.card-title {
-  font-size: 1.3em;
-  font-weight: bold;
-  margin-bottom: 10px;
-}
-
-.card-sub {
-  margin-top: 8px;
-}
-
-/* WhatsApp button */
-.whatsapp-btn {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background-color: #25d366;
-  color: white;
-  padding: 15px;
-  border-radius: 50px;
-  font-size: 16px;
-  box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
-  text-decoration: none;
-}
-
-.whatsapp-btn:hover {
-  background-color: #128c7e;
-}
-
-/* ========================= */
-/* QUIZ PAGE STYLES */
-/* ========================= */
-
-/* Layout */
-.main {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  max-width: 900px;
-  margin: auto;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-
-/* Question */
-.question {
-  font-size: 1.3em;
-  font-weight: 600;
-  margin-bottom: 15px;
+.question{
+font-size:1.3em;
+font-weight:600;
+margin-bottom:15px;
 }
 
 /* Question image */
-.image {
-  max-width: 100%;
-  border-radius: 10px;
-  margin-bottom: 15px;
+
+.image{
+max-width:100%;
+margin-bottom:15px;
+display:none;
+border-radius:10px;
 }
 
 /* Options */
-.options button {
-  display: block;
-  width: 100%;
-  text-align: left;
-  margin-bottom: 10px;
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid #ddd;
-  background: #fafafa;
-  color: #333;
-  font-size: 1em;
-  transition: 0.2s;
+
+.options button{
+display:block;
+width:100%;
+text-align:left;
+margin:10px 0;
+padding:12px;
+border-radius:8px;
+border:1px solid #ddd;
+background:#fafafa;
+color:#333;
 }
 
-.options button:hover {
-  background: #f0f0f0;
+.options button:hover{
+background:#f0f0f0;
 }
 
-/* Answer colors */
-.correct {
-  background: #c8e6c9 !important;
-  border-color: #4caf50;
+/* Correct answer */
+
+.correct{
+background:#c8e6c9 !important;
 }
 
-.wrong {
-  background: #ffcdd2 !important;
-  border-color: #f44336;
+/* Wrong answer */
+
+.wrong{
+background:#ffcdd2 !important;
 }
 
-/* Explanation box */
-#explanation-box {
-  margin-top: 20px;
-  padding: 15px;
-  border-radius: 10px;
-  background: #f5f5f5;
-  border-left: 5px solid #4caf50;
-  max-height: 250px;
-  overflow-y: auto;
+/* Explanation text */
+
+#explanation-title{
+margin-top:20px;
+font-size:1.2em;
+font-weight:bold;
 }
 
-/* Explanation image */
-#explanation-image {
-  max-width: 100%;
-  margin-bottom: 10px;
+#explanation-text{
+margin-top:10px;
+line-height:1.5;
 }
 
-/* Show explanation button */
-#show-explanation-btn {
-  background: #2196f3;
-  margin-top: 10px;
+#explanation-image{
+max-width:100%;
+margin-top:10px;
 }
 
-#show-explanation-btn:hover {
-  background: #1976d2;
+/* Summary */
+
+.summary{
+margin-top:20px;
+padding:10px;
+background:#f4f4f4;
+border-radius:8px;
 }
 
 /* Timer */
-#timer {
-  font-weight: bold;
-  margin-top: 10px;
+
+#timer{
+margin-top:10px;
+font-weight:bold;
 }
 
-/* Sidebar palette */
-.sidebar {
-  width: 100px;
-  background: #ffffff;
-  border-right: 1px solid #ddd;
-  padding: 10px;
+/* WhatsApp button */
+
+.whatsapp-btn{
+position:fixed;
+bottom:20px;
+right:20px;
+background-color:#25d366;
+color:white;
+padding:15px;
+border-radius:50px;
+font-size:16px;
+box-shadow:0px 4px 10px rgba(0,0,0,0.2);
+text-decoration:none;
 }
 
-#palette button {
-  width: 40px;
-  height: 40px;
-  border-radius: 6px;
-  border: none;
-  margin: 4px;
-  background: #e0e0e0;
+/* Mobile responsive */
+
+@media(max-width:768px){
+
+body{
+flex-direction:column;
 }
 
-#palette button:hover {
-  background: #bdbdbd;
+.sidebar{
+width:100%;
+border-right:none;
+border-bottom:1px solid #ddd;
+display:flex;
+flex-wrap:wrap;
+justify-content:center;
 }
 
-/* Mobile responsiveness */
-@media (max-width: 768px) {
+#palette button{
+margin:4px;
+}
 
-  body {
-    flex-direction: column;
-  }
-
-  .sidebar {
-    width: 100%;
-    border-right: none;
-    border-bottom: 1px solid #ddd;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  #palette button {
-    margin: 4px;
-  }
-
-  .main {
-    margin-top: 10px;
-  }
+.main{
+margin-top:10px;
+}
 
 }
 
-@media (max-width: 480px) {
+@media(max-width:480px){
 
-  h1 {
-    font-size: 2em;
-  }
+h1{
+font-size:2em;
+}
 
-  .card {
-    font-size: 0.9em;
-    padding: 10px;
-  }
-
-  button {
-    font-size: 1em;
-  }
+.options button{
+font-size:0.95em;
+}
 
 }
