@@ -16,6 +16,6 @@
   {"id": "orthopaedics", "name": "Orthopaedics", "year": "Final Year"},
   {"id": "dermatology", "name": "Dermatology", "year": "Final Year"},
   {"id": "psychiatry", "name": "Psychiatry", "year": "Final Year"},
-  {"id": "respiratory", "name": "Respiratory Medicine", "year": "Final Year"},
+  {"id": "respiratory", "name": "Radiology", "year": "Final Year"},
   {"id": "anesthesiology", "name": "Anesthesiology", "year": "Final Year"}
 ]
