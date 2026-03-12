@@ -34,6 +34,7 @@ const resultDiv = document.getElementById("result-summary");
 const timer = document.getElementById("timer");
 
 const expBox = document.getElementById("explanation-box");
+const expTitle = document.getElementById("explanation-title");
 const expText = document.getElementById("explanation-text");
 const expImage = document.getElementById("explanation-image");
 
@@ -80,6 +81,7 @@ function loadQuestion(index) {
   qOptions.innerHTML = "";
 
   expBox.style.display = "none";
+  expTitle.style.display = "none";
   expText.innerHTML = "";
   expImage.style.display = "none";
 
@@ -143,6 +145,7 @@ function selectAnswer(selectedIndex) {
 function showExplanation(q){
 
   expBox.style.display = "block";
+  expTitle.style.display = "block";
 
   expText.innerHTML = q.explanation ? q.explanation : "No explanation available.";
 
@@ -184,7 +187,6 @@ function submitQuiz(){
   });
 
   const unattempted=questions.length-attempted;
-
   const score=correct*4-wrong;
 
   const timeTaken=Math.floor((Date.now()-startTime)/1000);
@@ -214,16 +216,13 @@ function submitQuiz(){
   });
 
   clearInterval(timerInterval);
-
   renderPalette();
 }
 
 function updateTimer(){
 
   const diff=Math.floor((Date.now()-startTime)/1000);
-
   const mins=Math.floor(diff/60);
-
   const secs=diff%60;
 
   timer.textContent=`Time: ${mins}m ${secs}s`;
@@ -262,33 +261,29 @@ async function loadProgress(userId){
   if(userProgressSnap.exists()){
 
     const userProgress=userProgressSnap.data();
-
     const savedProgress=userProgress[key];
 
     if(savedProgress){
-
       selectedAnswers=savedProgress.answers || [];
-
     }
+
   }
+
 }
 
 async function loadQuiz(subjectName,userId=null){
 
   const docRef=doc(db,"questions",subjectName);
-
   const docSnap=await getDoc(docRef);
 
   if(docSnap.exists()){
 
     questions=docSnap.data().questions;
-
     selectedAnswers=new Array(questions.length);
 
     if(userId) loadProgress(userId);
 
     loadQuestion(0);
-
     timerInterval=setInterval(updateTimer,1000);
 
   }else{
@@ -296,6 +291,7 @@ async function loadQuiz(subjectName,userId=null){
     alert("No questions found for this subject.");
 
   }
+
 }
 
 window.prevQuestion=prevQuestion;
