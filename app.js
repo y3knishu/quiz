@@ -25,8 +25,6 @@ let selectedAnswers = [];
 let startTime = Date.now();
 let timerInterval;
 
-/* DOM elements */
-
 const qText = document.getElementById("question-text");
 const qImage = document.getElementById("question-image");
 const qOptions = document.getElementById("options");
@@ -35,18 +33,13 @@ const palette = document.getElementById("palette");
 const resultDiv = document.getElementById("result-summary");
 const timer = document.getElementById("timer");
 
-const expBox = document.getElementById("explanation-box");
+const expTitle = document.getElementById("explanation-title");
 const expText = document.getElementById("explanation-text");
 const expImage = document.getElementById("explanation-image");
-const showExpBtn = document.getElementById("show-explanation-btn");
-
-/* Disable right click */
 
 document.addEventListener('contextmenu', function(event) {
   event.preventDefault();
 });
-
-/* Auth */
 
 onAuthStateChanged(auth, (user) => {
   if (user) {
@@ -80,7 +73,7 @@ function renderPalette() {
   });
 }
 
-/* Load question */
+/* Load Question */
 
 function loadQuestion(index){
 
@@ -97,9 +90,7 @@ function loadQuestion(index){
 
   qOptions.innerHTML = "";
 
-  expBox.style.display = "none";
-  showExpBtn.style.display = "none";
-
+  expTitle.style.display = "none";
   expText.innerHTML = "";
   expImage.style.display = "none";
 
@@ -133,16 +124,14 @@ function loadQuestion(index){
 
     });
 
-    showExpBtn.style.display = "block";
-
-    showExpBtn.onclick = () => showExplanation(q);
+    showExplanation(q);
 
   }
 
   renderPalette();
 }
 
-/* Select answer */
+/* Select Answer */
 
 function selectAnswer(selectedIndex){
 
@@ -164,20 +153,18 @@ function selectAnswer(selectedIndex){
 
   });
 
-  showExpBtn.style.display = "block";
-
-  showExpBtn.onclick = () => showExplanation(q);
+  showExplanation(q);
 
   saveProgress(auth.currentUser ? auth.currentUser.uid : null);
 
   renderPalette();
 }
 
-/* Explanation */
+/* Show Explanation */
 
 function showExplanation(q){
 
-  expBox.style.display = "block";
+  expTitle.style.display = "block";
 
   expText.innerHTML = q.explanation || "No explanation available.";
 
@@ -208,7 +195,7 @@ function nextQuestion(){
 
 }
 
-/* Reset quiz */
+/* Reset Quiz */
 
 function resetQuiz(){
 
@@ -224,22 +211,17 @@ function resetQuiz(){
 
 }
 
-/* Review wrong questions */
+/* Review Wrong Questions */
 
 function reviewWrong(){
 
   const wrongQuestions = questions.filter((q,i) =>
-
     selectedAnswers[i] && !selectedAnswers[i].correct
-
   );
 
   if(wrongQuestions.length === 0){
-
     alert("No wrong questions to review 🎉");
-
     return;
-
   }
 
   questions = wrongQuestions;
@@ -249,10 +231,9 @@ function reviewWrong(){
   current = 0;
 
   loadQuestion(0);
-
 }
 
-/* Submit quiz */
+/* Submit Quiz */
 
 function submitQuiz(){
 
@@ -283,21 +264,13 @@ function submitQuiz(){
   const seconds = timeTaken % 60;
 
   resultDiv.innerHTML = `
-
-  <h3>Quiz Summary</h3>
-
-  <p>✅ Correct: ${correct}</p>
-
-  <p>❌ Wrong: ${wrong}</p>
-
-  <p>⏳ Unattempted: ${unattempted}</p>
-
-  <p>🧮 Score: ${score} / ${questions.length * 4}</p>
-
-  <p>⏱️ Time Taken: ${minutes} min ${seconds} sec</p>
-
-  <canvas id="resultChart" width="300" height="300"></canvas>
-
+    <h3>Quiz Summary</h3>
+    <p>✅ Correct: ${correct}</p>
+    <p>❌ Wrong: ${wrong}</p>
+    <p>⏳ Unattempted: ${unattempted}</p>
+    <p>🧮 Score: ${score} / ${questions.length * 4}</p>
+    <p>⏱️ Time Taken: ${minutes} min ${seconds} sec</p>
+    <canvas id="resultChart" width="300" height="300"></canvas>
   `;
 
   new Chart(document.getElementById("resultChart"),{
@@ -305,17 +278,11 @@ function submitQuiz(){
     type:"pie",
 
     data:{
-
       labels:["Correct","Wrong","Unattempted"],
-
       datasets:[{
-
         data:[correct,wrong,unattempted],
-
         backgroundColor:["#66bb6a","#ef5350","#ffee58"]
-
       }]
-
     }
 
   });
@@ -336,10 +303,9 @@ function updateTimer(){
   const secs = diff % 60;
 
   timer.textContent = `Time: ${mins}m ${secs}s`;
-
 }
 
-/* Firebase progress */
+/* Firebase Save Progress */
 
 async function saveProgress(userId){
 
@@ -350,15 +316,10 @@ async function saveProgress(userId){
   const summary = {
 
     attempted:selectedAnswers.filter(a=>a!==undefined).length,
-
     correct:selectedAnswers.filter(a=>a && a.correct).length,
-
     wrong:selectedAnswers.filter(a=>a && !a.correct).length,
-
     total:questions.length,
-
     answers:selectedAnswers.filter(a=>a!==undefined),
-
     timestamp:new Date().toISOString()
 
   };
@@ -367,6 +328,8 @@ async function saveProgress(userId){
 
   await setDoc(userProgressRef,{[key]:summary});
 }
+
+/* Load Progress */
 
 async function loadProgress(userId){
 
@@ -393,6 +356,8 @@ async function loadProgress(userId){
   }
 
 }
+
+/* Load Quiz */
 
 async function loadQuiz(subjectName,userId=null){
 
