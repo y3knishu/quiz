@@ -25,6 +25,8 @@ let selectedAnswers = [];
 let startTime = Date.now();
 let timerInterval;
 
+/* DOM elements */
+
 const qText = document.getElementById("question-text");
 const qImage = document.getElementById("question-image");
 const qOptions = document.getElementById("options");
@@ -36,11 +38,15 @@ const timer = document.getElementById("timer");
 const expBox = document.getElementById("explanation-box");
 const expText = document.getElementById("explanation-text");
 const expImage = document.getElementById("explanation-image");
+const showExpBtn = document.getElementById("show-explanation-btn");
+
+/* Disable right click */
 
 document.addEventListener('contextmenu', function(event) {
   event.preventDefault();
-  alert('Right-click is disabled on this page!');
 });
+
+/* Auth */
 
 onAuthStateChanged(auth, (user) => {
   if (user) {
@@ -51,11 +57,18 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
+/* Palette */
+
 function renderPalette() {
+
   palette.innerHTML = "";
+
   questions.forEach((_, i) => {
+
     const btn = document.createElement("button");
+
     btn.textContent = i + 1;
+
     btn.onclick = () => loadQuestion(i);
 
     if (selectedAnswers[i] !== undefined) {
@@ -63,15 +76,20 @@ function renderPalette() {
     }
 
     palette.appendChild(btn);
+
   });
 }
 
-function loadQuestion(index) {
+/* Load question */
+
+function loadQuestion(index){
 
   current = index;
+
   const q = questions[index];
 
   qNumber.textContent = `Question ${index + 1}`;
+
   qText.textContent = q.question;
 
   qImage.style.display = q.image ? "block" : "none";
@@ -80,19 +98,27 @@ function loadQuestion(index) {
   qOptions.innerHTML = "";
 
   expBox.style.display = "none";
+  showExpBtn.style.display = "none";
+
   expText.innerHTML = "";
   expImage.style.display = "none";
 
   q.options.forEach((opt, i) => {
+
     const btn = document.createElement("button");
+
     btn.textContent = opt;
+
     btn.onclick = () => selectAnswer(i);
+
     qOptions.appendChild(btn);
+
   });
 
   if (selectedAnswers[index] !== undefined) {
 
     const correctIndex = q.answer;
+
     const selected = selectedAnswers[index].selectedIndex;
 
     const buttons = qOptions.querySelectorAll("button");
@@ -107,13 +133,18 @@ function loadQuestion(index) {
 
     });
 
-    showExplanation(q);
+    showExpBtn.style.display = "block";
+
+    showExpBtn.onclick = () => showExplanation(q);
+
   }
 
   renderPalette();
 }
 
-function selectAnswer(selectedIndex) {
+/* Select answer */
+
+function selectAnswer(selectedIndex){
 
   const q = questions[current];
 
@@ -133,84 +164,160 @@ function selectAnswer(selectedIndex) {
 
   });
 
-  showExplanation(q);
+  showExpBtn.style.display = "block";
+
+  showExpBtn.onclick = () => showExplanation(q);
 
   saveProgress(auth.currentUser ? auth.currentUser.uid : null);
 
   renderPalette();
 }
 
+/* Explanation */
+
 function showExplanation(q){
 
   expBox.style.display = "block";
 
-  expText.innerHTML = q.explanation ? q.explanation : "No explanation available.";
+  expText.innerHTML = q.explanation || "No explanation available.";
 
   if(q.explanation_image && q.explanation_image !== ""){
-      expImage.src = q.explanation_image;
-      expImage.style.display = "block";
-  }else{
-      expImage.style.display = "none";
-  }
 
+    expImage.src = q.explanation_image;
+
+    expImage.style.display = "block";
+
+  }else{
+
+    expImage.style.display = "none";
+
+  }
 }
 
+/* Navigation */
+
 function prevQuestion(){
-  if(current>0) loadQuestion(current-1);
+
+  if(current > 0) loadQuestion(current - 1);
+
 }
 
 function nextQuestion(){
-  if(current<questions.length-1) loadQuestion(current+1);
+
+  if(current < questions.length - 1) loadQuestion(current + 1);
+
 }
 
+/* Reset quiz */
+
 function resetQuiz(){
-  selectedAnswers=[];
+
+  selectedAnswers = [];
+
   saveProgress(auth.currentUser ? auth.currentUser.uid : null);
+
   loadQuestion(0);
-  resultDiv.innerHTML="";
-  startTime=Date.now();
+
+  resultDiv.innerHTML = "";
+
+  startTime = Date.now();
+
 }
+
+/* Review wrong questions */
+
+function reviewWrong(){
+
+  const wrongQuestions = questions.filter((q,i) =>
+
+    selectedAnswers[i] && !selectedAnswers[i].correct
+
+  );
+
+  if(wrongQuestions.length === 0){
+
+    alert("No wrong questions to review 🎉");
+
+    return;
+
+  }
+
+  questions = wrongQuestions;
+
+  selectedAnswers = new Array(questions.length);
+
+  current = 0;
+
+  loadQuestion(0);
+
+}
+
+/* Submit quiz */
 
 function submitQuiz(){
 
-  let correct=0,wrong=0,attempted=0;
+  let correct = 0, wrong = 0, attempted = 0;
 
-  selectedAnswers.forEach(a=>{
-    if(a!==undefined){
+  selectedAnswers.forEach(a => {
+
+    if(a !== undefined){
+
       attempted++;
+
       if(a.correct) correct++;
+
       else wrong++;
+
     }
+
   });
 
-  const unattempted=questions.length-attempted;
+  const unattempted = questions.length - attempted;
 
-  const score=correct*4-wrong;
+  const score = correct * 4 - wrong;
 
-  const timeTaken=Math.floor((Date.now()-startTime)/1000);
+  const timeTaken = Math.floor((Date.now() - startTime) / 1000);
 
-  const minutes=Math.floor(timeTaken/60);
-  const seconds=timeTaken%60;
+  const minutes = Math.floor(timeTaken / 60);
 
-  resultDiv.innerHTML=`
-    <h3>Quiz Summary</h3>
-    <p>✅ Correct: ${correct}</p>
-    <p>❌ Wrong: ${wrong}</p>
-    <p>⏳ Unattempted: ${unattempted}</p>
-    <p>🧮 Score: ${score} / ${questions.length * 4}</p>
-    <p>⏱️ Time Taken: ${minutes} min ${seconds} sec</p>
-    <canvas id="resultChart" width="300" height="300"></canvas>
+  const seconds = timeTaken % 60;
+
+  resultDiv.innerHTML = `
+
+  <h3>Quiz Summary</h3>
+
+  <p>✅ Correct: ${correct}</p>
+
+  <p>❌ Wrong: ${wrong}</p>
+
+  <p>⏳ Unattempted: ${unattempted}</p>
+
+  <p>🧮 Score: ${score} / ${questions.length * 4}</p>
+
+  <p>⏱️ Time Taken: ${minutes} min ${seconds} sec</p>
+
+  <canvas id="resultChart" width="300" height="300"></canvas>
+
   `;
 
   new Chart(document.getElementById("resultChart"),{
+
     type:"pie",
+
     data:{
+
       labels:["Correct","Wrong","Unattempted"],
+
       datasets:[{
+
         data:[correct,wrong,unattempted],
+
         backgroundColor:["#66bb6a","#ef5350","#ffee58"]
+
       }]
+
     }
+
   });
 
   clearInterval(timerInterval);
@@ -218,33 +325,45 @@ function submitQuiz(){
   renderPalette();
 }
 
+/* Timer */
+
 function updateTimer(){
 
-  const diff=Math.floor((Date.now()-startTime)/1000);
+  const diff = Math.floor((Date.now() - startTime) / 1000);
 
-  const mins=Math.floor(diff/60);
+  const mins = Math.floor(diff / 60);
 
-  const secs=diff%60;
+  const secs = diff % 60;
 
-  timer.textContent=`Time: ${mins}m ${secs}s`;
+  timer.textContent = `Time: ${mins}m ${secs}s`;
+
 }
+
+/* Firebase progress */
 
 async function saveProgress(userId){
 
   if(!userId) return;
 
-  const key=`progress_${subject}`;
+  const key = `progress_${subject}`;
 
-  const summary={
+  const summary = {
+
     attempted:selectedAnswers.filter(a=>a!==undefined).length,
+
     correct:selectedAnswers.filter(a=>a && a.correct).length,
+
     wrong:selectedAnswers.filter(a=>a && !a.correct).length,
+
     total:questions.length,
+
     answers:selectedAnswers.filter(a=>a!==undefined),
+
     timestamp:new Date().toISOString()
+
   };
 
-  const userProgressRef=doc(db,"user_progress",userId);
+  const userProgressRef = doc(db,"user_progress",userId);
 
   await setDoc(userProgressRef,{[key]:summary});
 }
@@ -253,52 +372,58 @@ async function loadProgress(userId){
 
   if(!userId) return;
 
-  const key=`progress_${subject}`;
+  const key = `progress_${subject}`;
 
-  const userProgressRef=doc(db,"user_progress",userId);
+  const userProgressRef = doc(db,"user_progress",userId);
 
-  const userProgressSnap=await getDoc(userProgressRef);
+  const userProgressSnap = await getDoc(userProgressRef);
 
   if(userProgressSnap.exists()){
 
-    const userProgress=userProgressSnap.data();
+    const userProgress = userProgressSnap.data();
 
-    const savedProgress=userProgress[key];
+    const savedProgress = userProgress[key];
 
     if(savedProgress){
 
-      selectedAnswers=savedProgress.answers || [];
+      selectedAnswers = savedProgress.answers || [];
 
     }
+
   }
+
 }
 
 async function loadQuiz(subjectName,userId=null){
 
-  const docRef=doc(db,"questions",subjectName);
+  const docRef = doc(db,"questions",subjectName);
 
-  const docSnap=await getDoc(docRef);
+  const docSnap = await getDoc(docRef);
 
   if(docSnap.exists()){
 
-    questions=docSnap.data().questions;
+    questions = docSnap.data().questions;
 
-    selectedAnswers=new Array(questions.length);
+    selectedAnswers = new Array(questions.length);
 
     if(userId) loadProgress(userId);
 
     loadQuestion(0);
 
-    timerInterval=setInterval(updateTimer,1000);
+    timerInterval = setInterval(updateTimer,1000);
 
   }else{
 
     alert("No questions found for this subject.");
 
   }
+
 }
 
-window.prevQuestion=prevQuestion;
-window.nextQuestion=nextQuestion;
-window.resetQuiz=resetQuiz;
-window.submitQuiz=submitQuiz;
+/* Expose functions */
+
+window.prevQuestion = prevQuestion;
+window.nextQuestion = nextQuestion;
+window.resetQuiz = resetQuiz;
+window.submitQuiz = submitQuiz;
+window.reviewWrong = reviewWrong;
