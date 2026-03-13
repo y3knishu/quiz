@@ -209,7 +209,7 @@ function submitQuiz(){
   let correct=0,wrong=0,attempted=0;
 
   selectedAnswers.forEach(a=>{
-    if(a){
+    if(a!==undefined){
       attempted++;
       if(a.correct) correct++;
       else wrong++;
@@ -269,7 +269,7 @@ async function saveProgress(userId){
 
   const summary={
 
-    attempted:selectedAnswers.filter(a=>a).length,
+    attempted:selectedAnswers.filter(a=>a!==undefined).length,
 
     correct:selectedAnswers.filter(a=>a && a.correct).length,
 
@@ -323,10 +323,12 @@ async function loadQuiz(subjectName,userId=null){
 
     questions=docSnap.data().questions;
 
-    selectedAnswers=new Array(questions.length);
-
     if(userId){
       await loadProgress(userId);
+    }
+
+    if(!selectedAnswers || selectedAnswers.length===0){
+      selectedAnswers=new Array(questions.length);
     }
 
     loadQuestion(current);
