@@ -15,7 +15,6 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-/* expose for console debugging */
 window.auth = auth;
 window.db = db;
 
@@ -28,7 +27,6 @@ let selectedAnswers = [];
 let startTime = Date.now();
 let timerInterval;
 
-/* DOM */
 const qText = document.getElementById("question-text");
 const qImage = document.getElementById("question-image");
 const qOptions = document.getElementById("options");
@@ -42,7 +40,6 @@ const expTitle = document.getElementById("explanation-title");
 const expText = document.getElementById("explanation-text");
 const expImage = document.getElementById("explanation-image");
 
-/* AUTH */
 onAuthStateChanged(auth, async (user) => {
 
   if (!user) {
@@ -51,13 +48,12 @@ onAuthStateChanged(auth, async (user) => {
     return;
   }
 
-  console.log("Logged in UID:", user.uid);
+  console.log("UID:", user.uid);
 
   await loadQuiz(subject, user.uid);
 
 });
 
-/* PALETTE */
 function renderPalette() {
 
   palette.innerHTML = "";
@@ -79,7 +75,6 @@ function renderPalette() {
 
 }
 
-/* LOAD QUESTION */
 function loadQuestion(index) {
 
   if (index < 0 || index >= questions.length) return;
@@ -106,6 +101,7 @@ function loadQuestion(index) {
     const btn = document.createElement("button");
     btn.textContent = opt;
     btn.onclick = () => selectAnswer(i);
+
     qOptions.appendChild(btn);
 
   });
@@ -122,6 +118,7 @@ function loadQuestion(index) {
       b.disabled = true;
 
       if (i === correctIndex) b.classList.add("correct");
+
       if (i === selected && selected !== correctIndex)
         b.classList.add("wrong");
 
@@ -135,10 +132,10 @@ function loadQuestion(index) {
 
 }
 
-/* SELECT ANSWER */
 function selectAnswer(selectedIndex) {
 
   const q = questions[current];
+
   const isCorrect = selectedIndex === q.answer;
 
   selectedAnswers[current] = {
@@ -153,6 +150,7 @@ function selectAnswer(selectedIndex) {
     b.disabled = true;
 
     if (i === q.answer) b.classList.add("correct");
+
     if (i === selectedIndex && !isCorrect)
       b.classList.add("wrong");
 
@@ -161,13 +159,13 @@ function selectAnswer(selectedIndex) {
   showExplanation(q);
 
   const user = auth.currentUser;
+
   if (user) saveProgress(user.uid);
 
   renderPalette();
 
 }
 
-/* EXPLANATION */
 function showExplanation(q) {
 
   expBox.style.display = "block";
@@ -176,124 +174,177 @@ function showExplanation(q) {
   expText.innerHTML = q.explanation || "No explanation available.";
 
   if (q.explanation_image) {
+
     expImage.src = q.explanation_image;
     expImage.style.display = "block";
+
   } else {
+
     expImage.style.display = "none";
+
   }
 
 }
 
-/* NAVIGATION */
 function prevQuestion() {
+
   if (current > 0) loadQuestion(current - 1);
+
 }
 
 function nextQuestion() {
+
   if (current < questions.length - 1) loadQuestion(current + 1);
+
 }
 
-/* RESET */
 function resetQuiz() {
 
   selectedAnswers = new Array(questions.length);
 
   const user = auth.currentUser;
+
   if (user) saveProgress(user.uid);
 
   loadQuestion(0);
+
   resultDiv.innerHTML = "";
+
   startTime = Date.now();
 
 }
 
-/* SAVE PROGRESS */
-async function saveProgress(userId) {
+function submitQuiz(){
 
-  try {
+  let correct = 0;
+  let wrong = 0;
+  let attempted = 0;
+
+  selectedAnswers.forEach(a=>{
+    if(a){
+      attempted++;
+      if(a.correct) correct++;
+      else wrong++;
+    }
+  });
+
+  const unattempted = questions.length - attempted;
+  const score = correct*4 - wrong;
+
+  resultDiv.innerHTML = `
+  <h3>Quiz Summary</h3>
+  <p>Correct: ${correct}</p>
+  <p>Wrong: ${wrong}</p>
+  <p>Unattempted: ${unattempted}</p>
+  <p>Score: ${score}</p>
+  `;
+
+}
+
+async function saveProgress(userId){
+
+  try{
 
     const key = `progress_${subject}`;
 
+    const cleanedAnswers = selectedAnswers.map(a => a || null);
+
     const summary = {
-      attempted: selectedAnswers.filter(a => a).length,
-      correct: selectedAnswers.filter(a => a && a.correct).length,
-      wrong: selectedAnswers.filter(a => a && !a.correct).length,
+
+      attempted: cleanedAnswers.filter(a=>a).length,
+      correct: cleanedAnswers.filter(a=>a && a.correct).length,
+      wrong: cleanedAnswers.filter(a=>a && !a.correct).length,
       currentQuestion: current,
-      answers: selectedAnswers,
+      answers: cleanedAnswers,
       timestamp: new Date().toISOString()
+
     };
 
-    const ref = doc(db, "user_progress", userId);
+    const ref = doc(db,"user_progress",userId);
 
-    await setDoc(ref, { [key]: summary }, { merge: true });
+    await setDoc(ref,{[key]:summary},{merge:true});
 
-    console.log("Progress saved successfully");
+    console.log("Progress saved");
 
-  } catch (err) {
-    console.error("Firestore save error:", err);
+    /* update homepage instantly */
+
+    localStorage.setItem(`progress_${subject}`,JSON.stringify(summary));
+
+  }catch(err){
+
+    console.error("Firestore save error:",err);
+
   }
 
 }
 
-/* LOAD PROGRESS */
-async function loadProgress(userId) {
+async function loadProgress(userId){
 
   const key = `progress_${subject}`;
-  const ref = doc(db, "user_progress", userId);
+
+  const ref = doc(db,"user_progress",userId);
+
   const snap = await getDoc(ref);
 
-  if (snap.exists()) {
+  if(snap.exists()){
 
     const saved = snap.data()[key];
 
-    if (saved) {
+    if(saved){
+
       selectedAnswers = saved.answers || [];
       current = saved.currentQuestion || 0;
+
     }
 
   }
 
 }
 
-/* LOAD QUIZ */
-async function loadQuiz(subjectName, userId) {
+async function loadQuiz(subjectName,userId){
 
-  const ref = doc(db, "questions", subjectName);
+  const ref = doc(db,"questions",subjectName);
+
   const snap = await getDoc(ref);
 
-  if (!snap.exists()) {
+  if(!snap.exists()){
+
     alert("No questions found");
+
     return;
+
   }
 
   questions = snap.data().questions;
 
   await loadProgress(userId);
 
-  if (!selectedAnswers || selectedAnswers.length !== questions.length) {
+  if(!selectedAnswers || selectedAnswers.length !== questions.length){
+
     selectedAnswers = new Array(questions.length);
+
   }
 
-  if (current >= questions.length) current = 0;
+  if(current >= questions.length) current = 0;
 
   loadQuestion(current);
 
-  timerInterval = setInterval(updateTimer, 1000);
+  timerInterval = setInterval(updateTimer,1000);
 
 }
 
-/* TIMER */
-function updateTimer() {
+function updateTimer(){
 
-  const diff = Math.floor((Date.now() - startTime) / 1000);
-  const mins = Math.floor(diff / 60);
-  const secs = diff % 60;
+  const diff = Math.floor((Date.now()-startTime)/1000);
+
+  const mins = Math.floor(diff/60);
+
+  const secs = diff%60;
 
   timer.textContent = `Time: ${mins}m ${secs}s`;
 
 }
 
-/* GLOBAL */
 window.prevQuestion = prevQuestion;
 window.nextQuestion = nextQuestion;
 window.resetQuiz = resetQuiz;
