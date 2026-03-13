@@ -139,12 +139,13 @@ let correct=progressData[key]?.correct ?? 0;
 let wrong=progressData[key]?.wrong ?? 0;
 let currentQ=progressData[key]?.currentQuestion ?? 0;
 
-let percent = attempted>0 ? Math.min(attempted*5,100) : 0;
+let percent = attempted * 5;
+if(percent>100) percent=100;
 
-let resumeText="";
+let resume="";
 
 if(currentQ>0){
-resumeText='<div class="resume-text">▶ Resume Quiz</div>';
+resume='<div class="resume-text">▶ Resume Quiz</div>';
 }
 
 card.innerHTML=
@@ -153,7 +154,7 @@ card.innerHTML=
 
 '<div class="card-sub">'+(locked?"🔒 Locked":"✅ Open")+'</div>'+
 
-resumeText+
+resume+
 
 '<div class="progress-container">'+
 '<div class="progress-bar" style="width:'+percent+'%"></div>'+
@@ -223,9 +224,7 @@ renderSubjects();
 });
 
 loginBtn.onclick=function(){
-
 window.location.href="admin-login.html";
-
 };
 
 logoutBtn.onclick=function(){
