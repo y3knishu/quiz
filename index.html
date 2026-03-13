@@ -1,83 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>NEET PG / INICET PYQs</title>
 
-<link rel="stylesheet" href="style.css" />
-
-<script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-6FZ770H045"></script>
-
-<script>
-window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
-gtag('config', 'G-6FZ770H045');
-</script>
-
-</head>
-
-<body>
-
-<header>
-
-<h1>NEET PG / INICET PYQs</h1>
-
-<div class="top-buttons">
-
-<div class="top-right">
-<span id="user-info">Loading...</span>
-
-<button id="loginBtn" style="display:none">🔐 Login / Sign Up</button>
-<button id="logoutBtn" style="display:none">🚪 Logout</button>
-</div>
-
-<button id="payBtn">💳 Pay ₹99 to Unlock All Subjects</button>
-
-</div>
-
-</header>
-
-<div class="info-message">
-
-🔓 <strong>Anatomy</strong> is free. Pay ₹99 once to unlock access to all other subjects.<br>
-Please login first to make the payment.
-
-</div>
-
-<div id="subject-container" class="subjects"></div>
-
-<div id="visitCounter" class="visit-number"></div>
-
-<a href="https://wa.me/919431328569" target="_blank" id="whatsappBtn" class="whatsapp-btn">
-💬 Chat with us on WhatsApp
-</a>
+<link rel="stylesheet" href="style.css">
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
-import {
-getFirestore,
-doc,
-getDoc,
-setDoc,
-updateDoc,
-increment,
-onSnapshot
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-import {
-getAuth,
-onAuthStateChanged,
-signOut
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseConfig = {
 apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
@@ -85,8 +23,7 @@ authDomain: "mcqs-96117.firebaseapp.com",
 projectId: "mcqs-96117",
 storageBucket: "mcqs-96117.firebasestorage.app",
 messagingSenderId: "352256319143",
-appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582",
-measurementId: "G-6FZ770H045"
+appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -101,20 +38,20 @@ const subjects = [
 "Dermatology","Psychiatry","Radiology","Anesthesiology"
 ];
 
-let isPaid=false;
-let userId=null;
-let currentUser=null;
+let isPaid = false;
+let userId = null;
+let currentUser = null;
 
-const userInfo=document.getElementById("user-info");
-const loginBtn=document.getElementById("loginBtn");
-const logoutBtn=document.getElementById("logoutBtn");
-const payBtn=document.getElementById("payBtn");
+const userInfo = document.getElementById("user-info");
+const loginBtn = document.getElementById("loginBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const payBtn = document.getElementById("payBtn");
 
-function getRandomColor(){
+function randomColor(){
 
 const colors=[
-"#FF5733","#33FF57","#3357FF","#F1C40F","#9B59B6",
-"#1ABC9C","#E74C3C","#8E44AD","#3498DB"
+"#FF6B6B","#6BCB77","#4D96FF","#FFD93D",
+"#9D4EDD","#00C2A8","#FF9671","#0081CF"
 ];
 
 return colors[Math.floor(Math.random()*colors.length)];
@@ -141,59 +78,61 @@ progressData=snap.data();
 }
 
 }catch(e){
-
-console.log("Progress load skipped",e);
-
+console.log("Progress load skipped");
 }
 
-subjects.forEach(subject=>{
+subjects.forEach(function(subject){
 
 const card=document.createElement("a");
 card.className="card";
 
-const isFree=subject==="Anatomy";
-const locked=!isFree && !isPaid;
+const isFree = subject==="Anatomy";
+const locked = !isFree && !isPaid;
 
 card.classList.toggle("locked",locked);
-card.style.backgroundColor=getRandomColor();
+card.style.backgroundColor=randomColor();
 
-const key=`progress_${subject}`;
+const key="progress_"+subject;
 
-let attempted=progressData[key]?.attempted ?? 0;
-let correct=progressData[key]?.correct ?? 0;
-let wrong=progressData[key]?.wrong ?? 0;
-let currentQ=progressData[key]?.currentQuestion ?? 0;
+const attempted = progressData[key]?.attempted || 0;
+const correct = progressData[key]?.correct || 0;
+const wrong = progressData[key]?.wrong || 0;
+const currentQ = progressData[key]?.currentQuestion || 0;
 
-let total=correct+wrong;
-let percent=total>0 ? Math.min(total,100) : 0;
+const total = correct + wrong;
+const percent = total>0 ? Math.min(total,100) : 0;
 
-card.innerHTML=`
+let resumeText="";
 
-<div class="card-title">${subject}</div>
+if(currentQ>0){
+resumeText='<div class="resume-text">Resume Quiz</div>';
+}
 
-<div class="card-sub">${locked?"🔒 Locked":"✅ Open"}</div>
+card.innerHTML=
 
-${currentQ>0 ? `<div class="resume-text">▶ Resume Quiz</div>`:""}
+'<div class="card-title">'+subject+'</div>'+
 
-<div class="progress-container">
-<div class="progress-bar" style="width:${percent}%"></div>
-</div>
+'<div class="card-sub">'+(locked?"Locked":"Open")+'</div>'+
 
-<div class="progress-text">
-✔ ${correct} | ❌ ${wrong} | 📄 ${attempted}
-</div>
+resumeText+
 
-`;
+'<div class="progress-container">'+
+'<div class="progress-bar" style="width:'+percent+'%"></div>'+
+'</div>'+
+
+'<div class="progress-text">'+
+'Correct '+correct+' | Wrong '+wrong+' | Attempted '+attempted+
+'</div>';
 
 if(!locked){
 
-card.href=\`quiz.html?subject=\${encodeURIComponent(subject)}\`;
+card.href="quiz.html?subject="+encodeURIComponent(subject);
 
 }else{
 
-card.onclick=(e)=>{
+card.onclick=function(e){
 e.preventDefault();
-alert("🔒 Login and pay ₹99 to unlock all subjects.");
+alert("Login and pay ₹99 to unlock subjects.");
 };
 
 }
@@ -214,7 +153,7 @@ userId=user.uid;
 loginBtn.style.display="none";
 logoutBtn.style.display="inline-block";
 
-userInfo.textContent=\`👋 \${user.email}\`;
+userInfo.textContent="Hello "+user.email;
 
 const snap=await getDoc(doc(db,"users",user.uid));
 
@@ -228,7 +167,6 @@ payBtn.style.display="none";
 }
 else{
 isPaid=false;
-payBtn.style.display="inline-block";
 }
 
 renderSubjects();
@@ -237,13 +175,9 @@ renderSubjects();
 
 else{
 
-currentUser=null;
-userInfo.textContent="🔐 Not logged in";
-
+userInfo.textContent="Not logged in";
 loginBtn.style.display="inline-block";
 logoutBtn.style.display="none";
-
-isPaid=false;
 
 renderSubjects();
 
@@ -251,13 +185,17 @@ renderSubjects();
 
 });
 
-loginBtn.onclick=()=>{window.location.href="admin-login.html";};
+loginBtn.onclick=function(){
+window.location.href="admin-login.html";
+};
 
-logoutBtn.onclick=()=>{
-signOut(auth).then(()=>{
+logoutBtn.onclick=function(){
+
+signOut(auth).then(function(){
 alert("Logged out");
 location.reload();
 });
+
 };
 
 payBtn.onclick=function(){
@@ -268,16 +206,17 @@ return;
 }
 
 const options={
+
 key:"rzp_live_S7e2qEXg0B5vrU",
-amount:900,
+amount:9900,
 currency:"INR",
-name:"NEET PG / INICET PYQs",
+
+name:"NEET PG PYQs",
 description:"Unlock all subjects",
+
 prefill:{email:currentUser.email},
 
 handler:async function(response){
-
-alert("✅ Payment Successful!");
 
 await setDoc(doc(db,"users",userId),{
 isPaid:true,
@@ -289,9 +228,10 @@ payBtn.style.display="none";
 
 renderSubjects();
 
-},
+alert("Payment Successful!");
 
-theme:{color:"#3399cc"}
+}
+
 };
 
 const rzp=new Razorpay(options);
@@ -303,11 +243,8 @@ async function updateVisitCount(){
 
 const today=new Date().toISOString().split("T")[0];
 
-const lastVisit=localStorage.getItem("lastVisitDate");
-
-if(lastVisit!==today){
-
 const ref=doc(db,"visits",today);
+
 const snap=await getDoc(ref);
 
 if(snap.exists()){
@@ -316,14 +253,9 @@ await updateDoc(ref,{count:increment(1)});
 await setDoc(ref,{count:1});
 }
 
-localStorage.setItem("lastVisitDate",today);
-}
-
-const ref=doc(db,"visits",today);
-
-onSnapshot(ref,(snap)=>{
-if(snap.exists()){
-document.getElementById("visitCounter").textContent="👀 Visitors Today: "+snap.data().count;
+onSnapshot(ref,function(s){
+if(s.exists()){
+document.getElementById("visitCounter").textContent="Visitors today: "+s.data().count;
 }
 });
 
@@ -335,40 +267,62 @@ updateVisitCount();
 
 <style>
 
-.progress-container{
-width:90%;
-height:6px;
-background:rgba(255,255,255,0.3);
+body{
+font-family:Arial;
+margin:0;
+padding:20px;
+}
+
+.card{
+display:block;
+padding:20px;
+margin:10px;
 border-radius:10px;
-margin-top:10px;
+color:white;
+text-decoration:none;
+}
+
+.progress-container{
+width:100%;
+height:6px;
+background:#ffffff40;
+margin-top:8px;
+border-radius:10px;
 overflow:hidden;
 }
 
 .progress-bar{
 height:100%;
 background:#00ff88;
-transition:width 0.4s;
-}
-
-.progress-text{
-font-size:12px;
-margin-top:4px;
 }
 
 .resume-text{
 font-size:13px;
-font-weight:bold;
 margin-top:6px;
-color:#00ffd5;
-}
-
-.visit-number{
-text-align:left;
-font-size:18px;
-margin-top:20px;
 }
 
 </style>
+
+</head>
+
+<body>
+
+<h1>NEET PG / INICET PYQs</h1>
+
+<div>
+<span id="user-info">Loading...</span>
+<button id="loginBtn">Login</button>
+<button id="logoutBtn">Logout</button>
+<button id="payBtn">Pay ₹99 to Unlock All Subjects</button>
+</div>
+
+<p><b>Anatomy</b> is free. Pay ₹99 once to unlock all other subjects.</p>
+
+<div id="subject-container"></div>
+
+<p id="visitCounter"></p>
+
+<a href="https://wa.me/919431328569">Chat with us on WhatsApp</a>
 
 </body>
 </html>
