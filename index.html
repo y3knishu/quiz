@@ -1,3 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>NEET PG / INICET PYQs</title>
+
+<link rel="stylesheet" href="style.css">
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+</head>
+
+<body>
+
+<header>
+
+<h1>NEET PG / INICET PYQs</h1>
+
+<div class="top-buttons">
+
+<span id="user-info">Loading...</span>
+
+<button id="loginBtn">Login</button>
+<button id="logoutBtn">Logout</button>
+
+<button id="payBtn">💳 Pay ₹99 to Unlock All Subjects</button>
+
+</div>
+
+</header>
+
+<p>
+🔓 <b>Anatomy</b> is free. Pay ₹99 once to unlock all other subjects.
+</p>
+
+<div id="subject-container"></div>
+
+<p id="visitCounter"></p>
+
+<a href="https://wa.me/919431328569" class="whatsapp-btn">
+💬 Chat with us on WhatsApp
+</a>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const firebaseConfig = {
+
+apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
+authDomain: "mcqs-96117.firebaseapp.com",
+projectId: "mcqs-96117",
+storageBucket: "mcqs-96117.firebasestorage.app",
+messagingSenderId: "352256319143",
+appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582"
+
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+const subjects = [
+
+"Anatomy","Physiology","Biochemistry","Pathology","Pharmacology",
+"Microbiology","Forensic Medicine","Community Medicine","ENT",
+"Ophthalmology","General Medicine","General Surgery",
+"Obstetrics & Gynaecology","Pediatrics","Orthopaedics",
+"Dermatology","Psychiatry","Radiology","Anesthesiology"
+
+];
+
+let userId=null;
+let currentUser=null;
+let isPaid=false;
+
+const userInfo=document.getElementById("user-info");
+const loginBtn=document.getElementById("loginBtn");
+const logoutBtn=document.getElementById("logoutBtn");
+const payBtn=document.getElementById("payBtn");
+
+function randomColor(){
+
+const colors=[
+"#ff6b6b","#6bcB77","#4d96ff","#ffd93d",
+"#9d4edd","#00c2a8","#ff9671","#0081cf"
+];
+
+return colors[Math.floor(Math.random()*colors.length)];
+
+}
+
 async function renderSubjects(){
 
 const container=document.getElementById("subject-container");
@@ -19,7 +117,7 @@ progressData=snap.data();
 
 }catch(e){
 
-console.log("Progress load skipped",e);
+console.log("Progress read error",e);
 
 }
 
@@ -28,8 +126,8 @@ subjects.forEach(subject=>{
 const card=document.createElement("a");
 card.className="card";
 
-const isFree=subject==="Anatomy";
-const locked=!isFree && !isPaid;
+const isFree = subject==="Anatomy";
+const locked = !isFree && !isPaid;
 
 card.classList.toggle("locked",locked);
 card.style.backgroundColor=randomColor();
@@ -41,20 +139,19 @@ let correct=progressData[key]?.correct ?? 0;
 let wrong=progressData[key]?.wrong ?? 0;
 let currentQ=progressData[key]?.currentQuestion ?? 0;
 
-let total=correct+wrong;
-let percent=total>0 ? Math.min(total,100) : 0;
+let percent = attempted>0 ? Math.min(attempted*5,100) : 0;
 
 let resumeText="";
 
 if(currentQ>0){
-resumeText='<div class="resume-text">Resume Quiz</div>';
+resumeText='<div class="resume-text">▶ Resume Quiz</div>';
 }
 
 card.innerHTML=
 
 '<div class="card-title">'+subject+'</div>'+
 
-'<div class="card-sub">'+(locked?"Locked":"Open")+'</div>'+
+'<div class="card-sub">'+(locked?"🔒 Locked":"✅ Open")+'</div>'+
 
 resumeText+
 
@@ -84,3 +181,173 @@ container.appendChild(card);
 });
 
 }
+
+onAuthStateChanged(auth,async(user)=>{
+
+if(user){
+
+currentUser=user;
+userId=user.uid;
+
+loginBtn.style.display="none";
+logoutBtn.style.display="inline-block";
+
+userInfo.textContent="Hello "+user.email;
+
+const snap=await getDoc(doc(db,"users",user.uid));
+
+if(user.email==="y3knishu@gmail.com"){
+isPaid=true;
+payBtn.style.display="none";
+}
+else if(snap.exists() && snap.data().isPaid){
+isPaid=true;
+payBtn.style.display="none";
+}
+
+renderSubjects();
+
+}
+
+else{
+
+userInfo.textContent="Not logged in";
+
+loginBtn.style.display="inline-block";
+logoutBtn.style.display="none";
+
+renderSubjects();
+
+}
+
+});
+
+loginBtn.onclick=function(){
+
+window.location.href="admin-login.html";
+
+};
+
+logoutBtn.onclick=function(){
+
+signOut(auth).then(function(){
+
+alert("Logged out");
+location.reload();
+
+});
+
+};
+
+payBtn.onclick=function(){
+
+if(!currentUser){
+
+alert("Please login first");
+return;
+
+}
+
+const options={
+
+key:"rzp_live_S7e2qEXg0B5vrU",
+amount:9900,
+currency:"INR",
+
+name:"NEET PG PYQs",
+description:"Unlock all subjects",
+
+prefill:{email:currentUser.email},
+
+handler:async function(response){
+
+await setDoc(doc(db,"users",userId),{
+
+isPaid:true,
+paymentId:response.razorpay_payment_id
+
+},{merge:true});
+
+isPaid=true;
+payBtn.style.display="none";
+
+renderSubjects();
+
+alert("Payment successful");
+
+}
+
+};
+
+const rzp=new Razorpay(options);
+rzp.open();
+
+};
+
+async function updateVisitCount(){
+
+const today=new Date().toISOString().split("T")[0];
+
+const ref=doc(db,"visits",today);
+
+const snap=await getDoc(ref);
+
+if(snap.exists()){
+await updateDoc(ref,{count:increment(1)});
+}
+else{
+await setDoc(ref,{count:1});
+}
+
+onSnapshot(ref,(s)=>{
+if(s.exists()){
+document.getElementById("visitCounter").textContent="Visitors today: "+s.data().count;
+}
+});
+
+}
+
+updateVisitCount();
+
+</script>
+
+<style>
+
+body{
+font-family:Arial;
+margin:0;
+padding:20px;
+}
+
+.card{
+display:block;
+padding:20px;
+margin:10px;
+border-radius:10px;
+color:white;
+text-decoration:none;
+}
+
+.progress-container{
+width:100%;
+height:6px;
+background:#ffffff40;
+margin-top:8px;
+border-radius:10px;
+overflow:hidden;
+}
+
+.progress-bar{
+height:100%;
+background:#00ff88;
+}
+
+.resume-text{
+font-size:13px;
+margin-top:6px;
+}
+
+</style>
+
+</body>
+</html>
