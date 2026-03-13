@@ -128,15 +128,21 @@ container.innerHTML="";
 
 let progressData={};
 
+try{
+
 if(userId){
 
-const snap=await getDoc(doc(db,"users",userId));
+const snap=await getDoc(doc(db,"user_progress",userId));
 
-if(snap.exists() && snap.data().progress){
-
-progressData=snap.data().progress;
+if(snap.exists()){
+progressData=snap.data();
+}
 
 }
+
+}catch(e){
+
+console.log("Progress load skipped",e);
 
 }
 
@@ -151,11 +157,12 @@ const locked=!isFree && !isPaid;
 card.classList.toggle("locked",locked);
 card.style.backgroundColor=getRandomColor();
 
-let attempted=progressData?.[subject]?.attempted || 0;
-let correct=progressData?.[subject]?.correct || 0;
-let wrong=progressData?.[subject]?.wrong || 0;
-let currentQ=progressData?.[subject]?.currentQuestion || 0;
-let completed=progressData?.[subject]?.completed || false;
+const key=`progress_${subject}`;
+
+let attempted=progressData[key]?.attempted ?? 0;
+let correct=progressData[key]?.correct ?? 0;
+let wrong=progressData[key]?.wrong ?? 0;
+let currentQ=progressData[key]?.currentQuestion ?? 0;
 
 let total=correct+wrong;
 let percent=total>0 ? Math.min(total,100) : 0;
@@ -166,7 +173,7 @@ card.innerHTML=`
 
 <div class="card-sub">${locked?"🔒 Locked":"✅ Open"}</div>
 
-${currentQ>0 && !completed ? `<div class="resume-text">▶ Resume Quiz</div>`:""}
+${currentQ>0 ? `<div class="resume-text">▶ Resume Quiz</div>`:""}
 
 <div class="progress-container">
 <div class="progress-bar" style="width:${percent}%"></div>
@@ -267,11 +274,10 @@ currency:"INR",
 name:"NEET PG / INICET PYQs",
 description:"Unlock all subjects",
 prefill:{email:currentUser.email},
-notes:{uid:currentUser.uid},
 
 handler:async function(response){
 
-alert("✅ Payment Successful! ID: "+response.razorpay_payment_id);
+alert("✅ Payment Successful!");
 
 await setDoc(doc(db,"users",userId),{
 isPaid:true,
@@ -296,6 +302,7 @@ rzp.open();
 async function updateVisitCount(){
 
 const today=new Date().toISOString().split("T")[0];
+
 const lastVisit=localStorage.getItem("lastVisitDate");
 
 if(lastVisit!==today){
@@ -324,13 +331,6 @@ document.getElementById("visitCounter").textContent="👀 Visitors Today: "+snap
 
 updateVisitCount();
 
-</script>
-
-<script>
-document.addEventListener('contextmenu',function(e){
-e.preventDefault();
-alert("Right click disabled");
-});
 </script>
 
 <style>
