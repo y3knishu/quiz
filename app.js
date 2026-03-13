@@ -8,8 +8,7 @@ const firebaseConfig = {
   projectId: "mcqs-96117",
   storageBucket: "mcqs-96117.firebasestorage.app",
   messagingSenderId: "352256319143",
-  appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582",
-  measurementId: "G-6FZ770H045"
+  appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -17,7 +16,7 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 const urlParams = new URLSearchParams(window.location.search);
-const subject = urlParams.get('subject') || 'Anatomy';
+const subject = urlParams.get("subject") || "Anatomy";
 
 let questions = [];
 let current = 0;
@@ -25,6 +24,7 @@ let selectedAnswers = [];
 let startTime = Date.now();
 let timerInterval;
 
+// DOM
 const qText = document.getElementById("question-text");
 const qImage = document.getElementById("question-image");
 const qOptions = document.getElementById("options");
@@ -38,14 +38,22 @@ const expTitle = document.getElementById("explanation-title");
 const expText = document.getElementById("explanation-text");
 const expImage = document.getElementById("explanation-image");
 
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    loadQuiz(subject, user.uid);
-  } else {
-    loadQuiz(subject);
+// AUTH
+onAuthStateChanged(auth, async (user) => {
+
+  if (!user) {
+    alert("Please login first");
+    window.location.href = "index.html";
+    return;
   }
+
+  console.log("User UID:", user.uid);
+
+  await loadQuiz(subject, user.uid);
+
 });
 
+// QUESTION PALETTE
 function renderPalette() {
 
   palette.innerHTML = "";
@@ -53,11 +61,15 @@ function renderPalette() {
   questions.forEach((_, i) => {
 
     const btn = document.createElement("button");
+
     btn.textContent = i + 1;
+
     btn.onclick = () => loadQuestion(i);
 
-    if (selectedAnswers[i] !== undefined) {
-      btn.style.background = selectedAnswers[i].correct ? "#66bb6a" : "#ef5350";
+    if (selectedAnswers[i]) {
+      btn.style.background = selectedAnswers[i].correct
+        ? "#66bb6a"
+        : "#ef5350";
     }
 
     palette.appendChild(btn);
@@ -66,9 +78,10 @@ function renderPalette() {
 
 }
 
+// LOAD QUESTION
 function loadQuestion(index) {
 
-  if(index < 0 || index >= questions.length) return;
+  if (index < 0 || index >= questions.length) return;
 
   current = index;
 
@@ -90,14 +103,17 @@ function loadQuestion(index) {
   q.options.forEach((opt, i) => {
 
     const btn = document.createElement("button");
+
     btn.textContent = opt;
+
     btn.onclick = () => selectAnswer(i);
 
     qOptions.appendChild(btn);
 
   });
 
-  if (selectedAnswers[index] !== undefined) {
+  // show saved answer
+  if (selectedAnswers[index]) {
 
     const correctIndex = q.answer;
     const selected = selectedAnswers[index].selectedIndex;
@@ -123,9 +139,11 @@ function loadQuestion(index) {
 
 }
 
+// SELECT ANSWER
 function selectAnswer(selectedIndex) {
 
   const q = questions[current];
+
   const isCorrect = selectedIndex === q.answer;
 
   selectedAnswers[current] = {
@@ -148,141 +166,116 @@ function selectAnswer(selectedIndex) {
 
   showExplanation(q);
 
-  saveProgress(auth.currentUser?.uid);
+  const user = auth.currentUser;
+
+  if (user) saveProgress(user.uid);
 
   renderPalette();
 
 }
 
-function showExplanation(q){
+// EXPLANATION
+function showExplanation(q) {
 
   expBox.style.display = "block";
   expTitle.style.display = "block";
 
-  expText.innerHTML = q.explanation ? q.explanation : "No explanation available.";
+  expText.innerHTML = q.explanation || "No explanation available.";
 
-  if(q.explanation_image){
+  if (q.explanation_image) {
+
     expImage.src = q.explanation_image;
     expImage.style.display = "block";
-  }else{
+
+  } else {
+
     expImage.style.display = "none";
+
   }
 
 }
 
-function prevQuestion(){
-  if(current > 0) loadQuestion(current-1);
+// NAVIGATION
+function prevQuestion() {
+  if (current > 0) loadQuestion(current - 1);
 }
 
-function nextQuestion(){
-  if(current < questions.length-1) loadQuestion(current+1);
+function nextQuestion() {
+  if (current < questions.length - 1) loadQuestion(current + 1);
 }
 
-function resetQuiz(){
+// RESET QUIZ
+function resetQuiz() {
 
   selectedAnswers = new Array(questions.length);
 
-  saveProgress(auth.currentUser?.uid);
+  const user = auth.currentUser;
+
+  if (user) saveProgress(user.uid);
 
   loadQuestion(0);
 
-  resultDiv.innerHTML="";
+  resultDiv.innerHTML = "";
 
   startTime = Date.now();
 
 }
 
-function submitQuiz(){
+// SAVE PROGRESS
+async function saveProgress(userId) {
 
-  let correct=0,wrong=0,attempted=0;
+  try {
 
-  selectedAnswers.forEach(a=>{
-    if(a!==undefined){
-      attempted++;
-      if(a.correct) correct++;
-      else wrong++;
-    }
-  });
+    const key = `progress_${subject}`;
 
-  const unattempted=questions.length-attempted;
-  const score=correct*4-wrong;
+    const summary = {
 
-  const timeTaken=Math.floor((Date.now()-startTime)/1000);
-  const minutes=Math.floor(timeTaken/60);
-  const seconds=timeTaken%60;
+      attempted: selectedAnswers.filter(a => a).length,
 
-  resultDiv.innerHTML=`
-    <h3>Quiz Summary</h3>
-    <p>✅ Correct: ${correct}</p>
-    <p>❌ Wrong: ${wrong}</p>
-    <p>⏳ Unattempted: ${unattempted}</p>
-    <p>🧮 Score: ${score}</p>
-    <p>⏱️ Time Taken: ${minutes}m ${seconds}s</p>
-    <canvas id="resultChart"></canvas>
-  `;
+      correct: selectedAnswers.filter(a => a && a.correct).length,
 
-  new Chart(document.getElementById("resultChart"),{
-    type:"pie",
-    data:{
-      labels:["Correct","Wrong","Unattempted"],
-      datasets:[{
-        data:[correct,wrong,unattempted],
-        backgroundColor:["#66bb6a","#ef5350","#ffee58"]
-      }]
-    }
-  });
+      wrong: selectedAnswers.filter(a => a && !a.correct).length,
 
-  clearInterval(timerInterval);
+      currentQuestion: current,
+
+      answers: selectedAnswers,
+
+      timestamp: new Date().toISOString()
+
+    };
+
+    const ref = doc(db, "user_progress", userId);
+
+    await setDoc(ref, { [key]: summary }, { merge: true });
+
+    console.log("Progress saved");
+
+  } catch (err) {
+
+    console.error("Save error:", err);
+
+  }
 
 }
 
-function updateTimer(){
+// LOAD PROGRESS
+async function loadProgress(userId) {
 
-  const diff=Math.floor((Date.now()-startTime)/1000);
-  const mins=Math.floor(diff/60);
-  const secs=diff%60;
+  const key = `progress_${subject}`;
 
-  timer.textContent=`Time: ${mins}m ${secs}s`;
+  const ref = doc(db, "user_progress", userId);
 
-}
+  const snap = await getDoc(ref);
 
-async function saveProgress(userId){
+  if (snap.exists()) {
 
-  if(!userId) return;
+    const saved = snap.data()[key];
 
-  const key=`progress_${subject}`;
+    if (saved) {
 
-  const summary={
-    attempted:selectedAnswers.filter(a=>a!==undefined).length,
-    correct:selectedAnswers.filter(a=>a && a.correct).length,
-    wrong:selectedAnswers.filter(a=>a && !a.correct).length,
-    currentQuestion:current,
-    answers:selectedAnswers,
-    timestamp:new Date().toISOString()
-  };
+      selectedAnswers = saved.answers || [];
 
-  const userProgressRef=doc(db,"user_progress",userId);
-
-  await setDoc(userProgressRef,{[key]:summary},{merge:true});
-
-}
-
-async function loadProgress(userId){
-
-  const key=`progress_${subject}`;
-
-  const userProgressRef=doc(db,"user_progress",userId);
-
-  const userProgressSnap=await getDoc(userProgressRef);
-
-  if(userProgressSnap.exists()){
-
-    const saved=userProgressSnap.data()[key];
-
-    if(saved){
-
-      selectedAnswers=saved.answers || [];
-      current=saved.currentQuestion || 0;
+      current = saved.currentQuestion || 0;
 
     }
 
@@ -290,40 +283,54 @@ async function loadProgress(userId){
 
 }
 
-async function loadQuiz(subjectName,userId=null){
+// LOAD QUIZ
+async function loadQuiz(subjectName, userId) {
 
-  const docRef=doc(db,"questions",subjectName);
-  const docSnap=await getDoc(docRef);
+  const ref = doc(db, "questions", subjectName);
 
-  if(docSnap.exists()){
+  const snap = await getDoc(ref);
 
-    questions=docSnap.data().questions;
+  if (!snap.exists()) {
 
-    if(userId){
-      await loadProgress(userId);
-    }
+    alert("No questions found");
 
-    if(!selectedAnswers || selectedAnswers.length !== questions.length){
-      selectedAnswers=new Array(questions.length);
-    }
-
-    if(current >= questions.length){
-      current = 0;
-    }
-
-    loadQuestion(current);
-
-    timerInterval=setInterval(updateTimer,1000);
-
-  }else{
-
-    alert("No questions found for this subject.");
+    return;
 
   }
 
+  questions = snap.data().questions;
+
+  await loadProgress(userId);
+
+  if (!selectedAnswers || selectedAnswers.length !== questions.length) {
+
+    selectedAnswers = new Array(questions.length);
+
+  }
+
+  if (current >= questions.length) current = 0;
+
+  loadQuestion(current);
+
+  timerInterval = setInterval(updateTimer, 1000);
+
 }
 
-window.prevQuestion=prevQuestion;
-window.nextQuestion=nextQuestion;
-window.resetQuiz=resetQuiz;
-window.submitQuiz=submitQuiz;
+// TIMER
+function updateTimer() {
+
+  const diff = Math.floor((Date.now() - startTime) / 1000);
+
+  const mins = Math.floor(diff / 60);
+
+  const secs = diff % 60;
+
+  timer.textContent = `Time: ${mins}m ${secs}s`;
+
+}
+
+// GLOBAL FUNCTIONS
+window.prevQuestion = prevQuestion;
+window.nextQuestion = nextQuestion;
+window.resetQuiz = resetQuiz;
+window.submitQuiz = submitQuiz;
