@@ -87,8 +87,6 @@ body {
   right: 10px;
 }
 
-/* Explanation styling */
-
 #explanation-box {
   margin-top: 20px;
 }
@@ -130,16 +128,10 @@ body {
 
 <div id="options" class="options"></div>
 
-<!-- Explanation section -->
-
 <div id="explanation-box">
-
 <h3 id="explanation-title">Explanation</h3>
-
 <img id="explanation-image">
-
 <p id="explanation-text"></p>
-
 </div>
 
 <p id="timer">Time: 0 sec</p>
@@ -174,6 +166,33 @@ function toggleDarkMode() {
 }
 
 </script>
+
+<!-- Firebase for Resume Quiz -->
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyAMNDoNuqkWfXEGYdwueJb5XTr1ST2ztKc",
+authDomain: "mcqs-96117.firebaseapp.com",
+projectId: "mcqs-96117",
+storageBucket: "mcqs-96117.firebasestorage.app",
+messagingSenderId: "352256319143",
+appId: "1:352256319143:web:74b2bd062a7f2dc5f1c582",
+measurementId: "G-6FZ770H045"
+};
+
+const app = initializeApp(firebaseConfig);
+
+window.db = getFirestore(app);
+window.auth = getAuth(app);
+
+</script>
+
+<!-- Quiz Logic -->
 
 <script type="module" src="app.js"></script>
 
