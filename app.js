@@ -38,14 +38,8 @@ const expTitle = document.getElementById("explanation-title");
 const expText = document.getElementById("explanation-text");
 const expImage = document.getElementById("explanation-image");
 
-document.addEventListener('contextmenu', function(event) {
-  event.preventDefault();
-  alert('Right-click is disabled on this page!');
-});
-
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    loadProgress(user.uid);
     loadQuiz(subject, user.uid);
   } else {
     loadQuiz(subject);
@@ -53,26 +47,37 @@ onAuthStateChanged(auth, (user) => {
 });
 
 function renderPalette() {
+
   palette.innerHTML = "";
+
   questions.forEach((_, i) => {
+
     const btn = document.createElement("button");
     btn.textContent = i + 1;
     btn.onclick = () => loadQuestion(i);
 
     if (selectedAnswers[i] !== undefined) {
-      btn.style.background = selectedAnswers[i].correct ? "#66bb6a" : "#ef5350";
+
+      btn.style.background = selectedAnswers[i].correct
+        ? "#66bb6a"
+        : "#ef5350";
+
     }
 
     palette.appendChild(btn);
+
   });
+
 }
 
 function loadQuestion(index) {
 
   current = index;
+
   const q = questions[index];
 
   qNumber.textContent = `Question ${index + 1}`;
+
   qText.textContent = q.question;
 
   qImage.style.display = q.image ? "block" : "none";
@@ -86,10 +91,15 @@ function loadQuestion(index) {
   expImage.style.display = "none";
 
   q.options.forEach((opt, i) => {
+
     const btn = document.createElement("button");
+
     btn.textContent = opt;
+
     btn.onclick = () => selectAnswer(i);
+
     qOptions.appendChild(btn);
+
   });
 
   if (selectedAnswers[index] !== undefined) {
@@ -105,14 +115,17 @@ function loadQuestion(index) {
 
       if (i === correctIndex) b.classList.add("correct");
 
-      if (i === selected && selected !== correctIndex) b.classList.add("wrong");
+      if (i === selected && selected !== correctIndex)
+        b.classList.add("wrong");
 
     });
 
     showExplanation(q);
+
   }
 
   renderPalette();
+
 }
 
 function selectAnswer(selectedIndex) {
@@ -121,7 +134,10 @@ function selectAnswer(selectedIndex) {
 
   const isCorrect = selectedIndex === q.answer;
 
-  selectedAnswers[current] = { selectedIndex, correct: isCorrect };
+  selectedAnswers[current] = {
+    selectedIndex,
+    correct: isCorrect
+  };
 
   const buttons = qOptions.querySelectorAll("button");
 
@@ -131,15 +147,17 @@ function selectAnswer(selectedIndex) {
 
     if (i === q.answer) b.classList.add("correct");
 
-    if (i === selectedIndex && !isCorrect) b.classList.add("wrong");
+    if (i === selectedIndex && !isCorrect)
+      b.classList.add("wrong");
 
   });
 
   showExplanation(q);
 
-  saveProgress(auth.currentUser ? auth.currentUser.uid : null);
+  saveProgress(auth.currentUser?.uid);
 
   renderPalette();
+
 }
 
 function showExplanation(q){
@@ -147,13 +165,19 @@ function showExplanation(q){
   expBox.style.display = "block";
   expTitle.style.display = "block";
 
-  expText.innerHTML = q.explanation ? q.explanation : "No explanation available.";
+  expText.innerHTML = q.explanation
+    ? q.explanation
+    : "No explanation available.";
 
-  if(q.explanation_image && q.explanation_image !== ""){
-      expImage.src = q.explanation_image;
-      expImage.style.display = "block";
+  if(q.explanation_image){
+
+    expImage.src = q.explanation_image;
+    expImage.style.display = "block";
+
   }else{
-      expImage.style.display = "none";
+
+    expImage.style.display = "none";
+
   }
 
 }
@@ -167,11 +191,17 @@ function nextQuestion(){
 }
 
 function resetQuiz(){
-  selectedAnswers=[];
-  saveProgress(auth.currentUser ? auth.currentUser.uid : null);
+
+  selectedAnswers = new Array(questions.length);
+
+  saveProgress(auth.currentUser?.uid);
+
   loadQuestion(0);
+
   resultDiv.innerHTML="";
-  startTime=Date.now();
+
+  startTime = Date.now();
+
 }
 
 function submitQuiz(){
@@ -179,7 +209,7 @@ function submitQuiz(){
   let correct=0,wrong=0,attempted=0;
 
   selectedAnswers.forEach(a=>{
-    if(a!==undefined){
+    if(a){
       attempted++;
       if(a.correct) correct++;
       else wrong++;
@@ -187,6 +217,7 @@ function submitQuiz(){
   });
 
   const unattempted=questions.length-attempted;
+
   const score=correct*4-wrong;
 
   const timeTaken=Math.floor((Date.now()-startTime)/1000);
@@ -199,9 +230,9 @@ function submitQuiz(){
     <p>✅ Correct: ${correct}</p>
     <p>❌ Wrong: ${wrong}</p>
     <p>⏳ Unattempted: ${unattempted}</p>
-    <p>🧮 Score: ${score} / ${questions.length * 4}</p>
-    <p>⏱️ Time Taken: ${minutes} min ${seconds} sec</p>
-    <canvas id="resultChart" width="300" height="300"></canvas>
+    <p>🧮 Score: ${score}</p>
+    <p>⏱️ Time Taken: ${minutes}m ${seconds}s</p>
+    <canvas id="resultChart"></canvas>
   `;
 
   new Chart(document.getElementById("resultChart"),{
@@ -216,16 +247,18 @@ function submitQuiz(){
   });
 
   clearInterval(timerInterval);
-  renderPalette();
+
 }
 
 function updateTimer(){
 
   const diff=Math.floor((Date.now()-startTime)/1000);
+
   const mins=Math.floor(diff/60);
   const secs=diff%60;
 
   timer.textContent=`Time: ${mins}m ${secs}s`;
+
 }
 
 async function saveProgress(userId){
@@ -235,22 +268,28 @@ async function saveProgress(userId){
   const key=`progress_${subject}`;
 
   const summary={
-    attempted:selectedAnswers.filter(a=>a!==undefined).length,
+
+    attempted:selectedAnswers.filter(a=>a).length,
+
     correct:selectedAnswers.filter(a=>a && a.correct).length,
+
     wrong:selectedAnswers.filter(a=>a && !a.correct).length,
-    total:questions.length,
-    answers:selectedAnswers.filter(a=>a!==undefined),
+
+    currentQuestion:current,
+
+    answers:selectedAnswers,
+
     timestamp:new Date().toISOString()
+
   };
 
   const userProgressRef=doc(db,"user_progress",userId);
 
-  await setDoc(userProgressRef,{[key]:summary});
+  await setDoc(userProgressRef,{[key]:summary},{merge:true});
+
 }
 
 async function loadProgress(userId){
-
-  if(!userId) return;
 
   const key=`progress_${subject}`;
 
@@ -260,11 +299,14 @@ async function loadProgress(userId){
 
   if(userProgressSnap.exists()){
 
-    const userProgress=userProgressSnap.data();
-    const savedProgress=userProgress[key];
+    const saved=userProgressSnap.data()[key];
 
-    if(savedProgress){
-      selectedAnswers=savedProgress.answers || [];
+    if(saved){
+
+      selectedAnswers=saved.answers || [];
+
+      current=saved.currentQuestion || 0;
+
     }
 
   }
@@ -274,16 +316,21 @@ async function loadProgress(userId){
 async function loadQuiz(subjectName,userId=null){
 
   const docRef=doc(db,"questions",subjectName);
+
   const docSnap=await getDoc(docRef);
 
   if(docSnap.exists()){
 
     questions=docSnap.data().questions;
+
     selectedAnswers=new Array(questions.length);
 
-    if(userId) loadProgress(userId);
+    if(userId){
+      await loadProgress(userId);
+    }
 
-    loadQuestion(0);
+    loadQuestion(current);
+
     timerInterval=setInterval(updateTimer,1000);
 
   }else{
