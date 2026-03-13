@@ -14,7 +14,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const auth = getAuth();
+const auth = getAuth(app);
 
 const urlParams = new URLSearchParams(window.location.search);
 const subject = urlParams.get('subject') || 'Anatomy';
@@ -57,11 +57,7 @@ function renderPalette() {
     btn.onclick = () => loadQuestion(i);
 
     if (selectedAnswers[i] !== undefined) {
-
-      btn.style.background = selectedAnswers[i].correct
-        ? "#66bb6a"
-        : "#ef5350";
-
+      btn.style.background = selectedAnswers[i].correct ? "#66bb6a" : "#ef5350";
     }
 
     palette.appendChild(btn);
@@ -72,12 +68,13 @@ function renderPalette() {
 
 function loadQuestion(index) {
 
+  if(index < 0 || index >= questions.length) return;
+
   current = index;
 
   const q = questions[index];
 
   qNumber.textContent = `Question ${index + 1}`;
-
   qText.textContent = q.question;
 
   qImage.style.display = q.image ? "block" : "none";
@@ -93,9 +90,7 @@ function loadQuestion(index) {
   q.options.forEach((opt, i) => {
 
     const btn = document.createElement("button");
-
     btn.textContent = opt;
-
     btn.onclick = () => selectAnswer(i);
 
     qOptions.appendChild(btn);
@@ -131,7 +126,6 @@ function loadQuestion(index) {
 function selectAnswer(selectedIndex) {
 
   const q = questions[current];
-
   const isCorrect = selectedIndex === q.answer;
 
   selectedAnswers[current] = {
@@ -165,29 +159,23 @@ function showExplanation(q){
   expBox.style.display = "block";
   expTitle.style.display = "block";
 
-  expText.innerHTML = q.explanation
-    ? q.explanation
-    : "No explanation available.";
+  expText.innerHTML = q.explanation ? q.explanation : "No explanation available.";
 
   if(q.explanation_image){
-
     expImage.src = q.explanation_image;
     expImage.style.display = "block";
-
   }else{
-
     expImage.style.display = "none";
-
   }
 
 }
 
 function prevQuestion(){
-  if(current>0) loadQuestion(current-1);
+  if(current > 0) loadQuestion(current-1);
 }
 
 function nextQuestion(){
-  if(current<questions.length-1) loadQuestion(current+1);
+  if(current < questions.length-1) loadQuestion(current+1);
 }
 
 function resetQuiz(){
@@ -217,11 +205,9 @@ function submitQuiz(){
   });
 
   const unattempted=questions.length-attempted;
-
   const score=correct*4-wrong;
 
   const timeTaken=Math.floor((Date.now()-startTime)/1000);
-
   const minutes=Math.floor(timeTaken/60);
   const seconds=timeTaken%60;
 
@@ -253,7 +239,6 @@ function submitQuiz(){
 function updateTimer(){
 
   const diff=Math.floor((Date.now()-startTime)/1000);
-
   const mins=Math.floor(diff/60);
   const secs=diff%60;
 
@@ -268,19 +253,12 @@ async function saveProgress(userId){
   const key=`progress_${subject}`;
 
   const summary={
-
     attempted:selectedAnswers.filter(a=>a!==undefined).length,
-
     correct:selectedAnswers.filter(a=>a && a.correct).length,
-
     wrong:selectedAnswers.filter(a=>a && !a.correct).length,
-
     currentQuestion:current,
-
     answers:selectedAnswers,
-
     timestamp:new Date().toISOString()
-
   };
 
   const userProgressRef=doc(db,"user_progress",userId);
@@ -304,7 +282,6 @@ async function loadProgress(userId){
     if(saved){
 
       selectedAnswers=saved.answers || [];
-
       current=saved.currentQuestion || 0;
 
     }
@@ -316,7 +293,6 @@ async function loadProgress(userId){
 async function loadQuiz(subjectName,userId=null){
 
   const docRef=doc(db,"questions",subjectName);
-
   const docSnap=await getDoc(docRef);
 
   if(docSnap.exists()){
@@ -327,8 +303,12 @@ async function loadQuiz(subjectName,userId=null){
       await loadProgress(userId);
     }
 
-    if(!selectedAnswers || selectedAnswers.length===0){
+    if(!selectedAnswers || selectedAnswers.length !== questions.length){
       selectedAnswers=new Array(questions.length);
+    }
+
+    if(current >= questions.length){
+      current = 0;
     }
 
     loadQuestion(current);
