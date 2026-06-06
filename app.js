@@ -244,7 +244,7 @@ async function saveProgress(userId){
 
   const userProgressRef=doc(db,"user_progress",userId);
 
-  await setDoc(userProgressRef,{[key]:summary});
+  await setDoc(userProgressRef,{[key]:summary},{merge:true});
 }
 
 async function loadProgress(userId){
