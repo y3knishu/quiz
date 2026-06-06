@@ -233,12 +233,12 @@ async function saveProgress(userId){
 
   const key=`progress_${subject}`;
 
-  const summary={
-  attempted:selectedAnswers.filter(a=>a!==undefined).length,
-  correct:selectedAnswers.filter(a=>a && a.correct).length,
-  wrong:selectedAnswers.filter(a=>a && !a.correct).length,
+  const summary = {
+  attempted:selectedAnswers.filter(a => a !== undefined).length,
+  correct:selectedAnswers.filter(a => a && a.correct).length,
+  wrong:selectedAnswers.filter(a => a && !a.correct).length,
   total:questions.length,
-  answers:selectedAnswers,
+  answers:selectedAnswers.map(a => a || null),
   timestamp:new Date().toISOString()
 };
 
