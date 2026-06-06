@@ -235,13 +235,13 @@ async function saveProgress(userId){
   const key=`progress_${subject}`;
 
   const summary={
-    attempted:selectedAnswers.filter(a=>a!==undefined).length,
-    correct:selectedAnswers.filter(a=>a && a.correct).length,
-    wrong:selectedAnswers.filter(a=>a && !a.correct).length,
-    total:questions.length,
-    answers:selectedAnswers.filter(a=>a!==undefined),
-    timestamp:new Date().toISOString()
-  };
+  attempted:selectedAnswers.filter(a=>a!==undefined).length,
+  correct:selectedAnswers.filter(a=>a && a.correct).length,
+  wrong:selectedAnswers.filter(a=>a && !a.correct).length,
+  total:questions.length,
+  answers:selectedAnswers,
+  timestamp:new Date().toISOString()
+};
 
   const userProgressRef=doc(db,"user_progress",userId);
 
