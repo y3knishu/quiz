@@ -231,20 +231,45 @@ async function saveProgress(userId){
 
   if(!userId) return;
 
-  const key=`progress_${subject}`;
+  const key = `progress_${subject}`;
+
+  const cleanedAnswers = [];
+
+  for(let i = 0; i < questions.length; i++){
+
+    if(selectedAnswers[i]){
+      cleanedAnswers[i] = {
+        selectedIndex: selectedAnswers[i].selectedIndex ?? null,
+        correct: selectedAnswers[i].correct ?? false
+      };
+    }else{
+      cleanedAnswers[i] = null;
+    }
+
+  }
 
   const summary = {
-  attempted:selectedAnswers.filter(a => a !== undefined).length,
-  correct:selectedAnswers.filter(a => a && a.correct).length,
-  wrong:selectedAnswers.filter(a => a && !a.correct).length,
-  total:questions.length,
-  answers:selectedAnswers.map(a => a || null),
-  timestamp:new Date().toISOString()
-};
+    attempted: cleanedAnswers.filter(a => a !== null).length,
+    correct: cleanedAnswers.filter(a => a && a.correct).length,
+    wrong: cleanedAnswers.filter(a => a && !a.correct).length,
+    total: questions.length,
+    answers: cleanedAnswers,
+    timestamp: new Date().toISOString()
+  };
 
-  const userProgressRef=doc(db,"user_progress",userId);
+  console.log("Saving:", summary);
 
-  await setDoc(userProgressRef,{[key]:summary},{merge:true});
+  try{
+    await setDoc(
+      doc(db,"user_progress",userId),
+      { [key]: summary },
+      { merge:true }
+    );
+
+    console.log("Saved Successfully");
+  }catch(err){
+    console.error("SAVE ERROR:", err);
+  }
 }
 
 async function loadProgress(userId){
