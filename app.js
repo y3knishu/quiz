@@ -45,7 +45,6 @@ document.addEventListener('contextmenu', function(event) {
 
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    loadProgress(user.uid);
     loadQuiz(subject, user.uid);
   } else {
     loadQuiz(subject);
