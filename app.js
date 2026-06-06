@@ -279,12 +279,14 @@ async function loadQuiz(subjectName,userId=null){
   if(docSnap.exists()){
 
     questions=docSnap.data().questions;
-    selectedAnswers=new Array(questions.length);
+selectedAnswers=new Array(questions.length);
 
-    if(userId) loadProgress(userId);
+if(userId){
+   await loadProgress(userId);
+}
 
-    loadQuestion(0);
-    timerInterval=setInterval(updateTimer,1000);
+loadQuestion(0);
+timerInterval=setInterval(updateTimer,1000);
 
   }else{
 
