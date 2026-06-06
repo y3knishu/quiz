@@ -263,7 +263,9 @@ async function loadProgress(userId){
     const savedProgress=userProgress[key];
 
     if(savedProgress){
-      selectedAnswers=savedProgress.answers || [];
+selectedAnswers=(savedProgress.answers || []).map(a =>
+  a === null ? undefined : a
+);
     }
 
   }
